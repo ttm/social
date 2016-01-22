@@ -32,7 +32,7 @@ Underline is used only in variable names where the words in variable name make s
 The code is the documentation. Code should be very readable to avoid writing unnecessary documentation and duplicating routine representations. This adds up to using docstrings to give context to the objects or omitting the docstrings.
 
 Tasks might have c("some status message") which are printed with time interval in seconds between P.check calls.
-These messages are turned of by setting S.QUIET=True or calling S.silence() which just sets P.QUIET=True
+These messages are turned of by setting S.QUIET=True or calling S.silence() which just sets S.QUIET=True
 
 The usual variables in scripts are: P for percolation, NS for P.rdf.NS for namespace, a for NS.rdf.type, c for P.utils.check, S for social, r for rdflib, x for networkx
 
@@ -51,6 +51,8 @@ This package relies heavily in the percolation package to assist rendering of RD
 
 
 #### the modules are:
+bootstrap.py for starting system with basic variables and routines
+
 facebook/\*
 - render.py for expressing contents of gml, gdf and tab files in RDF. 
 - access.py for access to data in the facebook platform (through bots and other interfaces)
@@ -86,7 +88,7 @@ S.twitter.access.stream("#love",100) # get tweets with the #love hashtag on the 
 S.twitter.render.publish("#love") # publish as rdf the tweets on #love obtained
 
 # start a browser bot to retrieve the friendship network of the user
-S.facebook.access.meBot("ego",login="me@memail.com",password="mepassword")
+S.facebook.access.MeBot(login="me@memail.com",password="mepassword","ego_friendship")
 S.facebook.render.renderFromBot("ego") # publish as rdf 
 
 
