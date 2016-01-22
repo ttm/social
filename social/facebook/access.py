@@ -1,7 +1,7 @@
 import percolation as P
 from percolation.rdf import NS, a
 c=P.check
-def parseBuiltinFiles(datadir="/../data/facebook/"):
+def parseLegacyFiles(datadir="/../data/facebook/"):
     prefixes="ego_","avlab_","posavlab_" # these are all gdf ego networks
     """group files with appropriated metadata extracted from filename"""
     triples=[

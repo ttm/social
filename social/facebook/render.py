@@ -8,7 +8,18 @@ def gmlFile(filename):
 def tabFile(filename):
     # tab files are associated to group data
     pass
+def publish(filegroup):
+    if len(filegroup)==1:
 
+def renderAny(snapshoturi):
+    # get associated files
+    # render with appropriate functions
+    pass
+def publishAny(snapshoturi):
+    # get associated files
+    # render with appropriate functions
+    # publish to percolationdir
+    pass
 
 def botData(filename):
     pass
