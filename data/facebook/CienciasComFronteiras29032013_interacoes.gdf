@@ -1,0 +1,2 @@
+nodedef>name VARCHAR,label VARCHAR,posts INT
+edgedef>node1 VARCHAR,node2 VARCHAR,weight INT

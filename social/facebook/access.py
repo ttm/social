@@ -77,9 +77,9 @@ def theStructure(filename):
     return uri
 def theNote(filename):
     if filename.startswith("avlab_"):
-        return "snapshot acquired during AVLAB in Feb/21-3,25/2015"
+        return "snapshot acquired during AVLAB in Feb/21-3,25/2014"
     elif filename.startswith("posavlab_"):
-        return "snapshot acquired after during AVLAB in Feb/21-3,25/2015"
+        return "snapshot acquired after during AVLAB in Feb/21-3,25/2014"
 class MeBot:
     """start browser bot with user credentials"""
     # use socialLegacy bot
