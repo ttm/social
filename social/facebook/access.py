@@ -1,4 +1,4 @@
-import percolation as P, os, re
+import percolation as P, os, re, datetime
 from percolation.rdf import NS, a
 from social import DATADIR
 c=P.check
@@ -43,6 +43,9 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     files=os.listdir(datadir)
     snapshots=set()
     for filename in files:
+        if filename.startswith("page_"):
+            c("page data currently not supported. Jumping", filename)
+            continue
         fileformat=theFormat(filename)
         snapshotclass,snapshotid,snapshoturi=theSnapshotIDURI(filename)
         expressed_structure_uri=theStructure(filename) # group/ego and friendship/interaction
@@ -71,7 +74,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     nsnapshots=len(snapshots)
     c("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
 def theName(filename):
-    name=re.findall(r"(avlab_|posavlab_|ego_)*([a-zA-Z]*)\d*.gdf",cc)[0][1]
+    name=re.findall(r"(avlab_|posavlab_|ego_)*([a-zA-Z]*)\d*[\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0][1]
     pattern=r'([A-Z]{2,}(?=[A-Z]|$)|[A-Z][a-z]*)'
     name=" ".join(re.findall(pattern, name))
     return name
@@ -92,9 +95,9 @@ def theSnapshotIDURI(filename):
     snapshoturi=class_+"#"+snapshotid
     return class_,snapshotid, snapshoturi
 def theDate(filename):
-    day,month,year=re.findall(r".*(\d\d)(\d\d)(\d\d\d\d)[\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0]
-    datetime=datetime.date(*[int(i) for i in (year,month,day)])
-    return datetime
+    day,month,year=re.findall(r".*(\d\d)(\d\d)(\d\d\d\d)[\b_interactions\b]*[\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0]
+    datetime_=datetime.date(*[int(i) for i in (year,month,day)])
+    return datetime_
 def theStructure(filename):
     if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
         uri=NS.po.EgoFriendshipNetwork
