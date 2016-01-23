@@ -9,7 +9,7 @@ def tabFile(filename):
     # tab files are associated to group data
     pass
 def publish(filegroup):
-    if len(filegroup)==1:
+    pass
 
 def renderAny(snapshoturi):
     # get associated files
