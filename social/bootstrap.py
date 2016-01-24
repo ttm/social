@@ -3,4 +3,4 @@ QUIET=False
 PERCOLATIONDIR="~/.percolation/rdf/"
 PACKAGEDIR=os.path.dirname(__file__)
 DATADIR=PACKAGEDIR+"/../data/"
-P.start()
+P.start(start_session=False)

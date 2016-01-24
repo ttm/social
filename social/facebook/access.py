@@ -1,6 +1,8 @@
 import percolation as P, os, re, datetime
 from percolation.rdf import NS, a
+po=NS.po
 from social import DATADIR
+import social as S
 c=P.check
 def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     """Parse legacy gdf, gml and tab files of facebook structures
@@ -34,9 +36,6 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     ToDo:
        *) Implement parsing of page files.
        *) Implement parsing of new group files."""
-
-    prefixes="ego_","avlab_","posavlab_" # these are all gdf ego networks
-    """group files with appropriated metadata extracted from filename"""
     triples=[
             (NS.po.Facebook, NS.po.dataDir,datadir),
             ]
@@ -69,10 +68,26 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
                  (fileuri,    NS.po.expressedStructure, expressed_structure_uri),
                  ]
         snapshots.add(snapshoturi)
+        # get metadata for files
+        metadata=theMetadata(filename)
+        if metadata[0]:
+            triples+=[(snapshoturi,po.numericID,metadata[0])]
+        if metadata[1]:
+            triples+=[(snapshoturi,po.stringID,metadata[1])]
+        if len(metadata)==3:
+            if not metadata[2]:
+                c("group data without a publishing link: ",filename)
+            triples+=[(snapshoturi,po.publishedURL,metadata[2])]
+
     P.add(triples,context="social_facebook")
     nfiles=len(files)
     nsnapshots=len(snapshots)
     c("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
+    print("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
+def theMetadata(filename):
+    metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
+    return metadata
+
 def theName(filename):
     name=re.findall(r"(avlab_|posavlab_|ego_)*([a-zA-Z]*)\d*[\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0][1]
     pattern=r'([A-Z]{2,}(?=[A-Z]|$)|[A-Z][a-z]*)'

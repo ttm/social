@@ -22,5 +22,4 @@ def snapshots():
             (po.GroupSnapshot,subClassOf, po.Snapshot),
 
             (po.rawFile,NS.rdfs.range, po.File),
-        
             ]
