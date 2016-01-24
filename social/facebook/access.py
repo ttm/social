@@ -78,12 +78,19 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             if not metadata[2]:
                 c("group data without a publishing link: ",filename)
             triples+=[(snapshoturi,po.publishedURL,metadata[2])]
-
-    P.add(triples,context="social_facebook")
+    # data about the overall data in percolation graph
     nfiles=len(files)
     nsnapshots=len(snapshots)
+    triples+=[
+             (NS.social.Session,NS.social.nFacebookParsedFiles,nfiles),
+             (NS.social.Session,NS.social.nFacebookSnapshots,nsnapshots),
+             ]
+    P.context("social_facebook","remove")
+    P.add(triples,context="social_facebook")
     c("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
     print("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
+    return snapshots
+
 def theMetadata(filename):
     metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
     return metadata
@@ -101,7 +108,8 @@ def theFormat(filename):
     elif filename.endswith(".gml"):
         return "gml"
 def theSnapshotIDURI(filename):
-    snapshotid=filename.replace("avlab_","").replace("posavlab_","").replace("ego_","").replace("_interaction.gdf",".gdf")
+    snapshotid=filename.replace("avlab_","").replace("posavlab_","").replace("ego_","").replace("_interactions.gdf",".gdf")
+    snapshotid=snapshotid.replace(".tab",".gdf")
     snapshotid+="_fb" # to avoid having the same id between snapshots from diverse provenance
     if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
         class_=NS.po.FacebookEgoFriendshipSnapshot

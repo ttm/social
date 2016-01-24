@@ -1,7 +1,7 @@
 from percolation.rdf import NS, a
 subClassOf=NS.rdfs.subClassOf
 subPropertyOf=NS.rdfs.subPropertyOf
-po=NS.po
+po=NS.po; social=NS.social
 def snapshots():
     triples=[
             (po.FacebookEgoFriendshipSnapshot,subClassOf,FacebookSnapshot),
@@ -22,4 +22,7 @@ def snapshots():
             (po.GroupSnapshot,subClassOf, po.Snapshot),
 
             (po.rawFile,NS.rdfs.range, po.File),
+
+            (social.nFacebookParsedFiles,subPropertyOf,social.nParsedFiles),
+
             ]
