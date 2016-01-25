@@ -1,4 +1,5 @@
 import percolation as P, social as S, rdflib as r, builtins as B, re, datetime, os, shutil
+from percolation.rdf import NS, a
 from .read import readGDF
 c=P.check
 
@@ -22,61 +23,81 @@ class GdfRdfPublishing:
     =======
     the tree in the directory fpath."""
 
-    def __init__(self,snapshoturi,snapshotid,filename_friendship="foo.gdf",\
-            filename_interaction=None,filename_posts=None,\
-            data_path="../data/fb/",final_path="./fb/"):
-        #self.snapshotid=snapshotid
-        #self.snapshot=self.snapshoturi=snapshoturi
-        self.isfriendship= bool(filename_friendship)
-        self.isinteraction=bool(filename_interaction)
-        fnet=readGDF(data_path+fname)     # return networkx graph
+    def __init__(self,snapshoturi,snapshotid,filename_friendships="foo.gdf",\
+            filename_interactions=None,filename_posts=None,\
+            data_path="../data/facebook/",final_path="./fb/",umbrella_dir="facebook_networks"):
+        self.friendship_graph="social_facebook_friendships"
+        self.interaction_graph="social_facebook_interactions"
+        self.meta_graph="social_facebook_meta"
+        self.snapshotid=snapshotid
+        self.snapshot=self.snapshoturi=snapshoturi
+        self.isfriendship= bool(filename_friendships)
+        self.isinteraction=bool(filename_interactions)
+        fnet=readGDF(data_path+filename_friendships)     # return networkx graph
         fnet_=self.rdfGDFFriendshipNetwork(fnet)   # return rdflib graph
-        if B.interaction:
-            inet=readGDF(dpath+fnamei)    # return networkx graph
-            inet_=rdfInteractionNetwork(inet)      # return rdflib graph
+        if self.isinteraction:
+            inet=readGDF(data_path+filename_interactions)    # return networkx graph
+            inet_=self.rdfInteractionNetwork(inet)      # return rdflib graph
         else:
             inet_=0
-        for i in locals():
+        locals_=locals().copy()
+        for i in locals_:
             if i !="self":
-                exec("self.{}={}".format(i,locals()[i]))
-        meta=makeMetadata(fnet_,inet_)     # return rdflib graph with metadata about the structure
-        writeAllFB(fnet_,inet_,meta)  # write linked data tree
+                if isinstance(locals_[i],str):
+                    exec("self.{}='{}'".format(i,locals_[i]))
+                else:
+                    exec("self.{}={}".format(i,locals_[i]))
+        meta=self.makeMetadata()     # return rdflib graph with metadata about the structure
+        self.writeAllFB()  # write linked data tree
 
-    def writeAllFB(self,fnet,inet,mnet):
-        fpath_="{}{}/".format(self.final_path,aname)
-        if self.friendship:
-            P.rdf.writeAll(fnet,self.snapshotid+"Friendship",fpath_,False,1)
-        if self.interaction:
-            P.rdf.writeAll(inet,self.snapshotid+"Interaction",fpath_)
-        # copia o script que gera este codigo
-        if not os.path.isdir(self.final_path+"scripts"):
-            os.mkdir(self.final_path+"scripts")
-        shutil.copy(self.scriptpath,self.final_path+"scripts/")
-        # copia do base data
-        if not os.path.isdir(self.final_path+"base"):
-            os.mkdir(self.final_path+"base")
-        shutil.copy(self.data_path+self.filename_friendships,self.final_path+"base/")
+    def writeAllFB(self):
+        self.final_path_="{}{}/".format(self.final_path,self.snapshotid)
+        if not os.path.isdir(self.final_path_):
+            os.mkdir(self.final_path_)
+        #fnet,inet,mnet
+        if self.isfriendship:
+            g=P.context("social_facebook_friendship")
+            g.serialize(self.final_path_+self.snapshotid+"Friendship.ttl","turtle")
+            g.serialize(self.final_path_+self.snapshotid+"Friendship.rdf","xml")
         if self.isinteraction:
-            shutil.copy(self.data_path+self.filename_interaction,self.final_path+"base/")
+            g=P.context("social_facebook_interaction")
+            g.serialize(self.final_path_+self.snapshotid+"Interaction.ttl","turtle")
+            g.serialize(self.final_path_+self.snapshotid+"Interaction.rdf","xml")
+        g=P.context("social_facebook_meta")
+        g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle")
+        g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
+        # copia o script que gera este codigo
+        if not os.path.isdir(self.final_path_+"scripts"):
+            os.mkdir(self.final_path_+"scripts")
+        shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py",self.final_path_+"scripts/triplify.py")
+        # copia do base data
+        if not os.path.isdir(self.final_path_+"base"):
+            os.mkdir(self.final_path_+"base")
+        shutil.copy(self.data_path+self.filename_friendships,self.final_path_+"base/")
+        if self.isinteraction:
+            shutil.copy(self.data_path+self.filename_interactions,self.final_path_+"base/")
             tinteraction="""\n{} individuals with metadata {}
 and {} interactions with metadata {} constitute the interaction 
 network in file:
 {}
 or
 {}
-(anonymized: {}).""".format( self.ninteracted,str(self.interactedvars),
-                        self.ninteractions,str(self.interactionvars),
+(anonymized: {}).""".format( self.ninteracted,str(self.varsfriendsinteraction),
+                        self.ninteractions,str(self.interactionsvars),
                         self.online_prefix+"/rdf/"+self.irdf,
                         self.online_prefix+"/rdf/"+self.ittl,
-                        self.interactions_anononymized)
+                        self.interactions_anonymized)
             originals="{}/data/{}\n{}/data/{}".format(self.online_prefix,self.filename_friendships,
                                                       self.online_prefix,self.filename_interactions)
         else:
             tinteraction=""
             originals="{}/data/{}".format(self.online_prefix,self.filename_friendships)
-        P.rdf.writeAll(mnet,aname+"Meta",fpath_,1)
+#        P.rdf.writeAll(mnet,aname+"Meta",fpath_,1)
         # faz um README
-        with open(fpath_+"README","w") as f:
+        datetime_string=P.get(r.URIRef(self.snapshoturi),NS.po.dateObtained,None,context="social_facebook")[2]
+        if not os.path.isdir(self.final_path+"base"):
+            os.mkdir(self.final_path+"base")
+        with open(self.final_path_+"README","w") as f:
             f.write("""This repo delivers RDF data from the facebook
                             friendship network of {snapid} collected around {date}.
                             {nf} individuals with metadata {fvars}
@@ -94,8 +115,8 @@ or
                             All files should be available at the git repository:
                             {ava}
                             \n""".format(
-                snapid=self.snapshotid,date=self.datetime_string,
-                nf=self.nfriends,fvars=str(self.fvars),
+                snapid=self.snapshotid,date=datetime_string,
+                nf=self.nfriends,fvars=str(self.friendsvars),
                         nfs=self.nfriendships,
                         frdf=self.frdf,fttl=self.fttl,
                         fan=self.friendships_anonymized,
@@ -109,30 +130,27 @@ or
                         ava=self.available_dir
                         ))
 
-    def makeMetadata(self,fnet,inet):
+    def makeMetadata(self):
         if self.groupid and self.groupid2 and (self.groupid!=self.groupid2):
             raise ValueError("Group IDS are different")
-        tg2=P.rdf.makeBasicGraph([["po","fb"],[P.rdf.ns.per,P.rdf.ns.fb]])
-        snapshot=P.rdf.IC([tg2],P.rdf.ns.po.FacebookSnapshot,aname,"Snapshot {}".format(self.snapshotid))
-
         foo={"uris":[],"vals":[]}
-        self.online_prefix=online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/".format(umbrella_dir)
-        if self.friendship:
+        self.online_prefix=online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/".format(self.umbrella_dir)
+        if self.isfriendship:
             foo["uris"]+=[
-                         NS.fb.onlineOriginalFriendshipFile,
-                         NS.fb.originalFriendshipFilename,
+                         NS.facebook.onlineOriginalFriendshipFile,
+                         NS.facebook.originalFriendshipFilename,
                          NS.po.onlineFriendshipXMLFile,
                          NS.po.onlineFriendshipTTLFile,
-                         NS.po.FriendshipXMLFilename,
-                         NS.po.FriendshipTTLFilename,
+                         NS.po.friendshipXMLFilename,
+                         NS.po.friendshipTTLFilename,
                          ]+\
                          [
-                         NS.fb.nFriends,
-                         NS.fb.nFriendships,
-                         NS.fb.friendshipsAnonymized 
+                         NS.facebook.nFriends,
+                         NS.facebook.nFriendships,
+                         NS.facebook.friendshipsAnonymized 
                          ]+\
-                         [NS.fb.frienshipParticipantAttribute]*len(self.friendsvars)
-            self.ffile=ffile="{}/base/{}".format(online_prefix,self.filename_friendship)
+                         [NS.facebook.frienshipParticipantAttribute]*len(self.friendsvars)
+            self.ffile=ffile="{}/base/{}".format(online_prefix,self.filename_friendships)
             self.frdf="{}Friendship.rdf".format(self.snapshotid)
             self.fttl="{}Friendship.ttl".format(self.snapshotid)
             foo["vals"]+=[
@@ -144,24 +162,27 @@ or
                          self.fttl,
                          self.nfriends,
                          self.nfriendships,
-                         self.friendships_anonymized]+list(self.friendsvars)
+                         self.friendships_anonymized
+                         ]+list(self.friendsvars)
 
-        if self.interaction:
+        if self.isinteraction:
             foo["uris"]+=[
-                          NS.fb.onlineOriginalInteractionFile,
-                          NS.fb.originalInteractionFilename,
-                          NS.po.onlineInteractionXMLFile,
-                          NS.po.onlineinteractionTTLFile,
-                          NS.po.interactionXMLFilename,
-                          NS.po.interactionTTLFilename,
-                          ]+\
-                        [ NS.fb.nInteracted,
-                          NS.fb.nInteractions,
-                          NS.fb.interactionsAnonymized ]+\
-                        [ NS.fb.interactionParticipantAttribute ]*len(self.interactionsvars)
+                         NS.facebook.onlineOriginalInteractionFile,
+                         NS.facebook.originalInteractionFilename,
+                         NS.po.onlineInteractionXMLFile,
+                         NS.po.onlineinteractionTTLFile,
+                         NS.po.interactionXMLFilename,
+                         NS.po.interactionTTLFilename,
+                         ]+\
+                         [
+                         NS.facebook.nInteracted,
+                         NS.facebook.nInteractions,
+                         NS.facebook.interactionsAnonymized 
+                         ]+\
+                         [NS.facebook.interactionParticipantAttribute]*len(self.interactionsvars)
             ifile="{}/base/{}".format(online_prefix,self.snapshotid)
-            irdf="{}Interaction.rdf".format(online_prefix,self.snapshotid)
-            ittl="{}Interaction.ttl".format(online_prefix,self.snapshotid)
+            self.irdf=irdf="{}Interaction.rdf".format(online_prefix,self.snapshotid)
+            self.ittl=ittl="{}Interaction.ttl".format(online_prefix,self.snapshotid)
             foo["vals"]+=[
                           ifile,
                           self.filename_interactions,
@@ -173,33 +194,38 @@ or
                           self.ninteracted,
                           self.interactions_anonymized,
                           ]+list(self.interactionsvars)
-
         foo["uris"]+=[
-                     NS.fb.isGroup,
-                     NS.fb.isEgo,
-                     NS.fb.isFriendship,
-                     NS.fb.isInteraction,
+                     NS.facebook.isGroup,
+                     NS.facebook.isEgo,
+                     NS.facebook.isFriendship,
+                     NS.facebook.isInteraction,
                      ]
-        foo["vals"]+=[self.isEgo,self.isFriendship,self.isInteraction]
+        self.isego=bool(P.get(self.snapshoturi,a,NS.po.EgoSnapshot))
+        self.isgroup=bool(P.get(self.snapshoturi,a,NS.po.GroupSnapshot))
+        foo["vals"]+=[self.isgroup,self.isego,self.isfriendship,self.isinteraction]
 
         #https://github.com/OpenLinkedSocialData/fbGroups/tree/master/AdornoNaoEhEnfeite29032013_fb
         self.available_dir=available_dir=online_prefix+self.snapshotid
-        mrdf="{}Meta.rdf".format(self.snapshotid)
-        mttl="{}Meta.ttl".format(self.snapshotid)
+        self.mrdf=mrdf="{}Meta.rdf".format(self.snapshotid)
+        self.mttl=mttl="{}Meta.ttl".format(self.snapshotid)
+        if "ninteracted" not in dir(self):
+            self.ninteracted,self.ninteractions=0,0
         desc="facebook network from {} . Ego: {}. Friendship: {}. Interaction: {}.\
                 nfriends: {}; nfrienships: {}; ninteracted: {}; ninteractions: ".format(
-                    self.name,self.isego,self.isfriendship,self.isinteraction,
+                    self.snapshotid,self.isego,self.isfriendship,self.isinteraction,
                     self.nfriends,self.nfriendships,self.ninteracted,self.ninteractions)
-        P.rdf.link([tg2],snapshot,[ 
+        ind2=P.rdf.ic(NS.po.Platform,"Facebook","social_facebook_gdf_metadata")
+        P.rdf.triplesScaffolding(self.snapshoturi,[ 
                                   NS.po.triplifiedIn,
                                   NS.po.donatedBy,
                                   NS.po.availableAt,
                                   NS.po.onlineMetaXMLFile,
                                   NS.po.onlineMetaTTLFile,
-                                  NS.po.MetaXMLFilename,
-                                  NS.po.MetaTTLFilename,
+                                  NS.po.metaXMLFilename,
+                                  NS.po.metaTTLFilename,
                                   NS.po.acquiredThrough,
                                   NS.po.socialProtocolTag,
+                                  NS.po.socialProtocol,
                                   NS.rdfs.comment,
                                   ]+foo["uris"],
                                   [
@@ -212,17 +238,11 @@ or
                                   mttl,
                                   "Netvizz",
                                   "Facebook",
+                                  ind2,
                                   desc,
                                   ]+foo["vals"],
-                                  "Snapshot {}".format(self.snapshot))
-        ind2=P.rdf.IC([tg2],NS.po.Platform,"Facebook")
-        P.rdf.linkClasses([tg2],snapshot,"Snapshot {}".format(aname),
-                   [NS.po.socialProtocol],
-                   [ind2],
-                   )
-        return tg2
+                                  "social_facebook_gdf_metadata")
     def rdfGDFFriendshipNetwork(self,fnet):
-        tg=P.rdf.makeBasicGraph([["po","facebook"],[NS.po,NS.facebook]])
         if sum([("user" in i) for i in fnet["individuals"]["label"]])==len(fnet["individuals"]["label"]):
             # nomes falsos, ids espurios
             self.friendships_anonymized=True
@@ -248,15 +268,16 @@ or
         insert_uris=insert["uris"][:]
         for vals_ in zip(*insert["vals"]): # cada participante recebe valores na ordem do insert_uris
             name_="{}-{}".format(self.snapshotid,vals_[iname])
-            if friendships_anonymized:
+            if self.friendships_anonymized:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if i not  in (ilabel,iname) and vals_[i]]
                 vals_=[el for i,el in enumerate(vals_) if (i not in (ilabel,iname)) and el]
             else:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
-                vals_=[el for i,el in vals_ if el]
-            ind=P.rdf.IC([tg],P.rdf.ns.fb.Participant,name_)
-            P.rdf.link([tg],ind,insert_uris_,vals_)
-            P.rdf.link_([tg],ind,[NS.po.snapshot],[snapshot])
+                vals_=[el for el in vals_ if el]
+            ind=P.rdf.ic(NS.facebook.Participant,name_,"facebook_gdf_triples",self.snapshoturi)
+#            P.rdf.link([tg],ind,insert_uris_,vals_)
+#            P.rdf.link_([tg],ind,[NS.po.snapshot],[snapshot])
+            P.rdf.triplesScaffolding(ind,insert_uris_+[NS.po.snapshot],vals_+[self.snapshoturi],context="facebook_gdf_triples")
         if self.friendships_anonymized:
             B.friends_vars=[trans(i) for j,i in enumerate(tkeys) if j not in (ilabel,iname)]
         else:
@@ -265,22 +286,21 @@ or
         friendships_=[fnet["relations"][i] for i in ("node1","node2")]
         i=0
         for uid1,uid2 in zip(*friendships_):
-            uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,vals_[iname])) for i in (uid1,uid2)]
-            P.rdf.link_([tg],uids[0],[P.rdf.ns.fb.friend],[uids[1]])
+            uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
+            P.add((uids[0],NS.facebook.friend,uids[1]),context="facebook_gdf_triples")
             # make friendship
             flabel="{}-{}-{}".format(self.snapshotid,uids[0],uids[1])
-            ind=P.rdf.IC([tg],P.rdf.ns.fb.Friendship,flabel)
-            P.rdf.link_([tg],ind,flabel,[NS.facebook.snapshot]+[NS.facebook.member]*2,
-                                        [snapshot]+uids)
+            ind=P.rdf.ic(NS.facebook.Friendship,flabel,"facebook_gdf_triples",self.snapshoturi)
+            P.rdf.triplesScaffolding(ind,[NS.facebook.snapshot]+[NS.facebook.member]*2,
+                                        [self.snapshoturi]+uids,"facebook_gdf_triples")
             if (i%1000)==0:
                 c("friendships",i)
             i+=1
         self.nfriendships=len(friendships_[0])
         c("escritas amizades")
-        return tg
 
-    def rdfInteractionNetwork(fnet):
-        tg=P.rdf.makeBasicGraph([["po","fb"],[NS.po,NS.facebook]])
+    def rdfInteractionNetwork(self,fnet):
+        #tg=P.rdf.makeBasicGraph([["po","fb"],[NS.po,NS.facebook]])
         if sum([("user" in i) for i in fnet["individuals"]["label"]])==len(fnet["individuals"]["label"]):
             # nomes falsos, ids espurios
             self.interactions_anonymized=True
@@ -297,24 +317,23 @@ or
         if self.interactions_anonymized:
             self.varsfriendsinteraction=[trans(i) for j,i in enumerate(tkeys) if j not in (ilabel,iname)]
         else:
-            self.varsiriendsinteraction=[trans(i) for i in tkeys]
+            self.varsfriendsinteraction=[trans(i) for i in tkeys]
         insert={"uris":[],"vals":[]}
         for tkey in tkeys:
-            insert["uris"]+=[eval("NS."+trans(tkey))]
+            insert["uris"]+=[eval("NS.facebook.interactionUserAttribute"+"#"+trans(tkey))]
             insert["vals"]+=[fnet["individuals"][tkey]]
         self.ninteracted=len(insert["vals"][0])
-        insert_uris=foo["uris"][:]
+        insert_uris=insert["uris"][:]
         for vals_ in zip(*insert["vals"]):
             name_="{}-{}".format(self.snapshotid,vals_[iname])
             if self.interactions_anonymized:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if i not  in (ilabel,iname) and vals_[i]]
-                vals_=[el for i,el in enumerate(vals_) if i not in (ilabel,iname)]
+                vals_=[el for i,el in enumerate(vals_) if i not  in (ilabel,iname) and vals_[i]]
             else:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
-                vals_=[el for i,el in vals_ if el]
-            ind=P.rdf.IC([tg],P.rdf.ns.fb.Participant,name_)
-            P.rdf.link([tg],ind,insert_uris,vals_)
-            P.rdf.link_([tg],ind,[NS.po.snapshot],[snapshot])
+                vals_=[el for i,el in enumerate(vals_) if vals_[i]]
+            ind=P.rdf.ic(NS.facebook.Participant,name_,"facebook_gdf_interaction_triples",self.snapshoturi)
+            P.rdf.triplesScaffolding(ind,insert_uris_+[NS.po.snapshot],vals_+[self.snapshoturi],"facebook_gdf_interaction_triples")
         c("escritos participantes")
         self.interactionsvars=["node1","node2","weight"]
         interactions_=[fnet["relations"][i] for i in self.interactionsvars]
@@ -325,16 +344,14 @@ or
             if weight_-weight != 0:
                 raise ValueError("float weights in fb interaction networks?")
             iid="{}-{}-{}".format(self.snapshotid,uid1,uid2)
-            ind=P.rdf.IC([tg],NS.Interaction,iid)
+            ind=P.rdf.ic(NS.facebook.Interaction,iid,"facebook_gdf_interaction_triples",self.snapshoturi)
             
             uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
-            P.rdf.link_([tg],ind,[NS.facebook.iFrom,P.rdf.ns.fb.iTo]+[NS.po.snapshot],uids+[self.snapshot])
-            P.rdf.link([tg],ind,[ NS.facebook.weight],[weight_])
+            P.rdf.triplesScaffolding(ind,[NS.facebook.iFrom,NS.facebook.iTo]+[NS.po.snapshot,NS.facebook.weight],uids+[self.snapshot,weight_],"facebook_gdf_interaction_triples")
             if (i%1000)==0:
                 c("interactions: ", i)
             i+=1
         c("escritas interações")
-        return tg
 
 def trans(tkey):
     if tkey=="name":
