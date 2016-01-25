@@ -50,6 +50,7 @@ def publishAny(snapshoturi):
     c(fileformat)
     if "gdf" in fileformat:
         c("publish gdf", snapshoturi)
+        friendship_filename,interaction_filename=None,None
         GdfRdfPublishing(snapshoturi,snapshotid,friendship_filename,interaction_filename,posts_filename)
     elif fileformat=="gml":
         c("publish gml", snapshoturi)
@@ -68,6 +69,13 @@ def publishAll(snapshoturis=None):
         # get all snapshots in new graph
         P.get((None,a,po.Snapshot),context=social_facebook_inferred)
     count=0
+    triples=[
+            ("?s",a,NS.po.Snapshot),
+            ("?s",NS.po.rawFile,"?rawfoo"),
+            ("?rawfoo",NS.po.expressedStructure,NS.po.GroupPosts),
+            ]
+    snapshoturis=P.get(triples)
+    c("snapuris:",snapshoturis)
     for snapshoturi in snapshoturis:
         publishAny(snapshoturi)
         count+=1
