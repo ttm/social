@@ -6,6 +6,8 @@ for key in keys:
 
 import social as S, percolation as P
 from percolation.rdf import NS, a
+po=NS.po
 ss=S.facebook.access.parseLegacyFiles()
+S.facebook.render.publishAll(ss)
 
 

@@ -22,8 +22,9 @@ class GdfRdfPublishing:
     =======
     the tree in the directory fpath."""
 
-    def __init__(self,data_path="../data/fb/",filename_friendship="foo.gdf",filename_interaction="foo_interaction.gdf",\
-            final_path="./fb/",snapshoturi=None,snapshotid=None):
+    def __init__(self,snapshoturi,snapshotid,filename_friendship="foo.gdf",\
+            filename_interaction=None,filename_posts=None,\
+            data_path="../data/fb/",final_path="./fb/"):
         #self.snapshotid=snapshotid
         #self.snapshot=self.snapshoturi=snapshoturi
         self.isfriendship= bool(filename_friendship)

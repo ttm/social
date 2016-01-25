@@ -8,9 +8,9 @@ def snapshots():
             (po.FriendshipSnapshot,subClassOf, po.Snapshot),
             (po.FacebookSnapshot,  subClassOf, po.Snapshot),
 
-            (po.FacebookEgoFriendshipSnapshot,subClassOf,FacebookSnapshot),
-            (po.FacebookEgoFriendshipSnapshot,subClassOf,FriendshipSnapshot),
-            (po.FacebookEgoFriendshipSnapshot,subClassOf,EgoSnapshot),
+            (po.FacebookEgoFriendshipSnapshot,subClassOf,po.FacebookSnapshot),
+            (po.FacebookEgoFriendshipSnapshot,subClassOf,po.FriendshipSnapshot),
+            (po.FacebookEgoFriendshipSnapshot,subClassOf,po.EgoSnapshot),
 
             (po.FacebookGroupFriendshipSnapshot, subClassOf,po.FacebookSnapshot),
             (po.FacebookGroupFriendshipSnapshot, subClassOf,po.GroupSnapshot),
@@ -23,6 +23,7 @@ def snapshots():
 
             (social.nFacebookParsedFiles,subPropertyOf,social.nParsedFiles),
 
+            (po.GroupInteractionNetwork, subClassOf, po.InteractionNetwork),
             (po.GroupFriendshipNetwork, subClassOf, po.FriendshipNetwork),
             (po.EgoFriendshipNetwork, subClassOf, po.FriendshipNetwork),
             ]

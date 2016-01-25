@@ -51,7 +51,6 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
 
         snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")
         snapshotid+="_fb" # to avoid having the same id between snapshots from diverse provenance
-
         if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
             snapshotclass=NS.po.FacebookEgoFriendshipSnapshot
         else: # group snapshot
@@ -66,7 +65,6 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
         date_obtained=theDate(filename)
         name=theName(filename)
         fileuri=NS.po.File+"#"+snapshotid+"_f_"+filename
-        triples=[]
         note=theNote(filename) # for avlab and posavlab
         if note:
             triples+=[
