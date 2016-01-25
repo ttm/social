@@ -78,8 +78,8 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
                  (snapshoturi, NS.po.humanizedName, name),
                  (snapshoturi, NS.po.dateObtained, date_obtained),
                  (snapshoturi, NS.po.rawFile, fileuri),
-                 (fileuri,    NS.po.filename, filename),
-                 (fileuri,    NS.po.fileformat, fileformat),
+                 (fileuri,    NS.po.fileName, filename),
+                 (fileuri,    NS.po.fileFormat, fileformat),
                  (fileuri,    NS.po.expressedStructure, expressed_structure_uri),
                  ]
         # get metadata for files

@@ -56,6 +56,7 @@ bootstrap.py for starting system with basic variables and routines
 facebook/\*
 - render.py for expressing contents of gml, gdf and tab files in RDF. 
 - access.py for access to data in the facebook platform (through bots and other interfaces)
+- ontology.py for ontological relations used in facebook data
 
 
 twitter/\*
@@ -67,6 +68,7 @@ irc/\*
 - access.py for access to IRC logs (through a list of current URLs of text logs). 
 
 legacy/\* for standard usage outlines of data access, rendering and publication, should mimic social modules structure
+- conversion for .gdf files conversion to networkx graphs and networkx graphs to rdf.
 
 
 other modules envisioned are:
