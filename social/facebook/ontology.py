@@ -15,6 +15,13 @@ def snapshots():
             (po.FacebookGroupFriendshipInteractionSnapshot, subClassOf,po.FacebookSnapshot),
             (po.FacebookGroupFriendshipInteractionSnapshot, subClassOf,po.GroupSnapshot),
             (po.FacebookGroupFriendshipInteractionSnapshot, subClassOf,po.FriendshipInteractionSnapshot),
+
+            (po.FacebookGroupFriendshipSnapshot, subClassOf,po.FacebookFriendshipSnapshot),
+            (po.FacebookGroupFriendshipInteractionSnapshot, subClassOf,po.FacebookGroupSnapshot),
+
+            (po.FacebookGroupInteractionSnapshot, subClassOf,po.InteractionSnapshot),
+            (po.FacebookGroupInteractionSnapshot, subClassOf,po.FacebookGroupSnapshot),
+
             (po.FriendshipInteractionSnapshot,subClassOf,po.FriendshipSnapshot),
             (po.FriendshipInteractionSnapshot,subClassOf,po.InteractionSnapshot),
 
