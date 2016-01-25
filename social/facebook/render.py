@@ -1,5 +1,5 @@
-from .gdf2rdf import GDFTriplification
-from .gml2rdf import GMLTriplification
+from .gdf2rdf import GdfRdfPublishing
+from .gml2rdf import GmlRdfPublishing
 
 
 def gdfFile(filename):
