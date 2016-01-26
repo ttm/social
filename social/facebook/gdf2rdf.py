@@ -38,8 +38,8 @@ class GdfRdfPublishing:
         P.context(self.posts_graph,"remove")
         self.snapshotid=snapshotid
         self.snapshoturi=snapshoturi
-        self.online_prefix=online_prefix="https://raw.githubusercontent.com/OpenLinked/SocialData{}master/{}/".format(umbrella_dir,self.snapshotid)
-        self.available_dir=available_dir=online_prefix+self.snapshotid
+        self.online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,self.snapshotid)
+        self.available_dir=available_dir=self.online_prefix+self.snapshotid
         self.isfriendship= bool(filename_friendships)
         self.isinteraction=bool(filename_interactions)
         self.hastext=bool(filename_posts)
@@ -50,6 +50,8 @@ class GdfRdfPublishing:
         if self.isinteraction:
             inet=readGDF(data_path+filename_interactions)    # return networkx graph
             self.rdfInteractionNetwork(inet)      # writes to self.interaction_graph
+        else:
+            self.groupid2=0
         if self.hastext:
             self.rdfGroupPosts(data_path+filename_posts)      # writes to self.posts_graph
 
@@ -86,8 +88,8 @@ class GdfRdfPublishing:
                      (ind,NS.facebook.postType,post[1]),
                      (ind,NS.facebook.postText,post[2]),
                      (ind,NS.facebook.createdAt,dateutil.parser.parse(post[3])),
-                     (ind,NS.facebook.nComments,post[4]),
-                     (ind,NS.facebook.nLikes,post[5]),
+                     (ind,NS.facebook.nComments,int(post[4])),
+                     (ind,NS.facebook.nLikes,int(post[5])),
                      (ind,NS.facebook.nChars,nchars),
                      (ind,NS.facebook.nTokens,ntokens),
                      ]
@@ -113,26 +115,35 @@ class GdfRdfPublishing:
         P.add(triples,context=self.posts_graph)
 
     def writeAllFB(self):
+        c("started rendering of the snapshot publication. snapshotID:",self.snapshotid)
         self.final_path_="{}{}/".format(self.final_path,self.snapshotid)
         if not os.path.isdir(self.final_path_):
             os.mkdir(self.final_path_)
         #fnet,inet,mnet
         if self.isfriendship:
             g=P.context(self.friendship_graph)
+            g.namespace_manager.bind("po",NS.po)
+            g.namespace_manager.bind("facebook",NS.facebook)
             g.serialize(self.final_path_+self.snapshotid+"Friendship.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Friendship.rdf","xml")
             c("serialized friendships")
         if self.isinteraction:
             g=P.context(self.interaction_graph)
+            g.namespace_manager.bind("po",NS.po)
+            g.namespace_manager.bind("facebook",NS.facebook)
             g.serialize(self.final_path_+self.snapshotid+"Interaction.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Interaction.rdf","xml")
             c("serialized interaction")
         if self.hastext:
             g=P.context(self.posts_graph)
+            g.namespace_manager.bind("po",NS.po)
+            g.namespace_manager.bind("facebook",NS.facebook)
             g.serialize(self.final_path_+self.snapshotid+"Posts.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Posts.rdf","xml")
             c("serialized posts")
         g=P.context(self.meta_graph)
+        g.namespace_manager.bind("po",NS.po)
+        g.namespace_manager.bind("facebook",NS.facebook)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
         c("serialized meta")
@@ -146,7 +157,7 @@ class GdfRdfPublishing:
         originals=""
         if self.isfriendship:
             shutil.copy(self.data_path+self.filename_friendships,self.final_path_+"base/")
-            originals+="{}data/{}".format(self.online_prefix,self.filename_friendships)
+            originals+="{}base/{}".format(self.online_prefix,self.filename_friendships)
             tfriendship="""{nf} individuals with metadata {fvars}
 and {nfs} friendships constitute the friendship network in file:
 {frdf} \nor \n{fttl}
@@ -168,24 +179,24 @@ or
 {}
 (anonymized: {}).""".format( self.ninteracted,str(self.varsfriendsinteraction),
                         self.ninteractions,str(self.interactionsvars),
-                        self.online_prefix+"/rdf/"+self.irdf,
-                        self.online_prefix+"/rdf/"+self.ittl,
+                        self.irdf,
+                        self.ittl,
                         self.interactions_anonymized)
-            originals+="\n{}data/{}".format(self.online_prefix,self.filename_interactions)
+            originals+="\nbase/{}".format(self.filename_interactions)
         else:
             tinteraction=""
         if self.hastext:
             shutil.copy(self.data_path+self.filename_posts,self.final_path_+"base/")
-            tposts="""\n{} posts with {} characters in average (std: {}) and total chars in snapshot: {}
-{} tokens in average (std: {}) and total tokens in snapshot: {}
+            tposts="""\n{} posts with {:3f.} characters in average (std: {:3f.}) and total chars in snapshot: {}
+{:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
 posts data in file:
 {}
 or
 {}""".format( self.nposts,self.mcharsposts,self.dcharsposts,self.totalchars,
                         self.mtokensposts,self.dtokensposts,self.totaltokens,
-                        self.online_prefix+"/rdf/"+self.prdf,
-                        self.online_prefix+"/rdf/"+self.pttl)
-            originals+="\n{}data/{}".format(self.online_prefix,self.filename_posts)
+                        self.prdf,
+                        self.pttl)
+            originals+="\nbase/{}".format(self.filename_posts)
         else:
             tposts=""
 
@@ -193,12 +204,13 @@ or
 #        P.rdf.writeAll(mnet,aname+"Meta",fpath_,1)
         # faz um README
         datetime_string=P.get(r.URIRef(self.snapshoturi),NS.po.dateObtained,None,context="social_facebook")[2]
-        if not os.path.isdir(self.final_path+"base"):
-            os.mkdir(self.final_path+"base")
-        with open(self.final_path_+"README","w") as f:
-            f.write("""This repo delivers RDF data from the facebook
+#        if not os.path.isdir(self.final_path+"base"):
+#            os.mkdir(self.final_path+"base")
+        with open(self.final_path_+"README.md","w") as f:
+            f.write("""# Open Linked Social Data publication
+This repo delivers RDF data from the facebook
 friendship network of {snapid} collected around {date}.
-{tfriendship}
+\n{tfriendship}
 {tinteraction}
 {tposts}
 Metadata for discovery is in file:
@@ -212,7 +224,9 @@ Interaction network: {isi}
 All files should be available at the git repository:
 {ava}
 \n
-{desc}""".format(
+{desc}
+
+The script that rendered this data publication is on the script/ directory.""".format(
                 snapid=self.snapshotid,date=datetime_string,
                         tfriendship=tfriendship,
                         tinteraction=tinteraction,
@@ -226,13 +240,12 @@ All files should be available at the git repository:
                         isi=self.isinteraction,
                         ava=self.available_dir,
                         desc=self.desc
-                        ))
+                        )).replace("\n","\n\n")
 
     def makeMetadata(self):
         if self.isfriendship and self.groupid and self.groupid2 and (self.groupid!=self.groupid2):
             raise ValueError("Group IDS are different")
         foo={"uris":[],"vals":[]}
-        online_prefix=self.online_prefix
         if self.isfriendship:
             foo["uris"]+=[
                          NS.facebook.onlineOriginalFriendshipFile,
@@ -248,14 +261,14 @@ All files should be available at the git repository:
                          NS.facebook.friendshipsAnonymized 
                          ]+\
                          [NS.facebook.frienshipParticipantAttribute]*len(self.friendsvars)
-            self.ffile=ffile="{}/base/{}".format(online_prefix,self.filename_friendships)
-            self.frdf="{}Friendship.rdf".format(self.snapshotid)
-            self.fttl="{}Friendship.ttl".format(self.snapshotid)
+            self.ffile=ffile="base/"+self.filename_friendships
+            self.frdf=self.snapshotid+"Friendship.rdf"
+            self.fttl=self.snapshotid+"Friendship.ttl"
             foo["vals"]+=[
+                         self.online_prefix+ffile,
                          ffile,
-                         self.filename_friendships,
-                         online_prefix+"/rdf/"+self.frdf,
-                         online_prefix+"/rdf/"+self.fttl,
+                         self.online_prefix+self.frdf,
+                         self.online_prefix+self.fttl,
                          self.frdf,
                          self.fttl,
                          self.nfriends,
@@ -278,14 +291,14 @@ All files should be available at the git repository:
                          NS.facebook.interactionsAnonymized 
                          ]+\
                          [NS.facebook.interactionParticipantAttribute]*len(self.interactionsvars)
-            ifile="{}/base/{}".format(online_prefix,self.snapshotid)
-            self.irdf=irdf="{}Interaction.rdf".format(online_prefix,self.snapshotid)
-            self.ittl=ittl="{}Interaction.ttl".format(online_prefix,self.snapshotid)
+            self.ifile="base/"+self.snapshotid
+            self.irdf=irdf=self.snapshotid+"Interaction.rdf"
+            self.ittl=ittl=self.snapshotid+"Interaction.ttl"
             foo["vals"]+=[
-                          ifile,
-                          self.filename_interactions,
-                          online_prefix+"/rdf/"+irdf,
-                          online_prefix+"/rdf/"+ittl,
+                          self.ifile,
+                          self.online_prefix+self.ifile,
+                          self.online_prefix+irdf,
+                          self.online_prefix+ittl,
                           irdf,
                           ittl,
                           self.ninteractions,
@@ -303,26 +316,32 @@ All files should be available at the git repository:
                          ]+\
                          [
                          NS.facebook.nPosts,
+                         NS.facebook.nChars,
                          NS.facebook.mCharsPosts,
                          NS.facebook.dCharsPosts,
+                         NS.facebook.nTokens,
+                         NS.facebook.mTokensPosts,
+                         NS.facebook.dTokensPosts,
                          ]+\
                          [NS.facebook.postAttribute]*len(self.postsvars)
-            pfile="{}/base/{}".format(online_prefix,self.snapshotid)
-            self.prdf=prdf="{}{}Post.rdf".format(online_prefix,self.snapshotid)
-            self.pttl=pttl="{}{}Post.ttl".format(online_prefix,self.snapshotid)
+            self.pfile="base/"+self.filename_posts
+            self.prdf=self.snapshotid+"Post.rdf"
+            self.pttl=self.snapshotid+"Post.ttl"
             foo["vals"]+=[
-                          pfile,
-                          self.filename_posts,
-                          online_prefix+"/rdf/"+prdf,
-                          online_prefix+"/rdf/"+pttl,
-                          prdf,
-                          pttl,
+                          self.online_prefix+pfile,
+                          self.pfile,
+                          self.online_prefix+prdf,
+                          self.online_prefix+pttl,
+                          self.prdf,
+                          self.pttl,
                           self.nposts,
+                          self.nchars,
                           self.mcharsposts,
                           self.dcharsposts,
+                          self.ntokens,
+                          self.mtokensposts,
+                          self.dtokensposts,
                           ]+list(self.postsvars)
-
-
         foo["uris"]+=[
                      NS.facebook.isGroup,
                      NS.facebook.isEgo,
@@ -333,28 +352,26 @@ All files should be available at the git repository:
         self.isgroup=bool(P.get(r.URIRef(self.snapshoturi),a,NS.po.GroupSnapshot))
         foo["vals"]+=[self.isgroup,self.isego,self.isfriendship,self.isinteraction]
 
-        #https://github.com/OpenLinkedSocialData/fbGroups/tree/master/AdornoNaoEhEnfeite29032013_fb
-        self.mrdf=mrdf="{}Meta.rdf".format(self.snapshotid)
-        self.mttl=mttl="{}Meta.ttl".format(self.snapshotid)
-        if "ninteracted" not in dir(self):
-            self.ninteracted,self.ninteractions=0,0
-        self.desc="facebook network from {} . Ego: {}. Group: {}.".format(
+        self.mrdf=self.snapshotid+"Meta.rdf"
+        self.mttl=self.snapshotid+"Meta.ttl"
+
+        self.desc="facebook network from {} .\n Ego: {}. Group: {}.".format(
                                                 self.snapshotid,self.isego,self.isgroup,)
+        self.desc+="\nFriendship: {}".format(self.isfriendship)
         if self.isfriendship:
-              self.desc+="\nFriendship: {}. nfriends: {}; nfrienships: {}.".format(
-                    self.isfriendship,self.nfriends,self.nfriendships,)
+           self.desc+="; nfriends: {}; nfrienships: {}.".format(self.nfriends,self.nfriendships,)
+        self.desc+="\nInteraction: {}".format(self.isinteraction)
         if self.isinteraction:
-              self.desc+="\nInteraction: {}; ninteracted: {}; ninteractions: {}.".format(
-                    self.isinteraction,self.ninteracted,self.ninteractions,)
+              self.desc+="; ninteracted: {}; ninteractions: {}.".format(self.ninteracted,self.ninteractions,)
+        self.desc+="\nnPosts: {}"
         if self.hastext:
-              self.desc+="\nnPosts: {}; \
-              \nmCharsPosts: {}; dCharsPosts: {}; totalChars: {} \
-              \nmTokensPosts: {}; dTokensPosts: {}; totalTokens: {} ".format(
+              self.desc+=";\nmCharsPosts: {}; dCharsPosts: {}; totalChars: {}; \
+                     \nmTokensPosts: {}; dTokensPosts: {}; totalTokens: {}".format(
                     self.nposts,
                     self.mcharsposts,self.dcharsposts,self.totalchars,
                     self.mtokensposts,self.dtokensposts,self.totaltokens,
                     )
-        ind2=P.rdf.ic(NS.po.Platform,"Facebook",self.meta_graph,self.snapshoturi)
+        
         P.rdf.triplesScaffolding(self.snapshoturi,[ 
                                   NS.po.triplifiedIn,
                                   NS.po.donatedBy,
@@ -372,13 +389,13 @@ All files should be available at the git repository:
                                   datetime.datetime.now(),
                                   self.snapshotid[:-4],
                                   self.available_dir,
-                                  online_prefix+"/rdf/"+mrdf,
-                                  online_prefix+"/rdf/"+mttl,
-                                  mrdf,
-                                  mttl,
+                                  self.online_prefix+self.mrdf,
+                                  self.online_prefix+self.mttl,
+                                  self.mrdf,
+                                  self.mttl,
                                   "Netvizz",
                                   "Facebook",
-                                  ind2,
+                                  P.rdf.ic(NS.po.Platform,"Facebook",self.meta_graph,self.snapshoturi),
                                   self.desc,
                                   ]+foo["vals"],
                                   self.meta_graph)
@@ -423,19 +440,15 @@ All files should be available at the git repository:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
                 vals_=[el for el in vals_ if el]
             ind=P.rdf.ic(NS.facebook.Participant,name_,self.friendship_graph,self.snapshoturi)
-#            P.rdf.link([tg],ind,insert_uris_,vals_)
-#            P.rdf.link_([tg],ind,[NS.po.snapshot],[snapshot])
             P.rdf.triplesScaffolding(ind,insert_uris_+[NS.po.snapshot],vals_+[self.snapshoturi],context=self.friendship_graph)
         c("escritos participantes")
         friendships_=[fnet["relations"][i] for i in ("node1","node2")]
         i=0
         for uid1,uid2 in zip(*friendships_):
             uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
-#            P.add((uids[0],NS.facebook.friend,uids[1]),context=self.friendship_graph)
-            # make friendship
             flabel="{}-{}-{}".format(self.snapshotid,uid1,uid2)
-            ind=P.rdf.ic(NS.facebook.Friendship,flabel,self.friendship_graph,self.snapshoturi)
-            P.rdf.triplesScaffolding(ind,[NS.po.snapshot]+[NS.facebook.member]*2,
+            friendship_uri=P.rdf.ic(NS.facebook.Friendship,flabel,self.friendship_graph,self.snapshoturi)
+            P.rdf.triplesScaffolding(friendship_uri,[NS.po.snapshot]+[NS.facebook.member]*2,
                                         [self.snapshoturi]+uids,self.friendship_graph)
             if (i%1000)==0:
                 c("friendships",i)
@@ -464,7 +477,7 @@ All files should be available at the git repository:
             self.varsfriendsinteraction=[trans(i) for i in tkeys]
         insert={"uris":[],"vals":[]}
         for tkey in tkeys:
-            insert["uris"]+=[eval("NS.facebook.interactionUserAttribute"+"#"+trans(tkey))]
+            insert["uris"]+=[eval("NS.facebook.interactionUserAttribute"+"#"+tkey)]
             insert["vals"]+=[fnet["individuals"][tkey]]
         self.ninteracted=len(insert["vals"][0])
         insert_uris=insert["uris"][:]
@@ -499,7 +512,7 @@ All files should be available at the git repository:
 
 def trans(tkey):
     if tkey=="name":
-        return "uid"
+        return "numericID"
     if tkey=="label":
         return "name"
     return tkey
