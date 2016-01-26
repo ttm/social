@@ -46,6 +46,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
         if filename.startswith("page_"):
             c("page data currently not supported. Jumping", filename)
             continue
+        filesize=os.path.getsize(datadir+filename)/(10**6) # size in megabytes
         fileformat=theFormat(filename)
 #        snapshotclass,snapshotid,snapshoturi=theSnapshotIDURI(filename)
 
@@ -76,6 +77,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
                  (snapshoturi, NS.po.humanizedName, name),
                  (snapshoturi, NS.po.dateObtained, date_obtained),
                  (snapshoturi, NS.po.rawFile, fileuri),
+                 (fileuri,    NS.po.fileSize, filesize),
                  (fileuri,    NS.po.fileName, filename),
                  (fileuri,    NS.po.fileFormat, fileformat),
                  (fileuri,    NS.po.expressedStructure, expressed_structure_uri),

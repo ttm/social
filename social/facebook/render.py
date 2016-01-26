@@ -69,13 +69,17 @@ def publishAll(snapshoturis=None):
         # get all snapshots in new graph
         P.get((None,a,po.Snapshot),context=social_facebook_inferred)
     count=0
-    #triples=[
-    #        ("?s",a,NS.po.Snapshot),
-    #        ("?s",NS.po.rawFile,"?rawfoo"),
-    #        ("?rawfoo",NS.po.expressedStructure,NS.po.GroupPosts),
-    #        ]
-    #snapshoturis=P.get(triples)
-    #c("snapuris:",snapshoturis)
+    triples=[
+            ("?s",a,NS.po.Snapshot),
+            ("?s",NS.po.rawFile,"?rawfoo"),
+            ("?rawfoo",NS.po.expressedStructure,NS.po.GroupPosts),
+            ("?rawfoo",NS.po.fileSize,"?flesize"),
+            ]
+    #snapshoturis=P.get(triples,modifier1=" ORDER BY DESC(?filesizefoo) ") # nao funciona
+    snapshoturis=P.get(triples)
+    snapshoturis.sort(key=lambda x: x[0])
+    snapshoturis=[i[1] for i in snapshoturis]
+    c("snapuris:",snapshoturis)
     for snapshoturi in snapshoturis:
         triplification_class=publishAny(snapshoturi)
         count+=1

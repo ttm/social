@@ -39,7 +39,6 @@ class GdfRdfPublishing:
         self.snapshotid=snapshotid
         self.snapshoturi=snapshoturi
         self.online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,self.snapshotid)
-        self.available_dir=available_dir=self.online_prefix+self.snapshotid
         self.isfriendship= bool(filename_friendships)
         self.isinteraction=bool(filename_interactions)
         self.hastext=bool(filename_posts)
@@ -96,22 +95,22 @@ class GdfRdfPublishing:
             if self.nposts%200==0:
                 c("posts: ",self.nposts)
             self.nposts+=1
-        self.postsvars=["postID","postType","postText","createdAt","nComments","nLikes","nChars"]
+        self.postsvars=["postID","postType","postText","createdAt","nComments","nLikes","nChars","nTokens"]
         self.mcharsposts=n.mean(nchars_all)
         self.dcharsposts=n.std(  nchars_all)
         self.totalchars=n.sum(   nchars_all)
         self.mtokensposts=n.mean(ntokens_all)
         self.dtokensposts=n.std( ntokens_all)
         self.totaltokens=n.sum(  ntokens_all)
-        triples+=[
-                 (self.snapshoturi,NS.po.mCharsPosts,self.mcharsposts),
-                 (self.snapshoturi,NS.po.dCharsPosts,self.dcharsposts),
-                 (self.snapshoturi,NS.po.totalCharsPosts,self.totalchars),
+        #triples+=[ # went to meta file
+        #         (self.snapshoturi,NS.po.mCharsPosts,self.mcharsposts),
+        #         (self.snapshoturi,NS.po.dCharsPosts,self.dcharsposts),
+        #         (self.snapshoturi,NS.po.totalCharsPosts,self.totalchars),
 
-                 (self.snapshoturi,NS.po.mTokensPosts,self.mtokensposts),
-                 (self.snapshoturi,NS.po.dTokensPosts,self.dtokensposts),
-                 (self.snapshoturi,NS.po.totalTokensPosts,self.totaltokens),
-                 ]
+        #         (self.snapshoturi,NS.po.mTokensPosts,self.mtokensposts),
+        #         (self.snapshoturi,NS.po.dTokensPosts,self.dtokensposts),
+        #         (self.snapshoturi,NS.po.totalTokensPosts,self.totaltokens),
+        #         ]
         P.add(triples,context=self.posts_graph)
 
     def writeAllFB(self):
@@ -120,6 +119,7 @@ class GdfRdfPublishing:
         if not os.path.isdir(self.final_path_):
             os.mkdir(self.final_path_)
         #fnet,inet,mnet
+        triples=[]
         if self.isfriendship:
             g=P.context(self.friendship_graph)
             g.namespace_manager.bind("po",NS.po)
@@ -127,6 +127,15 @@ class GdfRdfPublishing:
             g.serialize(self.final_path_+self.snapshotid+"Friendship.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Friendship.rdf","xml")
             c("serialized friendships")
+            # get filesize and ntriples
+            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.rdf")
+            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.ttl")
+            ntriples=len(g)
+            triples+=[
+                     (self.snapshoturi,NS.po.friendshipXMLFilesize,filesizerdf)
+                     (self.snapshoturi,NS.po.friendshipTTLFilesize,filesizettl)
+                     (self.snapshoturi,NS.po.nFriendshipTriples,ntriples)
+                     ]
         if self.isinteraction:
             g=P.context(self.interaction_graph)
             g.namespace_manager.bind("po",NS.po)
@@ -134,6 +143,14 @@ class GdfRdfPublishing:
             g.serialize(self.final_path_+self.snapshotid+"Interaction.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Interaction.rdf","xml")
             c("serialized interaction")
+            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.rdf")
+            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.ttl")
+            ntriples=len(g)
+            triples+=[
+                     (self.snapshoturi,NS.po.interactionXMLFilesize,filesizerdf)
+                     (self.snapshoturi,NS.po.interactionTTLFilesize,filesizettl)
+                     (self.snapshoturi,NS.po.nInteractionTriples,ntriples)
+                     ]
         if self.hastext:
             g=P.context(self.posts_graph)
             g.namespace_manager.bind("po",NS.po)
@@ -141,12 +158,28 @@ class GdfRdfPublishing:
             g.serialize(self.final_path_+self.snapshotid+"Posts.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Posts.rdf","xml")
             c("serialized posts")
+            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Posts.rdf")
+            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Posts.ttl")
+            ntriples=len(g)
+            triples+=[
+                     (self.snapshoturi,NS.po.postsXMLFilesize,filesizerdf)
+                     (self.snapshoturi,NS.po.postsTTLFilesize,filesizettl)
+                     (self.snapshoturi,NS.po.nPostsTriples,ntriples)
+                     ]
         g=P.context(self.meta_graph)
         g.namespace_manager.bind("po",NS.po)
         g.namespace_manager.bind("facebook",NS.facebook)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
         c("serialized meta")
+        filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Meta.rdf")
+        filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Meta.ttl")
+        ntriples=len(g)
+        triples+=[
+                 (self.snapshoturi,NS.po.metaXMLFilesize,filesizerdf)
+                 (self.snapshoturi,NS.po.metaTTLFilesize,filesizettl)
+                 (self.snapshoturi,NS.po.nMetaTriples,ntriples)
+                 ]
         # copia o script que gera este codigo
         if not os.path.isdir(self.final_path_+"scripts"):
             os.mkdir(self.final_path_+"scripts")
@@ -157,10 +190,10 @@ class GdfRdfPublishing:
         originals=""
         if self.isfriendship:
             shutil.copy(self.data_path+self.filename_friendships,self.final_path_+"base/")
-            originals+="{}base/{}".format(self.online_prefix,self.filename_friendships)
-            tfriendship="""{nf} individuals with metadata {fvars}
-and {nfs} friendships constitute the friendship network in file:
-{frdf} \nor \n{fttl}
+            originals+="base/{}".format(self.filename_friendships)
+            tfriendship="""\n{nf} individuals with metadata {fvars}
+and {nfs} friendships constitute the friendship network in the RDF/XML file:
+{frdf} \nor in Turtle: \n{fttl}
 (anonymized: {fan}).""".format(
                             nf=self.nfriends,fvars=str(self.friendsvars),
                             nfs=self.nfriendships,
@@ -173,9 +206,9 @@ and {nfs} friendships constitute the friendship network in file:
             shutil.copy(self.data_path+self.filename_interactions,self.final_path_+"base/")
             tinteraction="""\n{} individuals with metadata {}
 and {} interactions with metadata {} constitute the interaction 
-network in file:
+network in the RDF/XML file:
 {}
-or
+or in Turtle:
 {}
 (anonymized: {}).""".format( self.ninteracted,str(self.varsfriendsinteraction),
                         self.ninteractions,str(self.interactionsvars),
@@ -187,11 +220,11 @@ or
             tinteraction=""
         if self.hastext:
             shutil.copy(self.data_path+self.filename_posts,self.final_path_+"base/")
-            tposts="""\n{} posts with {:3f.} characters in average (std: {:3f.}) and total chars in snapshot: {}
+            tposts="""\n{} posts with {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
 {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
-posts data in file:
+posts data in the RDF/XML file:
 {}
-or
+or in Turtle:
 {}""".format( self.nposts,self.mcharsposts,self.dcharsposts,self.totalchars,
                         self.mtokensposts,self.dtokensposts,self.totaltokens,
                         self.prdf,
@@ -206,27 +239,27 @@ or
         datetime_string=P.get(r.URIRef(self.snapshoturi),NS.po.dateObtained,None,context="social_facebook")[2]
 #        if not os.path.isdir(self.final_path+"base"):
 #            os.mkdir(self.final_path+"base")
-        with open(self.final_path_+"README.md","w") as f:
-            f.write("""# Open Linked Social Data publication
-This repo delivers RDF data from the facebook
-friendship network of {snapid} collected around {date}.
-\n{tfriendship}
+        with open(self.final_path_+"README","w") as f:
+            f.write("""::: Open Linked Social Data publication
+\nThis repository is a RDF data expression of the facebook
+snapshot {snapid} collected around {date}.
+{tfriendship}
 {tinteraction}
 {tposts}
-Metadata for discovery is in file:
-{mrdf} \nor \n{mttl}
-Original files:
+\nMetadata for discovery in the RDF/XML file:
+{mrdf} \nor in Turtle:\n{mttl}
+\nOriginal files:
 {origs}
-Ego network: {ise}
+\nEgo network: {ise}
 Group network: {isg}
 Friendship network: {isf}
 Interaction network: {isi}
-All files should be available at the git repository:
+Has text/posts: {ist}
+\nAll files should be available at the git repository:
 {ava}
-\n
-{desc}
+\n{desc}
 
-The script that rendered this data publication is on the script/ directory.""".format(
+The script that rendered this data publication is on the script/ directory.\n:::""".format(
                 snapid=self.snapshotid,date=datetime_string,
                         tfriendship=tfriendship,
                         tinteraction=tinteraction,
@@ -238,9 +271,10 @@ The script that rendered this data publication is on the script/ directory.""".f
                         isg=self.isgroup,
                         isf=self.isfriendship,
                         isi=self.isinteraction,
-                        ava=self.available_dir,
+                        ist=self.hastext,
+                        ava=self.online_prefix,
                         desc=self.desc
-                        )).replace("\n","\n\n")
+                        ))
 
     def makeMetadata(self):
         if self.isfriendship and self.groupid and self.groupid2 and (self.groupid!=self.groupid2):
@@ -281,7 +315,7 @@ The script that rendered this data publication is on the script/ directory.""".f
                          NS.facebook.onlineOriginalInteractionFile,
                          NS.facebook.originalInteractionFilename,
                          NS.po.onlineInteractionXMLFile,
-                         NS.po.onlineinteractionTTLFile,
+                         NS.po.onlineInteractionTTLFile,
                          NS.po.interactionXMLFilename,
                          NS.po.interactionTTLFilename,
                          ]+\
@@ -316,29 +350,29 @@ The script that rendered this data publication is on the script/ directory.""".f
                          ]+\
                          [
                          NS.facebook.nPosts,
-                         NS.facebook.nChars,
-                         NS.facebook.mCharsPosts,
-                         NS.facebook.dCharsPosts,
-                         NS.facebook.nTokens,
-                         NS.facebook.mTokensPosts,
-                         NS.facebook.dTokensPosts,
+                         NS.facebook.nCharsOverall,
+                         NS.facebook.mCharsPostsOverall,
+                         NS.facebook.dCharsPostsOverall,
+                         NS.facebook.nTokensOverall,
+                         NS.facebook.mTokensPostsOverall,
+                         NS.facebook.dTokensPostsOverall,
                          ]+\
                          [NS.facebook.postAttribute]*len(self.postsvars)
             self.pfile="base/"+self.filename_posts
             self.prdf=self.snapshotid+"Post.rdf"
             self.pttl=self.snapshotid+"Post.ttl"
             foo["vals"]+=[
-                          self.online_prefix+pfile,
+                          self.online_prefix+self.pfile,
                           self.pfile,
-                          self.online_prefix+prdf,
-                          self.online_prefix+pttl,
+                          self.online_prefix+self.prdf,
+                          self.online_prefix+self.pttl,
                           self.prdf,
                           self.pttl,
                           self.nposts,
-                          self.nchars,
+                          int(self.totalchars),
                           self.mcharsposts,
                           self.dcharsposts,
-                          self.ntokens,
+                          int(self.totaltokens),
                           self.mtokensposts,
                           self.dtokensposts,
                           ]+list(self.postsvars)
@@ -347,26 +381,28 @@ The script that rendered this data publication is on the script/ directory.""".f
                      NS.facebook.isEgo,
                      NS.facebook.isFriendship,
                      NS.facebook.isInteraction,
+                     NS.facebook.hasText,
+                     NS.facebook.isPost,
                      ]
         self.isego=  bool(P.get(r.URIRef(self.snapshoturi),a,NS.po.EgoSnapshot  ))
         self.isgroup=bool(P.get(r.URIRef(self.snapshoturi),a,NS.po.GroupSnapshot))
-        foo["vals"]+=[self.isgroup,self.isego,self.isfriendship,self.isinteraction]
+        foo["vals"]+=[self.isgroup,self.isego,self.isfriendship,self.isinteraction,self.hastext,self.hastext]
 
         self.mrdf=self.snapshotid+"Meta.rdf"
         self.mttl=self.snapshotid+"Meta.ttl"
 
-        self.desc="facebook network from {} .\n Ego: {}. Group: {}.".format(
-                                                self.snapshotid,self.isego,self.isgroup,)
-        self.desc+="\nFriendship: {}".format(self.isfriendship)
+        self.desc="facebook network with snapshotID: {}\nsnapshotURI: {} \nisEgo: {}. isGroup: {}.".format(
+                                                self.snapshotid,self.snapshoturi,self.isego,self.isgroup,)
+        self.desc+="\nisFriendship: {}".format(self.isfriendship)
         if self.isfriendship:
-           self.desc+="; nfriends: {}; nfrienships: {}.".format(self.nfriends,self.nfriendships,)
-        self.desc+="\nInteraction: {}".format(self.isinteraction)
+           self.desc+="; nFriends: {}; nFrienships: {}.".format(self.nfriends,self.nfriendships,)
+        self.desc+="\nisInteraction: {}".format(self.isinteraction)
         if self.isinteraction:
-              self.desc+="; ninteracted: {}; ninteractions: {}.".format(self.ninteracted,self.ninteractions,)
-        self.desc+="\nnPosts: {}"
+              self.desc+="; nInteracted: {}; nInteractions: {}.".format(self.ninteracted,self.ninteractions,)
+        self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
         if self.hastext:
-              self.desc+=";\nmCharsPosts: {}; dCharsPosts: {}; totalChars: {}; \
-                     \nmTokensPosts: {}; dTokensPosts: {}; totalTokens: {}".format(
+              self.desc+=";\nmCharsPostsOverall: {}; dCharsPostsOverall: {}; totalCharsOverall: {}; \
+                          \nmTokensPostsOverall: {}; dTokensPostsOverall: {}; totalTokensOverall: {}".format(
                     self.nposts,
                     self.mcharsposts,self.dcharsposts,self.totalchars,
                     self.mtokensposts,self.dtokensposts,self.totaltokens,
@@ -374,6 +410,7 @@ The script that rendered this data publication is on the script/ directory.""".f
         
         P.rdf.triplesScaffolding(self.snapshoturi,[ 
                                   NS.po.triplifiedIn,
+                                  NS.po.triplifiedBy,
                                   NS.po.donatedBy,
                                   NS.po.availableAt,
                                   NS.po.onlineMetaXMLFile,
@@ -387,8 +424,9 @@ The script that rendered this data publication is on the script/ directory.""".f
                                   ]+foo["uris"],
                                   [
                                   datetime.datetime.now(),
+                                  "scripts/",
                                   self.snapshotid[:-4],
-                                  self.available_dir,
+                                  self.online_prefix,
                                   self.online_prefix+self.mrdf,
                                   self.online_prefix+self.mttl,
                                   self.mrdf,
@@ -420,12 +458,6 @@ The script that rendered this data publication is on the script/ directory.""".f
             self.friendsvars=[trans(i) for i in tkeys]
         count=0
         for tkey in tkeys:
-            if self.friendships_anonymized:
-                if count not in (ilabel,iname):
-                    insert["uris"]+=[eval("NS.facebook."+trans(tkey))]
-                    insert["vals"]+=[fnet["individuals"][tkey]]
-                count+=1
-                continue
             insert["uris"]+=[eval("NS.facebook."+trans(tkey))]
             insert["vals"]+=[fnet["individuals"][tkey]]
             count+=1
@@ -434,6 +466,8 @@ The script that rendered this data publication is on the script/ directory.""".f
         for vals_ in zip(*insert["vals"]): # cada participante recebe valores na ordem do insert_uris
             name_="{}-{}".format(self.snapshotid,vals_[iname])
             if self.friendships_anonymized:
+                if vals_[ilabel] and ("user" not in vals_[ilabel]):
+                    raise ValueError("Anonymized networks should have no informative name. Found: "+vals_[ilabel])
                 insert_uris_=[el for i,el in enumerate(insert_uris) if i not  in (ilabel,iname) and vals_[i]]
                 vals_=[el for i,el in enumerate(vals_) if (i not in (ilabel,iname)) and el]
             else:
@@ -477,7 +511,7 @@ The script that rendered this data publication is on the script/ directory.""".f
             self.varsfriendsinteraction=[trans(i) for i in tkeys]
         insert={"uris":[],"vals":[]}
         for tkey in tkeys:
-            insert["uris"]+=[eval("NS.facebook.interactionUserAttribute"+"#"+tkey)]
+            insert["uris"]+=[eval("NS.facebook."+trans(tkey))]
             insert["vals"]+=[fnet["individuals"][tkey]]
         self.ninteracted=len(insert["vals"][0])
         insert_uris=insert["uris"][:]
@@ -492,9 +526,10 @@ The script that rendered this data publication is on the script/ directory.""".f
             ind=P.rdf.ic(NS.facebook.Participant,name_,self.interaction_graph,self.snapshoturi)
             P.rdf.triplesScaffolding(ind,insert_uris_+[NS.po.snapshot],vals_+[self.snapshoturi],self.interaction_graph)
         c("escritos participantes")
-        self.interactionsvars=["node1","node2","weight"]
-        interactions_=[fnet["relations"][i] for i in self.interactionsvars]
+        self.interactionsvarsfoo=["node1","node2","weight"]
+        interactions_=[fnet["relations"][i] for i in self.interactionsvarsfoo]
         self.ninteractions=len(interactions_[0])
+        self.interactionsvars=["iFrom","iTo","weight"]
         i=0
         for uid1,uid2,weight in zip(*interactions_):
             weight_=int(weight)
@@ -515,5 +550,7 @@ def trans(tkey):
         return "numericID"
     if tkey=="label":
         return "name"
+    if tkey=="posts":
+        return "nPosts"
     return tkey
 
