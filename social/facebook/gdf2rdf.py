@@ -1,4 +1,4 @@
-import percolation as P, social as S, rdflib as r, builtins as B, re, datetime, dateutil.parser, os, shutil, numpy as n
+import percolation as P, social as S, rdflib as r, builtins as B, re, datetime, dateutil.parser, os, shutil, numpy as n, nltk as k
 from percolation.rdf import NS, a
 from .read import readGDF
 c=P.check
@@ -37,8 +37,8 @@ class GdfRdfPublishing:
         P.context(self.meta_graph,"remove")
         P.context(self.posts_graph,"remove")
         self.snapshotid=snapshotid
-        self.snapshot=self.snapshoturi=snapshoturi
-        self.online_prefix=online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData{}{}/master/".format(umbrella_dir,self.snapshotid)
+        self.snapshoturi=snapshoturi
+        self.online_prefix=online_prefix="https://raw.githubusercontent.com/OpenLinked/SocialData{}master/{}/".format(umbrella_dir,self.snapshotid)
         self.available_dir=available_dir=online_prefix+self.snapshotid
         self.isfriendship= bool(filename_friendships)
         self.isinteraction=bool(filename_interactions)
@@ -72,10 +72,14 @@ class GdfRdfPublishing:
         data=data[1:]
         triples=[]
         self.nposts=0
-        nchars=[]
+        nchars_all=[]
+        ntokens_all=[]
         for post in data:
             ind=P.rdf.ic(NS.facebook.Post,post[0],self.posts_graph,self.snapshoturi)
-            nchars+=[len(post[2])]
+            nchars=len(post[2])
+            nchars_all+=[nchars]
+            ntokens=len(k.tokenize.wordpunct_tokenize(post[2]))
+            ntokens_all+=[ntokens]
             triples+=[
                      (ind,NS.po.snapshot,self.snapshoturi),
                      (ind,NS.facebook.postID,post[0]),
@@ -84,17 +88,27 @@ class GdfRdfPublishing:
                      (ind,NS.facebook.createdAt,dateutil.parser.parse(post[3])),
                      (ind,NS.facebook.nComments,post[4]),
                      (ind,NS.facebook.nLikes,post[5]),
-                     (ind,NS.facebook.nChars,len(post[2])),
+                     (ind,NS.facebook.nChars,nchars),
+                     (ind,NS.facebook.nTokens,ntokens),
                      ]
             if self.nposts%200==0:
                 c("posts: ",self.nposts)
             self.nposts+=1
         self.postsvars=["postID","postType","postText","createdAt","nComments","nLikes","nChars"]
-        self.mcharsposts=n.mean(nchars)
-        self.dcharsposts=n.std(nchars)
+        self.mcharsposts=n.mean(nchars_all)
+        self.dcharsposts=n.std(  nchars_all)
+        self.totalchars=n.sum(   nchars_all)
+        self.mtokensposts=n.mean(ntokens_all)
+        self.dtokensposts=n.std( ntokens_all)
+        self.totaltokens=n.sum(  ntokens_all)
         triples+=[
                  (self.snapshoturi,NS.po.mCharsPosts,self.mcharsposts),
                  (self.snapshoturi,NS.po.dCharsPosts,self.dcharsposts),
+                 (self.snapshoturi,NS.po.totalCharsPosts,self.totalchars),
+
+                 (self.snapshoturi,NS.po.mTokensPosts,self.mtokensposts),
+                 (self.snapshoturi,NS.po.dTokensPosts,self.dtokensposts),
+                 (self.snapshoturi,NS.po.totalTokensPosts,self.totaltokens),
                  ]
         P.add(triples,context=self.posts_graph)
 
@@ -162,14 +176,16 @@ or
             tinteraction=""
         if self.hastext:
             shutil.copy(self.data_path+self.filename_posts,self.final_path_+"base/")
-            tposts="""\n{} posts with {} words in average (std: {})
+            tposts="""\n{} posts with {} characters in average (std: {}) and total chars in snapshot: {}
+{} tokens in average (std: {}) and total tokens in snapshot: {}
 posts data in file:
 {}
 or
-{}""".format( self.nposts,self.mcharsposts, self.dcharsposts,
+{}""".format( self.nposts,self.mcharsposts,self.dcharsposts,self.totalchars,
+                        self.mtokensposts,self.dtokensposts,self.totaltokens,
                         self.online_prefix+"/rdf/"+self.prdf,
                         self.online_prefix+"/rdf/"+self.pttl)
-            originals+="\n{}data/{}".format(self.online_prefix,self.filename_interactions)
+            originals+="\n{}data/{}".format(self.online_prefix,self.filename_posts)
         else:
             tposts=""
 
@@ -195,7 +211,8 @@ Friendship network: {isf}
 Interaction network: {isi}
 All files should be available at the git repository:
 {ava}
-\n""".format(
+\n
+{desc}""".format(
                 snapid=self.snapshotid,date=datetime_string,
                         tfriendship=tfriendship,
                         tinteraction=tinteraction,
@@ -207,7 +224,8 @@ All files should be available at the git repository:
                         isg=self.isgroup,
                         isf=self.isfriendship,
                         isi=self.isinteraction,
-                        ava=self.available_dir
+                        ava=self.available_dir,
+                        desc=self.desc
                         ))
 
     def makeMetadata(self):
@@ -290,8 +308,8 @@ All files should be available at the git repository:
                          ]+\
                          [NS.facebook.postAttribute]*len(self.postsvars)
             pfile="{}/base/{}".format(online_prefix,self.snapshotid)
-            self.prdf=prdf="{}Post.rdf".format(online_prefix,self.snapshotid)
-            self.pttl=pttl="{}Post.ttl".format(online_prefix,self.snapshotid)
+            self.prdf=prdf="{}{}Post.rdf".format(online_prefix,self.snapshotid)
+            self.pttl=pttl="{}{}Post.ttl".format(online_prefix,self.snapshotid)
             foo["vals"]+=[
                           pfile,
                           self.filename_posts,
@@ -320,12 +338,21 @@ All files should be available at the git repository:
         self.mttl=mttl="{}Meta.ttl".format(self.snapshotid)
         if "ninteracted" not in dir(self):
             self.ninteracted,self.ninteractions=0,0
-        desc="facebook network from {} . Ego: {}. Group: {}. Friendship: {}. Interaction: {}.\
-                nfriends: {}; nfrienships: {}; ninteracted: {}; ninteractions: .\
-                nPosts: {}; mCharsPosts: {}; dCharsPosts: ".format(
-                    self.snapshotid,self.isego,self.isgroup,self.isfriendship,self.isinteraction,
-                    self.nfriends,self.nfriendships,self.ninteracted,self.ninteractions,
-                    self.nposts,self.mcharsposts,self.dcharsposts
+        self.desc="facebook network from {} . Ego: {}. Group: {}.".format(
+                                                self.snapshotid,self.isego,self.isgroup,)
+        if self.isfriendship:
+              self.desc+="\nFriendship: {}. nfriends: {}; nfrienships: {}.".format(
+                    self.isfriendship,self.nfriends,self.nfriendships,)
+        if self.isinteraction:
+              self.desc+="\nInteraction: {}; ninteracted: {}; ninteractions: {}.".format(
+                    self.isinteraction,self.ninteracted,self.ninteractions,)
+        if self.hastext:
+              self.desc+="\nnPosts: {}; \
+              \nmCharsPosts: {}; dCharsPosts: {}; totalChars: {} \
+              \nmTokensPosts: {}; dTokensPosts: {}; totalTokens: {} ".format(
+                    self.nposts,
+                    self.mcharsposts,self.dcharsposts,self.totalchars,
+                    self.mtokensposts,self.dtokensposts,self.totaltokens,
                     )
         ind2=P.rdf.ic(NS.po.Platform,"Facebook",self.meta_graph,self.snapshoturi)
         P.rdf.triplesScaffolding(self.snapshoturi,[ 
@@ -352,7 +379,7 @@ All files should be available at the git repository:
                                   "Netvizz",
                                   "Facebook",
                                   ind2,
-                                  desc,
+                                  self.desc,
                                   ]+foo["vals"],
                                   self.meta_graph)
     def rdfGDFFriendshipNetwork(self,fnet):
