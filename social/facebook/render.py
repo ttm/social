@@ -92,11 +92,18 @@ def publishAll(snapshoturis=None):
         count+=1
     return triplification_class
 def writePublishingReadme(final_path="./fb/"):
+    nfriendship=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:FriendshipSnapshot }")
+    ninteraction=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:InteractionSnapshot }")
+    nposts=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:PostsSnapshot }")
+    nego=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:EgoSnapshot }")
+    ngroup=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:GroupSnapshot }")
+    nfriendship_group=nfriendship-nego
+
     body="""::: Open Linked Social Data publication\n
 This repository provides linked data for:
 {} friendship snapshots (*Friendship.ttl and .rdf)
 {} interaction snapshots (*Interaction.ttl and .rdf)
-{} posts/texts collections (*Posts.ttl and .rdf)
+{} posts/texts snapshots (*Posts.ttl and .rdf)
 {} ego snapshots (only *Friendship.ttl and .rdf)
 {} group snapshots (can have *Friendship *Interaction *Posts.ttl .rdf)
 
@@ -104,8 +111,9 @@ This repository provides linked data for:
 for discovery.
 
 all interaction snapshots are group snapshots.
+all posts snapshots are group snapshots.
+all ego snapshots are friendship snapshots.
 {} friendship snapshots are group snapshots.
-{} friendship snapshots are ego snapshots.
 
 The posts snapshots are not related to any participant.
 Interactions and friendships yield relations
@@ -118,7 +126,69 @@ facebook:Participant#<snapshotid>-<userid2>
 
 Each directory of this repository have the name of the snapshot id
 it provides data about.
-:::"""
+""".format(
+        nfrienship,
+        ninteraction,
+        nposts,
+        nego,
+        ngroup,
+        nfriendship_group
+        )
+
+    # n participants
+    nparticipants=P.get("SELECT (COUNT(?s) as ?cs) \
+                    WHERE { ?s a po:Participant }")
+    nparticipants_a0=P.get("SELECT (COUNT(?s) as ?cs) WHERE { \
+                            ?s a facebook:Participant . \
+                            ?s po:name ?namefoo . \
+                    }")
+    nparticipants_a=nparticipants-nparticipants_a0
+    nparticipants_unique=P.get("SELECT (COUNT(?numeric_id) as ?total) WHERE { \
+                            ?sfoo a facebook:Participant . \
+                            ?sfoo po:numericID ?numeric_id . \
+                    }")
+
+    nfriendships=P.get("SELECT (COUNT(?s) as ?cs)\
+                    WHERE { ?s a facebook:Friendship }")
+    nfriendships_a=P.get("SELECT (COUNT(?s) as ?cs)\
+                    WHERE { ?s a facebook:Friendship .
+                            ?s po:snapshot ?snapfoo .
+                            ?snapfoo po:friendshipsAnonymized true .\
+                    }")
+
+    ninteractions=P.get("SELECT (COUNT(?s) as ?cs)\
+                        WHERE { ?s a facebook:Interaction }")
+
+    ninteractions_a=P.get("SELECT (COUNT(?s) as ?cs)\
+                    WHERE { ?s a facebook:Interaction .\
+                            ?s po:snapshot ?snapfoo .
+                            ?snapfoo po:interactionsAnonymized true }")
+
+    nposts=P.get("SELECT (COUNT(?s) as ?cs) WHERE { \
+                            ?s a facebook:Post . \
+                    }")
+
+    ntokens=sum(P.get("SELECT ?val WHERE { \
+            ?foosnapshot facebook:nTokensOverall ?val . \
+                    }"))
+    nlikes=sum(P.get("SELECT ?val WHERE { \
+            ?foosnapshot facebook:nLikes ?val . \
+                    }"))
+    ncomments=sum(P.get("SELECT ?val WHERE { \
+            ?foosnapshot facebook:nComments ?val . \
+                    }"))
+    nreactions=nlines+ncomments
+
+    body+="""
+Overview of core entities:
+{} participants ({} anonymized; {} unique numericID)
+{} friendships ({} anonymized)
+{} interaction ({} anonymized)
+{} posts with a total of {} tokens and {} reaction counts ({} comments+ {} likes)
+:::""".format(nparticipants, nparticipants_a, nparticipants_unique,
+        nfriendships, nfriendships_a,
+        ninteractions, ninteractions_a,
+        nposts, ntokens, nreactions, ncomments, nlikes)
     with open("README","w") as f:
         f.write(body)
 
