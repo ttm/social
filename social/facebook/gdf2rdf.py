@@ -77,15 +77,16 @@ class GdfRdfPublishing:
         ntokens_all=[]
         for post in data:
             ind=P.rdf.ic(NS.facebook.Post,post[0],self.posts_graph,self.snapshoturi)
-            nchars=len(post[2])
+            ptext=post[2].replace("_","\n")
+            nchars=len(ptext)
             nchars_all+=[nchars]
-            ntokens=len(k.tokenize.wordpunct_tokenize(post[2]))
+            ntokens=len(k.tokenize.wordpunct_tokenize(ptext))
             ntokens_all+=[ntokens]
             triples+=[
                      (ind,NS.po.snapshot,self.snapshoturi),
                      (ind,NS.facebook.postID,post[0]),
                      (ind,NS.facebook.postType,post[1]),
-                     (ind,NS.facebook.postText,post[2]),
+                     (ind,NS.facebook.postText,ptext),
                      (ind,NS.facebook.createdAt,dateutil.parser.parse(post[3])),
                      (ind,NS.facebook.nComments,int(post[4])),
                      (ind,NS.facebook.nLikes,int(post[5])),
@@ -128,13 +129,13 @@ class GdfRdfPublishing:
             g.serialize(self.final_path_+self.snapshotid+"Friendship.rdf","xml")
             c("serialized friendships")
             # get filesize and ntriples
-            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.rdf")
-            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.ttl")
+            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.rdf")/(10**6)
+            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.ttl")/(10**6)
             ntriples=len(g)
             triples+=[
-                     (self.snapshoturi,NS.po.friendshipXMLFilesize,filesizerdf)
-                     (self.snapshoturi,NS.po.friendshipTTLFilesize,filesizettl)
-                     (self.snapshoturi,NS.po.nFriendshipTriples,ntriples)
+                     (self.snapshoturi,NS.po.friendshipXMLFileSizeMB,filesizerdf),
+                     (self.snapshoturi,NS.po.friendshipTTLFileSizeMB,filesizettl),
+                     (self.snapshoturi,NS.po.nFriendshipTriples,ntriples),
                      ]
         if self.isinteraction:
             g=P.context(self.interaction_graph)
@@ -143,13 +144,13 @@ class GdfRdfPublishing:
             g.serialize(self.final_path_+self.snapshotid+"Interaction.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Interaction.rdf","xml")
             c("serialized interaction")
-            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.rdf")
-            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.ttl")
+            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.rdf")/(10**6)
+            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.ttl")/(10**6)
             ntriples=len(g)
             triples+=[
-                     (self.snapshoturi,NS.po.interactionXMLFilesize,filesizerdf)
-                     (self.snapshoturi,NS.po.interactionTTLFilesize,filesizettl)
-                     (self.snapshoturi,NS.po.nInteractionTriples,ntriples)
+                     (self.snapshoturi,NS.po.interactionXMLFileSizeMB,filesizerdf),
+                     (self.snapshoturi,NS.po.interactionTTLFileSizeMB,filesizettl),
+                     (self.snapshoturi,NS.po.nInteractionTriples,ntriples),
                      ]
         if self.hastext:
             g=P.context(self.posts_graph)
@@ -158,28 +159,25 @@ class GdfRdfPublishing:
             g.serialize(self.final_path_+self.snapshotid+"Posts.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Posts.rdf","xml")
             c("serialized posts")
-            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Posts.rdf")
-            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Posts.ttl")
+            filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Posts.rdf")/(10**6)
+            filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Posts.ttl")/(10**6)
             ntriples=len(g)
             triples+=[
-                     (self.snapshoturi,NS.po.postsXMLFilesize,filesizerdf)
-                     (self.snapshoturi,NS.po.postsTTLFilesize,filesizettl)
-                     (self.snapshoturi,NS.po.nPostsTriples,ntriples)
+                     (self.snapshoturi,NS.po.postsXMLFileSizeMB,filesizerdf),
+                     (self.snapshoturi,NS.po.postsTTLFileSizeMB,filesizettl),
+                     (self.snapshoturi,NS.po.nPostsTriples,ntriples)      ,
                      ]
         g=P.context(self.meta_graph)
+        ntriples=len(g)
+        triples+=[
+                 (self.snapshoturi,NS.po.nMetaTriples,ntriples)      ,
+                 ]
+        P.add(triples,context=self.meta_graph)
         g.namespace_manager.bind("po",NS.po)
         g.namespace_manager.bind("facebook",NS.facebook)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
         c("serialized meta")
-        filesizerdf=os.path.getsize(self.final_path_+self.snapshotid+"Meta.rdf")
-        filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Meta.ttl")
-        ntriples=len(g)
-        triples+=[
-                 (self.snapshoturi,NS.po.metaXMLFilesize,filesizerdf)
-                 (self.snapshoturi,NS.po.metaTTLFilesize,filesizettl)
-                 (self.snapshoturi,NS.po.nMetaTriples,ntriples)
-                 ]
         # copia o script que gera este codigo
         if not os.path.isdir(self.final_path_+"scripts"):
             os.mkdir(self.final_path_+"scripts")
@@ -279,15 +277,23 @@ The script that rendered this data publication is on the script/ directory.\n:::
     def makeMetadata(self):
         if self.isfriendship and self.groupid and self.groupid2 and (self.groupid!=self.groupid2):
             raise ValueError("Group IDS are different")
+        # put all triples from social_facebook to self.meta_graph
+        #g1=P.context("social_facebook")
+        #g2=P.context(self.meta_graph)
+        #for subject, predicate, object_ in g1.triples((self.snapshoturi))
+        triples=P.get(self.snapshoturi,None,None,"social_facebook")
+        for rawfile in P.get(self.snapshoturi,NS.po.rawFile,None,"social_facebook",strict=True,minimized=True):
+            triples+=P.get(rawfile,None,None,"social_facebook")
+        P.add(triples,context=self.meta_graph)
         foo={"uris":[],"vals":[]}
         if self.isfriendship:
             foo["uris"]+=[
                          NS.facebook.onlineOriginalFriendshipFile,
-                         NS.facebook.originalFriendshipFilename,
+                         NS.facebook.originalFriendshipFileName,
                          NS.po.onlineFriendshipXMLFile,
                          NS.po.onlineFriendshipTTLFile,
-                         NS.po.friendshipXMLFilename,
-                         NS.po.friendshipTTLFilename,
+                         NS.po.friendshipXMLFileName,
+                         NS.po.friendshipTTLFileName,
                          ]+\
                          [
                          NS.facebook.nFriends,
@@ -313,11 +319,11 @@ The script that rendered this data publication is on the script/ directory.\n:::
         if self.isinteraction:
             foo["uris"]+=[
                          NS.facebook.onlineOriginalInteractionFile,
-                         NS.facebook.originalInteractionFilename,
+                         NS.facebook.originalInteractionFileName,
                          NS.po.onlineInteractionXMLFile,
                          NS.po.onlineInteractionTTLFile,
-                         NS.po.interactionXMLFilename,
-                         NS.po.interactionTTLFilename,
+                         NS.po.interactionXMLFileName,
+                         NS.po.interactionTTLFileName,
                          ]+\
                          [
                          NS.facebook.nInteracted,
@@ -342,11 +348,11 @@ The script that rendered this data publication is on the script/ directory.\n:::
         if self.hastext:
             foo["uris"]+=[
                          NS.facebook.onlineOriginalPostsFile,
-                         NS.facebook.originalPostsFilename,
+                         NS.facebook.originalPostsFileName,
                          NS.po.onlinePostsXMLFile,
                          NS.po.onlinePostsTTLFile,
-                         NS.po.postsXMLFilename,
-                         NS.po.postsTTLFilename,
+                         NS.po.postsXMLFileName,
+                         NS.po.postsTTLFileName,
                          ]+\
                          [
                          NS.facebook.nPosts,
@@ -415,8 +421,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
                                   NS.po.availableAt,
                                   NS.po.onlineMetaXMLFile,
                                   NS.po.onlineMetaTTLFile,
-                                  NS.po.metaXMLFilename,
-                                  NS.po.metaTTLFilename,
+                                  NS.po.metaXMLFileName,
+                                  NS.po.metaTTLFileName,
                                   NS.po.acquiredThrough,
                                   NS.po.socialProtocolTag,
                                   NS.po.socialProtocol,

@@ -65,7 +65,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
         expressed_structure_uri=theStructure(filename) # group/ego and friendship/interaction
         date_obtained=theDate(filename)
         name=theName(filename)
-        fileuri=NS.po.File+"#"+snapshotid+"_f_"+filename
+        fileuri=NS.po.File+"#"+snapshotid+"-_file_-"+filename
         note=theNote(filename) # for avlab and posavlab
         if note:
             triples+=[
@@ -110,7 +110,7 @@ def theMetadata(filename):
     return metadata
 
 def theName(filename):
-    name=re.findall(r"(avlab_|posavlab_|ego_)*([a-zA-Z]*)\d*[\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0][1]
+    name=re.findall(r"(avlab_|posavlab_|ego_)*([a-zA-Z]*)\d*[\b_interactions.gdf\b|\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0][1]
     pattern=r'([A-Z]{2,}(?=[A-Z]|$)|[A-Z][a-z]*)'
     name=" ".join(re.findall(pattern, name))
     return name

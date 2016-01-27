@@ -69,16 +69,23 @@ def publishAll(snapshoturis=None):
         # get all snapshots in new graph
         P.get((None,a,po.Snapshot),context=social_facebook_inferred)
     count=0
-    triples=[
-            ("?s",a,NS.po.Snapshot),
-            ("?s",NS.po.rawFile,"?rawfoo"),
-            ("?rawfoo",NS.po.expressedStructure,NS.po.GroupPosts),
-            ("?rawfoo",NS.po.fileSize,"?flesize"),
-            ]
-    #snapshoturis=P.get(triples,modifier1=" ORDER BY DESC(?filesizefoo) ") # nao funciona
-    snapshoturis=P.get(triples)
-    snapshoturis.sort(key=lambda x: x[0])
-    snapshoturis=[i[1] for i in snapshoturis]
+    #triples=[
+    #        ("?s",a,NS.po.Snapshot),
+    #        ("?s",NS.po.rawFile,"?rawfoo"),
+    #        ("?rawfoo",NS.po.expressedStructure,NS.po.GroupPosts),
+    #        ("?rawfoo",NS.po.fileSize,"?flesize"),
+    #        ]
+    ##snapshoturis=P.get(triples,modifier1=" ORDER BY DESC(?filesizefoo) ") # nao funciona
+    #snapshoturis=P.get(triples)
+    #snapshoturis.sort(key=lambda x: x[0])
+    #snapshoturis=[i[1] for i in snapshoturis]
+    uridict={}
+    for snapshoturi in P.get(None,a,NS.po.Snapshot,minimized=True):
+        uridict[snapshoturi]=0
+        for rawFile in P.get(snapshoturi,NS.po.rawFile,strict=True,minimized=True):
+            uridict[snapshoturi]+=P.get(rawFile,NS.po.fileSize,minimized=True).toPython()
+    snapshoturis=list(uridict.keys())
+    snapshoturis.sort(key=lambda x: uridict[x])
     c("snapuris:",snapshoturis)
     for snapshoturi in snapshoturis:
         triplification_class=publishAny(snapshoturi)
