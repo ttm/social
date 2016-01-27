@@ -189,9 +189,9 @@ class GdfRdfPublishing:
         if self.isfriendship:
             shutil.copy(self.data_path+self.filename_friendships,self.final_path_+"base/")
             originals+="base/{}".format(self.filename_friendships)
-            tfriendship="""\n{nf} individuals with metadata {fvars}
+            tfriendship="""\n\n{nf} individuals with metadata {fvars}
 and {nfs} friendships constitute the friendship network in the RDF/XML file:
-{frdf} \nor in Turtle: \n{fttl}
+{frdf} \nor in the Turtle file: \n{fttl}
 (anonymized: {fan}).""".format(
                             nf=self.nfriends,fvars=str(self.friendsvars),
                             nfs=self.nfriendships,
@@ -202,11 +202,11 @@ and {nfs} friendships constitute the friendship network in the RDF/XML file:
             tfriendship=""
         if self.isinteraction:
             shutil.copy(self.data_path+self.filename_interactions,self.final_path_+"base/")
-            tinteraction="""\n{} individuals with metadata {}
+            tinteraction="""\n\n{} individuals with metadata {}
 and {} interactions with metadata {} constitute the interaction 
 network in the RDF/XML file:
 {}
-or in Turtle:
+or in the Turtle file:
 {}
 (anonymized: {}).""".format( self.ninteracted,str(self.varsfriendsinteraction),
                         self.ninteractions,str(self.interactionsvars),
@@ -218,11 +218,11 @@ or in Turtle:
             tinteraction=""
         if self.hastext:
             shutil.copy(self.data_path+self.filename_posts,self.final_path_+"base/")
-            tposts="""\n{} posts with {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
+            tposts="""\n\n{} posts with {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
 {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
 posts data in the RDF/XML file:
 {}
-or in Turtle:
+or in the Turtle file:
 {}""".format( self.nposts,self.mcharsposts,self.dcharsposts,self.totalchars,
                         self.mtokensposts,self.dtokensposts,self.totaltokens,
                         self.prdf,
@@ -240,13 +240,10 @@ or in Turtle:
         with open(self.final_path_+"README","w") as f:
             f.write("""::: Open Linked Social Data publication
 \nThis repository is a RDF data expression of the facebook
-snapshot {snapid} collected around {date}.
-{tfriendship}
-{tinteraction}
-{tposts}
+snapshot {snapid} collected around {date}.{tfriendship}{tinteraction}{tposts}
 \nMetadata for discovery in the RDF/XML file:
-{mrdf} \nor in Turtle:\n{mttl}
-\nOriginal files:
+{mrdf} \nor in the Turtle file:\n{mttl}
+\nOriginal file(s):
 {origs}
 \nEgo network: {ise}
 Group network: {isg}

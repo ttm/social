@@ -91,6 +91,36 @@ def publishAll(snapshoturis=None):
         triplification_class=publishAny(snapshoturi)
         count+=1
     return triplification_class
+def writePublishingReadme(final_path="./fb/"):
+    body="""::: Open Linked Social Data publication\n
+This repository provides linked data for:
+{} friendship snapshots (*Friendship.ttl and .rdf)
+{} interaction snapshots (*Interaction.ttl and .rdf)
+{} posts/texts collections (*Posts.ttl and .rdf)
+{} ego snapshots (only *Friendship.ttl and .rdf)
+{} group snapshots (can have *Friendship *Interaction *Posts.ttl .rdf)
+
+*Meta.ttl and .rdf files are smaller and hold overall information
+for discovery.
+
+all interaction snapshots are group snapshots.
+{} friendship snapshots are group snapshots.
+{} friendship snapshots are ego snapshots.
+
+The posts snapshots are not related to any participant.
+Interactions and friendships yield relations
+by the
+facebook:Interaction#<snapshotid>-<userid1>-<userid2> and
+facebook:Friendship#<snapshotid>-<userid1>-<userid2>
+instances which relates
+facebook:Participant#<snapshotid>-<userid1> and
+facebook:Participant#<snapshotid>-<userid2>
+
+Each directory of this repository have the name of the snapshot id
+it provides data about.
+:::"""
+    with open("README","w") as f:
+        f.write(body)
 
 def botData(filename):
     pass
