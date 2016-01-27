@@ -99,6 +99,7 @@ def writePublishingReadme(final_path="./fb/"):
     nego=        P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:EgoSnapshot }")
     ngroup=      P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:GroupSnapshot }")
     nfriendship_group=nfriendship-nego
+    c("got snapshot counts")
 
     body="""::: Open Linked Social Data publication\n
 This repository provides linked data for:
@@ -128,7 +129,7 @@ facebook:Participant#<snapshotid>-<userid2>
 Each directory of this repository have the name of the snapshot id
 it provides data about.
 """.format(
-        nfrienship,
+        nfriendship,
         ninteraction,
         nposts,
         nego,
@@ -137,48 +138,47 @@ it provides data about.
         )
 
     # n participants
-    nparticipants=P.get("SELECT (COUNT(?s) as ?cs) \
+    nparticipants=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a po:Participant }")
-    nparticipants_a0=P.get("SELECT (COUNT(?s) as ?cs) WHERE { \
+    nparticipants_a0=P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
                             ?s a facebook:Participant . \
                             ?s po:name ?namefoo . \
                     }")
     nparticipants_a=nparticipants-nparticipants_a0
-    nparticipants_unique=P.get("SELECT (COUNT(?numeric_id) as ?total) WHERE { \
+    nparticipants_unique=P.rdf.query("SELECT (COUNT(?numeric_id) as ?total) WHERE { \
                             ?sfoo a facebook:Participant . \
                             ?sfoo po:numericID ?numeric_id . \
                     }")
-
-    nfriendships=P.get("SELECT (COUNT(?s) as ?cs) \
+    nfriendships=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Friendship }")
-    nfriendships_a=P.get("SELECT (COUNT(?s) as ?cs) \
+    nfriendships_a=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Friendship . \
                             ?s po:snapshot ?snapfoo . \
                             ?snapfoo po:friendshipsAnonymized true . \
                     }")
-
-    ninteractions=P.get("SELECT (COUNT(?s) as ?cs) \
+    ninteractions=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                         WHERE { ?s a facebook:Interaction }")
 
-    ninteractions_a=P.get("SELECT (COUNT(?s) as ?cs) \
+    ninteractions_a=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Interaction . \
                             ?s po:snapshot ?snapfoo . \
                             ?snapfoo po:interactionsAnonymized true }")
 
-    nposts=P.get("SELECT (COUNT(?s) as ?cs) WHERE { \
+    nposts=P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
                             ?s a facebook:Post . \
                     }")
 
-    ntokens=sum(P.get("SELECT ?val WHERE { \
+    ntokens=sum(P.rdf.query("SELECT ?val WHERE { \
             ?foosnapshot facebook:nTokensOverall ?val . \
                     }"))
-    nlikes=sum(P.get("SELECT ?val WHERE { \
+    nlikes=sum(P.rdf.query("SELECT ?val WHERE { \
             ?foosnapshot facebook:nLikes ?val . \
                     }"))
-    ncomments=sum(P.get("SELECT ?val WHERE { \
+    ncomments=sum(P.rdf.query("SELECT ?val WHERE { \
             ?foosnapshot facebook:nComments ?val . \
                     }"))
-    nreactions=nlines+ncomments
+    nreactions=nlikes+ncomments
+    c("got entities counts")
 
     body+="""
 Overview of core entities:
