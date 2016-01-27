@@ -26,7 +26,7 @@ def publishAny(snapshoturi):
     # publish to percolationdir
     # get friendship and interaction of the snapshoturi
     triples=[
-            (snapshoturi, NS.po.rawFile, "?fileurifoo"),
+            (snapshoturi,    NS.po.rawFile, "?fileurifoo"),
             (snapshoturi,    NS.po.snapshotID, "?snapshotid"),
             ("?fileurifoo",    NS.po.expressedStructure, NS.po.FriendshipNetwork),
             ("?fileurifoo",    NS.po.fileFormat, "?fileformat"),
@@ -87,10 +87,10 @@ def publishAll(snapshoturis=None):
     snapshoturis=list(uridict.keys())
     snapshoturis.sort(key=lambda x: uridict[x])
     c("snapuris:",snapshoturis)
-    for snapshoturi in snapshoturis[:7]:
+    for snapshoturi in snapshoturis:
         triplification_class=publishAny(snapshoturi)
         count+=1
-    writePublishingReadme()
+    #writePublishingReadme()
     return triplification_class
 def writePublishingReadme(final_path="./fb/"):
     nfriendship= P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:Snapshot . ?s facebook:isFriendship true . }")
