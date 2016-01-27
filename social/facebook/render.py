@@ -87,16 +87,17 @@ def publishAll(snapshoturis=None):
     snapshoturis=list(uridict.keys())
     snapshoturis.sort(key=lambda x: uridict[x])
     c("snapuris:",snapshoturis)
-    for snapshoturi in snapshoturis:
+    for snapshoturi in snapshoturis[:7]:
         triplification_class=publishAny(snapshoturi)
         count+=1
+    writePublishingReadme()
     return triplification_class
 def writePublishingReadme(final_path="./fb/"):
-    nfriendship=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:FriendshipSnapshot }")
-    ninteraction=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:InteractionSnapshot }")
-    nposts=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:PostsSnapshot }")
-    nego=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:EgoSnapshot }")
-    ngroup=P.get("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:GroupSnapshot }")
+    nfriendship= P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:Snapshot . ?s facebook:isFriendship true . }")
+    ninteraction=P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:InteractionSnapshot }")
+    nposts=      P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:PostsSnapshot }")
+    nego=        P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:EgoSnapshot }")
+    ngroup=      P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:GroupSnapshot }")
     nfriendship_group=nfriendship-nego
 
     body="""::: Open Linked Social Data publication\n
@@ -148,20 +149,20 @@ it provides data about.
                             ?sfoo po:numericID ?numeric_id . \
                     }")
 
-    nfriendships=P.get("SELECT (COUNT(?s) as ?cs)\
+    nfriendships=P.get("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Friendship }")
-    nfriendships_a=P.get("SELECT (COUNT(?s) as ?cs)\
-                    WHERE { ?s a facebook:Friendship .
-                            ?s po:snapshot ?snapfoo .
-                            ?snapfoo po:friendshipsAnonymized true .\
+    nfriendships_a=P.get("SELECT (COUNT(?s) as ?cs) \
+                    WHERE { ?s a facebook:Friendship . \
+                            ?s po:snapshot ?snapfoo . \
+                            ?snapfoo po:friendshipsAnonymized true . \
                     }")
 
-    ninteractions=P.get("SELECT (COUNT(?s) as ?cs)\
+    ninteractions=P.get("SELECT (COUNT(?s) as ?cs) \
                         WHERE { ?s a facebook:Interaction }")
 
-    ninteractions_a=P.get("SELECT (COUNT(?s) as ?cs)\
-                    WHERE { ?s a facebook:Interaction .\
-                            ?s po:snapshot ?snapfoo .
+    ninteractions_a=P.get("SELECT (COUNT(?s) as ?cs) \
+                    WHERE { ?s a facebook:Interaction . \
+                            ?s po:snapshot ?snapfoo . \
                             ?snapfoo po:interactionsAnonymized true }")
 
     nposts=P.get("SELECT (COUNT(?s) as ?cs) WHERE { \
@@ -189,7 +190,7 @@ Overview of core entities:
         nfriendships, nfriendships_a,
         ninteractions, ninteractions_a,
         nposts, ntokens, nreactions, ncomments, nlikes)
-    with open("README","w") as f:
+    with open(final_path+"README","w") as f:
         f.write(body)
 
 def botData(filename):
