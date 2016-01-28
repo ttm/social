@@ -84,7 +84,7 @@ def publishAll(snapshoturis=None):
         uridict[snapshoturi]=0
         for rawFile in P.get(snapshoturi,NS.po.rawFile,strict=True,minimized=True):
             uridict[snapshoturi]+=P.get(rawFile,NS.po.fileSize,minimized=True).toPython()
-    snapshoturis=list(uridict.keys())
+    snapshoturis=[i for i in list(uridict.keys()) if i.endswith(".gml")]
     snapshoturis.sort(key=lambda x: uridict[x])
     c("snapuris:",snapshoturis)
     for snapshoturi in snapshoturis:

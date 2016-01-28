@@ -1,5 +1,5 @@
 import percolation as P, datetime, os, shutil
-from percolation.rdf import NS. a
+from percolation.rdf import NS, a
 po=NS.po
 c=P.check
 class GmlRdfPublishing:

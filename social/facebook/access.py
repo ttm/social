@@ -36,8 +36,9 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     ToDo:
        *) Implement parsing of page files.
        *) Implement parsing of new group files."""
+    platformuri=P.rdf.ic(po.Platform,"#Facebook",context="social_facebook")
     triples=[
-            (NS.po.Facebook, NS.po.dataDir,datadir),
+            (platformuri, po.dataDir,datadir),
             ]
     filenames=os.listdir(datadir)
     # clean filenames: if they are equal except for extension, keep gml file
@@ -53,8 +54,20 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
         snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")
         snapshotid+="_fb" # to avoid having the same id between snapshots from diverse provenance
         if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
-            snapshotclass=NS.po.FacebookEgoFriendshipSnapshot
+            isego=True
+            isgroup=False
+            isfriendship=True
+            isinteraction=False
+            hastext=isposts=False
         else: # group snapshot
+            isego=False
+            isgroup=True
+            if filename.endswith("_interactions.gdf"):
+                ifilename=filename
+                ffilename=filename.replace("_interactions.gdf",".gdf")
+                tfilename=filename.replace("_interactions.gdf",".tab")
+            # every group snapshot should be a friendship snapshot
+            # and can be an interaction and/or a posts snapshot
             if filename.endswith("_interactions.gdf") or filename.endswith(".tab") or (filename.replace(".gdf","_interactions.gdf") in filenames): # with interaction
                 snapshotclass=NS.po.FacebookGroupFriendshipInteractionSnapshot
             else:
