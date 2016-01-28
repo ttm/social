@@ -4,26 +4,13 @@ from .read import readGDF
 c=P.check
 
 class GdfRdfPublishing:
-    """Produce a linked data publication tree from a standard GDF file.
-
-    INPUTS:
-    ======
-    => the data directory path
-    => the file name (filename_friendship) of the friendship network
-    => the file name (filename_interaction) of the interaction network
-    => the final path (final_path) for the tree of files to be created
-    => a path to the script that is initializing this class (scriptpath)
-    => the numeric id (numericid) of the facebook user or group of the network(s)
-    => the string id (stringid) of the facebook user or group of the network(s)
-    => the facebook link (fb_link) of the user or group
-    => the network is from a user (ego==True) or a group (ego==False)
-    => a umbrella directory (umbrella_dir) on which more of data is being published
+    """Produce a linked data publication tree from GDF and TAB files expressing ego and group structures.
 
     OUTPUTS:
     =======
-    the tree in the directory fpath."""
+    the tree in the directory final_path."""
 
-    def __init__(self,snapshoturi,snapshotid,filename_friendships="foo.gdf",\
+    def __init__(self,snapshoturi,snapshotid,filename_friendships=None,\
             filename_interactions=None,filename_posts=None,\
             data_path="../data/facebook/",final_path="./fb/",umbrella_dir="facebook_networks/"):
 
@@ -45,7 +32,7 @@ class GdfRdfPublishing:
         self.nfriends=self.nfriendships=self.ninteracted=self.ninteractions=self.nposts=0
         if self.isfriendship:
             fnet=readGDF(data_path+filename_friendships)     # return networkx graph
-            fnet_=self.rdfGDFFriendshipNetwork(fnet)   # writes to self.friendship_graph
+            fnet_=self.rdfFriendshipNetwork(fnet)   # writes to self.friendship_graph
         if self.isinteraction:
             inet=readGDF(data_path+filename_interactions)    # return networkx graph
             self.rdfInteractionNetwork(inet)      # writes to self.interaction_graph
@@ -61,7 +48,7 @@ class GdfRdfPublishing:
                     exec("self.{}='{}'".format(i,locals_[i]))
                 else:
                     exec("self.{}={}".format(i,locals_[i]))
-        meta=self.makeMetadata()     # return rdflib graph with metadata about the structure
+        self.makeMetadata()     # return rdflib graph with metadata about the structure
         self.writeAllFB()  # write linked data tree
 
     def rdfGroupPosts(self,filename_posts_):
@@ -291,19 +278,17 @@ The script that rendered this data publication is on the script/ directory.\n:::
                          NS.po.onlineFriendshipTTLFile,
                          NS.po.friendshipXMLFileName,
                          NS.po.friendshipTTLFileName,
-                         ]+\
-                         [
                          NS.facebook.nFriends,
                          NS.facebook.nFriendships,
                          NS.facebook.friendshipsAnonymized 
                          ]+\
                          [NS.facebook.frienshipParticipantAttribute]*len(self.friendsvars)
-            self.ffile=ffile="base/"+self.filename_friendships
+            self.ffile="base/"+self.filename_friendships
             self.frdf=self.snapshotid+"Friendship.rdf"
             self.fttl=self.snapshotid+"Friendship.ttl"
             foo["vals"]+=[
-                         self.online_prefix+ffile,
-                         ffile,
+                         self.online_prefix+self.ffile,
+                         self.ffile,
                          self.online_prefix+self.frdf,
                          self.online_prefix+self.fttl,
                          self.frdf,
@@ -321,8 +306,6 @@ The script that rendered this data publication is on the script/ directory.\n:::
                          NS.po.onlineInteractionTTLFile,
                          NS.po.interactionXMLFileName,
                          NS.po.interactionTTLFileName,
-                         ]+\
-                         [
                          NS.facebook.nInteracted,
                          NS.facebook.nInteractions,
                          NS.facebook.interactionsAnonymized 
@@ -350,8 +333,6 @@ The script that rendered this data publication is on the script/ directory.\n:::
                          NS.po.onlinePostsTTLFile,
                          NS.po.postsXMLFileName,
                          NS.po.postsTTLFileName,
-                         ]+\
-                         [
                          NS.facebook.nPosts,
                          NS.facebook.nCharsOverall,
                          NS.facebook.mCharsPostsOverall,
@@ -440,7 +421,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                                   self.desc,
                                   ]+foo["vals"],
                                   self.meta_graph)
-    def rdfGDFFriendshipNetwork(self,fnet):
+    def rdfFriendshipNetwork(self,fnet):
         if sum([("user" in i) for i in fnet["individuals"]["label"]])==len(fnet["individuals"]["label"]):
             # nomes falsos, ids espurios
             self.friendships_anonymized=True
@@ -477,7 +458,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
                 vals_=[el for el in vals_ if el]
             ind=P.rdf.ic(NS.facebook.Participant,name_,self.friendship_graph,self.snapshoturi)
-            P.rdf.triplesScaffolding(ind,insert_uris_+[NS.po.snapshot],vals_+[self.snapshoturi],context=self.friendship_graph)
+            P.rdf.triplesScaffolding(ind,insert_uris_,vals_,context=self.friendship_graph)
         c("escritos participantes")
         friendships_=[fnet["relations"][i] for i in ("node1","node2")]
         i=0
@@ -485,8 +466,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
             uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
             flabel="{}-{}-{}".format(self.snapshotid,uid1,uid2)
             friendship_uri=P.rdf.ic(NS.facebook.Friendship,flabel,self.friendship_graph,self.snapshoturi)
-            P.rdf.triplesScaffolding(friendship_uri,[NS.po.snapshot]+[NS.facebook.member]*2,
-                                        [self.snapshoturi]+uids,self.friendship_graph)
+            P.rdf.triplesScaffolding(friendship_uri,[NS.facebook.member]*2,
+                                        uids,self.friendship_graph)
             if (i%1000)==0:
                 c("friendships",i)
             i+=1
@@ -527,7 +508,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
                 vals_=[el for i,el in enumerate(vals_) if vals_[i]]
             ind=P.rdf.ic(NS.facebook.Participant,name_,self.interaction_graph,self.snapshoturi)
-            P.rdf.triplesScaffolding(ind,insert_uris_+[NS.po.snapshot],vals_+[self.snapshoturi],self.interaction_graph)
+            P.rdf.triplesScaffolding(ind,insert_uris_,vals_,self.interaction_graph)
         c("escritos participantes")
         self.interactionsvarsfoo=["node1","node2","weight"]
         interactions_=[fnet["relations"][i] for i in self.interactionsvarsfoo]
@@ -542,7 +523,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
             ind=P.rdf.ic(NS.facebook.Interaction,iid,self.interaction_graph,self.snapshoturi)
             
             uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
-            P.rdf.triplesScaffolding(ind,[NS.facebook.iFrom,NS.facebook.iTo]+[NS.po.snapshot,NS.facebook.weight],uids+[self.snapshoturi,weight_],self.interaction_graph)
+            P.rdf.triplesScaffolding(ind,[NS.facebook.iFrom,NS.facebook.iTo]+[NS.facebook.weight],uids+[weight_],self.interaction_graph)
             if (i%1000)==0:
                 c("interactions: ", i)
             i+=1
