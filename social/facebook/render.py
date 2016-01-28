@@ -59,15 +59,15 @@ def publishAny(snapshoturi):
 #GDFTriplification(data_path="../data/fb/",filename_friendship="foo.gdf",filename_interaction="foo_interaction.gdf",
 #    final_path="./fb/",scriptpath=None,numericid=None,stringid=None,fb_link=None,isego=None,umbrella_dir=None)
 def publishAll(snapshoturis=None):
-    triples=S.facebook.ontology.snapshots()
-    P.add(triples,context="facebook_snapshots_ontology")
-    P.rdf.inference.performRdfsInference("social_facebook","facebook_snapshots_ontology",social_facebook_inferred,False)
+    #triples=S.facebook.ontology.snapshots()
+    #P.add(triples,context="facebook_snapshots_ontology")
+    #P.rdf.inference.performRdfsInference("social_facebook","facebook_snapshots_ontology",social_facebook_inferred,False)
     if not snapshoturis:
         # get snapshots
         c("getting facebook snapshots, implementation needs verification TTM")
         # make inference from social_facebook with ontology
         # get all snapshots in new graph
-        P.get((None,a,po.Snapshot),context=social_facebook_inferred)
+        snapshots=P.get((None,a,po.Snapshot),context=social_facebook_inferred)
     count=0
     #triples=[
     #        ("?s",a,NS.po.Snapshot),

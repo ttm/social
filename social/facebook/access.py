@@ -43,68 +43,71 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     filenames=os.listdir(datadir)
     # clean filenames: if they are equal except for extension, keep gml file
     snapshots=set()
+    regex=re.compile(r"^(avlab_|ego_|posavlab_|page_)*(.*?)(\d{8})(_interactions|_comments){0,1}\.(gdf|tab|gml)$")
+    regex2=re.compile(r'([A-Z]{2,}(?=[A-Z]|$)|[A-Z][a-z]*)')
     for filename in filenames:
-        if filename.startswith("page_"):
+        prefix,name,date,sufix,format_=regex.findall(filename)[0]
+        if prefix=="page_":
             c("page data currently not supported. Jumping", filename)
             continue
-        filesize=os.path.getsize(datadir+filename)/(10**6) # size in megabytes
-        fileformat=theFormat(filename)
-#        snapshotclass,snapshotid,snapshoturi=theSnapshotIDURI(filename)
-
-        snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")
-        snapshotid+="_fb" # to avoid having the same id between snapshots from diverse provenance
         if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
             isego=True
             isgroup=False
             isfriendship=True
             isinteraction=False
-            hastext=isposts=False
+            isposts=False
+            expressed_structure="ego_friendship" # for the file
         else: # group snapshot
             isego=False
             isgroup=True
-            if filename.endswith("_interactions.gdf"):
-                ifilename=filename
-                ffilename=filename.replace("_interactions.gdf",".gdf")
-                tfilename=filename.replace("_interactions.gdf",".tab")
-            # every group snapshot should be a friendship snapshot
-            # and can be an interaction and/or a posts snapshot
-            if filename.endswith("_interactions.gdf") or filename.endswith(".tab") or (filename.replace(".gdf","_interactions.gdf") in filenames): # with interaction
-                snapshotclass=NS.po.FacebookGroupFriendshipInteractionSnapshot
+            ffilename=prefix+name+date+".gdf"
+            ifilename=prefix+name+date+"_interactions.gdf"
+            tfilename=prefix+name+date+".tab"
+            isfriendship=ffilename in filenames
+            isinteraction=ifilename in filenames
+            isposts=tfilename in filenames
+            if filename==ffilename:
+                expressed_structure="group_friendship" # for the file
+            elif filename==ifilename:
+                expressed_structure="group_interaction" # for the file
+            elif format_=="tab":
+                expressed_structure="group_posts" # for the file
             else:
-                snapshotclass=NS.po.FacebookGroupFriendshipSnapshot
-
+                raise NameError("filename structure not understood")
+        filesize=os.path.getsize(datadir+filename)/(10**6) # size in megabytes
+        snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")+"_fb"
         snapshoturi=snapshotclass+"#"+snapshotid
 
-        expressed_structure_uri=theStructure(filename) # group/ego and friendship/interaction
-        date_obtained=theDate(filename)
-        name=theName(filename)
+        date_obtained=datetime.datetime(int(date[4:]),int(date[2:4]),int(date[:2]))
+        name_humanized=" ".join(regex2.findall(name)[0])
         fileuri=NS.po.File+"#"+snapshotid+"-_file_-"+filename
+        triples+=[
+                 (snapshoturi, a, po.Snapshot),
+                 (snapshoturi, NS.po.snapshotID, snapshotid),
+                 (snapshoturi, NS.po.humanizedName, name_humanized),
+                 (snapshoturi, NS.po.dateObtained, date_obtained),
+                 (snapshoturi, NS.po.rawFile, fileuri),
+                 (fileuri,    NS.po.fileSize, filesize),
+                 (fileuri,    NS.po.fileName, filename),
+                 (fileuri,    NS.po.fileFormat, format_),
+                 (fileuri,    NS.po.expressedStructure, expressed_structure),
+                 ]
+        # get metadata for files
+        metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
+        if metadata[0]:
+            triples+=[(snapshoturi,po.numericID,metadata[0])]
+        if metadata[1]:
+            triple+=[(snapshoturi,po.stringID,metadata[1])]
+        if len(metadata)==3:
+            if not metadata[2]:
+                c("group data without a publishing link: ",filename)
+            else:
+                triples+=[(snapshoturi,po.publishedURL,metadata[2])]
         note=theNote(filename) # for avlab and posavlab
         if note:
             triples+=[
                      (snapshoturi,NS.rdfs.comment,note),
                      ]
-        triples+=[
-                 (snapshoturi, a, snapshotclass),
-                 (snapshoturi, NS.po.snapshotID, snapshotid),
-                 (snapshoturi, NS.po.humanizedName, name),
-                 (snapshoturi, NS.po.dateObtained, date_obtained),
-                 (snapshoturi, NS.po.rawFile, fileuri),
-                 (fileuri,    NS.po.fileSize, filesize),
-                 (fileuri,    NS.po.fileName, filename),
-                 (fileuri,    NS.po.fileFormat, fileformat),
-                 (fileuri,    NS.po.expressedStructure, expressed_structure_uri),
-                 ]
-        # get metadata for files
-        metadata=theMetadata(filename)
-        if metadata[0]:
-            triples+=[(snapshoturi,po.numericID,metadata[0])]
-        if metadata[1]:
-            triples+=[(snapshoturi,po.stringID,metadata[1])]
-        if len(metadata)==3:
-            if not metadata[2]:
-                c("group data without a publishing link: ",filename)
-            triples+=[(snapshoturi,po.publishedURL,metadata[2])]
         snapshots.add(snapshoturi)
     # data about the overall data in percolation graph
     nfiles=len(filenames)
@@ -118,36 +121,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     c("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
     print("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
     return snapshots
-def theMetadata(filename):
-    metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
-    return metadata
 
-def theName(filename):
-    name=re.findall(r"(avlab_|posavlab_|ego_)*([a-zA-Z]*)\d*[\b_interactions.gdf\b|\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0][1]
-    pattern=r'([A-Z]{2,}(?=[A-Z]|$)|[A-Z][a-z]*)'
-    name=" ".join(re.findall(pattern, name))
-    return name
-def theFormat(filename):
-    if filename.endswith(".tab"):
-        return "tab"
-    elif filename.endswith(".gdf"):
-        return "gdf"
-    elif filename.endswith(".gml"):
-        return "gml"
-def theDate(filename):
-    day,month,year=re.findall(r".*(\d\d)(\d\d)(\d\d\d\d)[\b_interactions\b]*[\b\.gdf\b|\b\.tab\b|\b\.gml\b]",filename)[0]
-    datetime_=datetime.date(*[int(i) for i in (year,month,day)])
-    return datetime_
-def theStructure(filename):
-    if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
-        uri=NS.po.EgoFriendshipNetwork
-    elif filename.endswith(".tab"):
-        uri=NS.po.GroupPosts
-    elif filename.endswith("_interactions.gdf"):
-        uri=NS.po.GroupInteractionNetwork
-    elif filename.endswith(".gdf"):
-        uri=NS.po.GroupFriendshipNetwork
-    return uri
 def theNote(filename):
     if filename.startswith("avlab_"):
         return "snapshot acquired during AVLAB in Feb/21-3,25/2014"
@@ -157,4 +131,3 @@ class MeBot:
     """start browser bot with user credentials"""
     # use socialLegacy bot
     pass
-
