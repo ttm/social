@@ -71,16 +71,63 @@ class PicklePublishing:
         if self.pickle_filename2:
             tweets,fopen=P.utils.pickleReadChunks(data_path+self.pickle_filename2,tweets,5000) # limit chuck to 5k tweets
         chunck_count=0
+        self.tweets=tweets
         while tweets:
             c("rendering tweets, chunk:",chunck_count,"ntweets:",len(tweets))
             for tweet in tweets:
-                tweetid=tweet["id_str"]
+                tweetid_=tweet["id_str"]
+                userid_=tweet["user"]["id_str"]
+                userid=self.snapshotid+"-"+userid_
+                tweetid=userid_+"-"+tweetid_
                 tweeturi=P.rdf.ic(po.Tweet,tweetid,self.tweet_graph,self.snapshoturi)
+                useruri=P.rdf.ic(po.Tweet,userid,self.tweet_graph,self.snapshoturi)
                 triples=[
                         (tweeturi,po.stringID,tweetid),
+                        (tweeturi,po.createdAt,dateutil.parser.parse(tweet["created_at"])),
                         (tweeturi,po.message,tweet["text"]),
                         (tweeturi,po.retweetCount,tweet["retweet_count"]),
+                        (tweeturi,po.language,tweet["lang"]),
+                        (tweeturi,po.author,useruri),
+                        (useruri,po.stringID,tweet["user"]["screen_name"]),
+                        (useruri,po.numericID,tweet["user"]["id_str"]),
+                        (useruri,po.favouritesCount,tweet["user"]["favourites_count"]),
+                        (useruri,po.followersCount,tweet["user"]["followers_count"]),
+                        (useruri,po.followersCount,tweet["user"]["friends_count"]),
+                        (useruri,po.language,tweet["user"]["lang"]),
+                        (useruri,po.listedCount,tweet["user"]["listed_count"]),
+                        (useruri,po.name,tweet["user"]["name"]),
+                        (useruri,po.statusesCount,tweet["user"]["statuses_count"]),
+                        (useruri,po.createdAt,dateutil.parser.parse(tweet["user"]["created_at"])),
+                        (useruri,po.utcOffset,tweet["user"]["utc_offset"]),
                         ]
+                if "retweeted_status" in dir(tweet):
+                    tweet0=tweet["retweeted_status"]
+                    userid0_=tweet0["user"]["id_str"]
+                    userid0=self.snapshotid+"-"+userid0_
+                    tweetid0_=tweet0["id_str"]
+                    tweetid0=userid0_+"-"+tweetid_
+                    tweeturi0=P.rdf.ic(po.Tweet,tweetid0,self.tweet_graph,self.snapshoturi)
+                    useruri0=P.rdf.ic(po.Tweet,userid0,self.tweet_graph,self.snapshoturi)
+                    triples+=[
+                             (tweeturi0,po.stringID,tweetid0),
+                             (tweeturi0,po.createdAt,dateutil.parser.parse(tweet0["created_at"])),
+                             (tweeturi0,po.message,tweet0["text"]),
+                             (tweeturi0,po.retweetCount,tweet0["retweet_count"]),
+                             (tweeturi0,po.language,tweet0["lang"]),
+                             (tweeturi0,po.author,useruri0),
+                             (useruri0,po.stringID,tweet0["user"]["screen_name"]),
+                             (useruri0,po.numericID,tweet0["user"]["id_str"]),
+                             (useruri0,po.favouritesCount,tweet0["user"]["favourites_count"]),
+                             (useruri0,po.followersCount,tweet0["user"]["followers_count"]),
+                             (useruri0,po.friendsCount,tweet0["user"]["friends_count"]),
+                             (useruri0,po.language,tweet0["user"]["lang"]),
+                             (useruri0,po.listedCount,tweet0["user"]["listed_count"]),
+                             (useruri0,po.name,tweet0["user"]["name"]),
+                             (useruri0,po.statusesCount,tweet0["user"]["statuses_count"]),
+                             (useruri0,po.createdAt,dateutil.parser.parse(tweet0["user"]["created_at"])),
+                             (useruri0,po.utcOffset,tweet0["user"]["utc_offset"]),
+                             (tweeturi0,po.retweet,tweeturi),
+                             ]
                 tweets=[]
                 if self.pickle_filename2:
                     tweets,fopen=P.utils.pRead3(None,tweets,fopen)
