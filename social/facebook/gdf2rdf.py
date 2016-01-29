@@ -496,15 +496,19 @@ The script that rendered this data publication is on the script/ directory.\n:::
         self.ninteracted=len(insert["vals"][0])
         insert_uris=insert["uris"][:]
         for vals_ in zip(*insert["vals"]):
-            name_="{}-{}".format(self.snapshotid,vals_[iname])
             if self.interactions_anonymized:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if i not  in (ilabel,iname) and vals_[i]]
-                vals_=[el for i,el in enumerate(vals_) if i not  in (ilabel,iname) and vals_[i]]
+                vals__=[el for i,el in enumerate(vals_) if i not  in (ilabel,iname) and vals_[i]]
             else:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
-                vals_=[el for i,el in enumerate(vals_) if vals_[i]]
+                vals__=[el for i,el in enumerate(vals_) if vals_[i]]
+            name_="{}-{}".format(self.snapshotid,vals_[iname])
             ind=P.rdf.ic(po.Participant,name_,self.interaction_graph,self.snapshoturi)
-            P.rdf.triplesScaffolding(ind,insert_uris_,vals_,self.interaction_graph)
+            if vals__:
+                P.rdf.triplesScaffolding(ind,insert_uris_,vals__,self.interaction_graph)
+            else:
+                c("anonymous participant without attributes (besides local id). snapshotid:",self.snapshotid,"values:",vals_)
+                
         c("escritos participantes")
         self.interactionsvarsfoo=["node1","node2","weight"]
         interactions_=[fnet["relations"][i] for i in self.interactionsvarsfoo]
