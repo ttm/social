@@ -1,3 +1,6 @@
+import percolation as P
+from percolation.rdf import NS, a, po
+c=P.check
 def publishAll(snapshoturis=None):
     """express tweets as RDF for publishing"""
     if not snapshoturis:
@@ -31,29 +34,29 @@ def publishAny(snapshoturi):
     return PicklePublishing(snapshoturi,snapshotid,filenames)
 
 class PicklePublishing:
-    def __init__(self,snapshoturi,snapshotid,filename="foo.pickle",\
+    def __init__(self,snapshoturi,snapshotid,filenames=("foo.pickle",),\
             data_path="../data/twitter/",final_path="./twitter_snapshots/",umbrella_dir="twitter_snapshots/"):
         if len(filenames)==2:
             pickle_filename1=filenames[0]
             pickle_filename2=filenames[1]
-        elif filenames[0].count("_")==0:
+        elif filenames[0].count("_")==1:
             pickle_filename1=filenames[0]
             pickle_filename2=""
-        elif filenames[0].count("_")==1:
+        elif filenames[0].count("_")==2:
             pickle_filename1=""
             pickle_filename2=filenames[0]
-        online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,self.snapshotid)
+        online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,snapshotid)
         isego=True
         isgroup=False
         isfriendship=True
         isinteraction=False
         hastext=False
         friendships_anonymized=True
-        tweets_graph="social_tweets"
+        tweet_graph="social_tweets"
         meta_graph="social_twitter_meta"
         social_graph="social_twitter"
-        P.context(self.tweets_graph,"remove")
-        P.context(self.meta_graph,"remove")
+        P.context(tweet_graph,"remove")
+        P.context(meta_graph,"remove")
         locals_=locals().copy()
         for i in locals_:
             if i !="self":
@@ -64,19 +67,25 @@ class PicklePublishing:
     def rdfTweets(self):
         tweets=[]
         if self.pickle_filename1:
-            tweets+=P.utils.pRead2( self.data_path+self.fname)[0]
+            tweets+=P.utils.pickleReadFile( self.data_path+self.pickle_filename1)[0]
         if self.pickle_filename2:
-            tweets,fopen=P.utils.pRead3(data_path+fname__,tweets,5000) # limit chuck to 5k tweets
-        
-
-        with open(data_path+filename) as f:
-            lines=f.readlines()
-        friendship_network=x.readwrite.gml.parse_gml_lines(lines,"id",None)
-        locals_=locals().copy()
-        for i in locals_:
-            if i !="self":
-                exec("self.{}={}".format(i,i))
-        self.rdfFriendshipNetwork(friendship_network)
-        self.makeMetadata()
-        self.writeAllFB()
-
+            tweets,fopen=P.utils.pickleReadChunks(data_path+self.pickle_filename2,tweets,5000) # limit chuck to 5k tweets
+        chunck_count=0
+        while tweets:
+            c("rendering tweets, chunk:",chunck_count,"ntweets:",len(tweets))
+            for tweet in tweets:
+                tweetid=tweet["id_str"]
+                tweeturi=P.rdf.ic(po.Tweet,tweetid,self.tweet_graph,self.snapshoturi)
+                triples=[
+                        (tweeturi,po.stringID,tweetid),
+                        (tweeturi,po.message,tweet["text"]),
+                        (tweeturi,po.retweetCount,tweet["retweet_count"]),
+                        ]
+                tweets=[]
+                if self.pickle_filename2:
+                    tweets,fopen=P.utils.pRead3(None,tweets,fopen)
+                chunck_count+=1
+    def makeMetadata(self):
+        pass
+    def writeAllTW(self):
+        pass
