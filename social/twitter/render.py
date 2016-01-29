@@ -22,33 +22,54 @@ def publishAny(snapshoturi):
             ("?fileurifoo",    po.fileName, "?filename"),
             ]
     filenames=P.get(triples)
+    filenames.sort()
     triples=[
             (snapshoturi,      po.rawFile, "?fileurifoo"),
             (snapshoturi,      po.snapshotID, "?snapshotid"),
             ]
     snapshotid=P.get(triples)
-    return PicklePublishing(snapshoturi,snapshotid,filename)
+    return PicklePublishing(snapshoturi,snapshotid,filenames)
 
 class PicklePublishing:
     def __init__(self,snapshoturi,snapshotid,filename="foo.pickle",\
             data_path="../data/twitter/",final_path="./twitter_snapshots/",umbrella_dir="twitter_snapshots/"):
-        self.friendship_graph="social_facebook_friendships"
-        self.meta_graph="social_facebook_meta"
-        self.social_graph="social_facebook"
-        P.context(self.friendship_graph,"remove")
+        if len(filenames)==2:
+            pickle_filename1=filenames[0]
+            pickle_filename2=filenames[1]
+        elif filenames[0].count("_")==0:
+            pickle_filename1=filenames[0]
+            pickle_filename2=""
+        elif filenames[0].count("_")==1:
+            pickle_filename1=""
+            pickle_filename2=filenames[0]
+        online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,self.snapshotid)
+        isego=True
+        isgroup=False
+        isfriendship=True
+        isinteraction=False
+        hastext=False
+        friendships_anonymized=True
+        tweets_graph="social_tweets"
+        meta_graph="social_twitter_meta"
+        social_graph="social_twitter"
+        P.context(self.tweets_graph,"remove")
         P.context(self.meta_graph,"remove")
-        self.snapshotid=snapshotid
-        self.snapshoturi=snapshoturi
-        self.online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,self.snapshotid)
-        self.isego=True
-        self.isgroup=False
-        self.isfriendship=True
-        self.isinteraction=False
-        self.hastext=False
-        self.friendships_anonymized=True
+        locals_=locals().copy()
+        for i in locals_:
+            if i !="self":
+                exec("self.{}={}".format(i,i))
+        self.rdfTweets()
+        self.makeMetadata()
+        self.writeAllTW()
+    def rdfTweets()
+        tweets=[]
+        if self.pickle_filename1:
+            tweets+=P.utils.pRead2( self.data_path+.self.fname)[0]
+        if self.pickle_filename2:
+            tweets,fopen=P.utils.pRead3(data_path+fname__,tweets,5000) # limit chuck to 5k tweets
+        
 
-        #friendship_network=x.read_gml(data_path+filename_friendships)
-        with open(data_path+filename_friendships) as f:
+        with open(data_path+filename) as f:
             lines=f.readlines()
         friendship_network=x.readwrite.gml.parse_gml_lines(lines,"id",None)
         locals_=locals().copy()
