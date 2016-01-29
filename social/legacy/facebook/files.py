@@ -36,7 +36,7 @@ data=[ # AVLAB
 ("JoaoMeirelles25022014.gdf",     None,"1194439813","joao.meirelles.10"),
 ("LucasOliveira26022014.gdf",     None,"1060987164",0),
 ('BarthorLaZule22022014.gdf',None,"100000077490764","barthor.la.zule"),
-("FideoFuturalista22022014.gdf",     None,None,None),
+("FideoFuturalista22022014.gdf",     None,"100005778367345","fideo.futuralista"),
 ]
 
 for snapshot in data:
@@ -63,7 +63,7 @@ data=[
         ("CamilaBatista23022014.gml",None,"100001707143512","camila.batista.3382"),
         ("DanielPenalva18022013.gml",None,"100000077490764","barthor.la.zule"),
         ("GabrielaThume19022013.gml",None,"100002011676407","gabithume"),
-        ("GrahamForrest28012013.gml",None,0,0),
+        ("GrahamForrest28012013.gml",None,"1366295371","graham.forrest"),
         ("LailaManuelle17012013.gml",None,"1713144485","laila.manuelle"),
         ("LarissaAnzoategui20022013.gml",None,"1760577842","larissa.chogui"),
         ("LuisCirne07032013.gml",None,"717903828","lufcirne"),
@@ -115,7 +115,7 @@ data=[("AdornoNaoEhEnfeite29032013.gdf","AdornoNaoEhEnfeite29032013_interacoes.g
 ("Tecnoxamanismo15032014.gdf","Tecnoxamanismo15032014_interactions.gdf","505090906188661",0,["https://www.facebook.com/groups/505090906188661/permalink/733144993383250/","https://www.facebook.com/groups/505090906188661/permalink/733157380048678/"]),
 ("Latesfip08032014.gdf","Latesfip08032014_interactions.gdf","183557128478424",0,"https://www.facebook.com/groups/183557128478424/permalink/266610616839741/"),
 ("EducacoesEAprendizagensXXI02032013.gdf",None,None,"geaxxi","https://www.facebook.com/groups/geaxxi/permalink/433229973421182/"),
-("RedeCulturaDigitalIndigena08042013.gdf",None,None,"",""),
+("RedeDeCulturaDigitalIndigena08042013.gdf",None,None,"RededeCulturaDigitalIndigena",""),
 ]
 
 for snapshot in data:

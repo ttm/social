@@ -50,13 +50,37 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
         if prefix=="page_":
             c("page data currently not supported. Jumping", filename)
             continue
+        filesize=os.path.getsize(datadir+filename)/(10**6) # size in megabytes
+        snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")+"_fb"
+        snapshoturi=po.FacebookSnapshot+"#"+snapshotid # put on ontology as subclass of po:Snapshot
+        date_obtained=datetime.datetime(int(date[4:]),int(date[2:4]),int(date[:2]))
+        name_humanized=" ".join(regex2.findall(name)[0])
+        metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
+        if metadata[0]:
+            triples+=[(snapshoturi,po.numericID,metadata[0])]
+        if metadata[1]:
+            triples+=[(snapshoturi,po.stringID,metadata[1])]
+        if len(metadata)==3:
+            if not metadata[2]:
+                c("group data without a publishing link: ",filename)
+            else:
+                triples+=[(snapshoturi,po.publishedURL,metadata[2])]
         if filename.endswith(".gml") or any(filename.startswith(i) for i in ("ego_","avlab_","posavlab_")):
             isego=True
             isgroup=False
             isfriendship=True
             isinteraction=False
             isposts=False
-            expressed_structure="ego_friendship" # for the file
+            expressed_classes=(po.Friendship,po.Participant)
+
+            if metadata[0]:
+                expressed_reference=po.FacebookParticipant+"#"+metadata[0]
+            else:
+                if "Mirtes" in filename:
+                    expressed_reference=po.FacebookParticipant+"#"+"anon_mirtes"
+                else:
+                    raise ValueError("Numeric ID is needed for friendship networks")
+            triples+=[(expressed_reference,a,po.FacebookParticipant),]
         else: # group snapshot
             isego=False
             isgroup=True
@@ -66,43 +90,43 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             isfriendship=ffilename in filenames
             isinteraction=ifilename in filenames
             isposts=tfilename in filenames
+            if metadata[0]:
+                expressed_reference=po.FacebookGroup+"#"+metadata[0]
+            else:
+                if metadata[1]:
+                    expressed_reference=po.FacebookGroup+"#"+metadata[1]
+                else:
+                    raise ValueError("Numeric or string ID is needed for group networks")
+            triples+=[(expressed_reference,a,po.FacebookGroup)]
             if filename==ffilename:
-                expressed_structure="group_friendship" # for the file
+                expressed_classes=(po.Friendship,po.Participant)
             elif filename==ifilename:
-                expressed_structure="group_interaction" # for the file
+                expressed_classes=(po.Interaction,po.Participant)
             elif format_=="tab":
-                expressed_structure="group_posts" # for the file
+                expressed_classes=(po.Post,)
             else:
                 raise NameError("filename structure not understood")
-        filesize=os.path.getsize(datadir+filename)/(10**6) # size in megabytes
-        snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")+"_fb"
-        snapshoturi=snapshotclass+"#"+snapshotid
 
-        date_obtained=datetime.datetime(int(date[4:]),int(date[2:4]),int(date[:2]))
-        name_humanized=" ".join(regex2.findall(name)[0])
         fileuri=NS.po.File+"#"+snapshotid+"-_file_-"+filename
         triples+=[
+                 (snapshoturi, po.isEgo, isego),
+                 (snapshoturi, po.isGroup, isgroup),
+                 (snapshoturi, po.isFriendship, isfriendship),
+                 (snapshoturi, po.isInteraction, isinteraction),
+                 (snapshoturi, po.isPost, isposts),
                  (snapshoturi, a, po.Snapshot),
-                 (snapshoturi, NS.po.snapshotID, snapshotid),
-                 (snapshoturi, NS.po.humanizedName, name_humanized),
-                 (snapshoturi, NS.po.dateObtained, date_obtained),
-                 (snapshoturi, NS.po.rawFile, fileuri),
-                 (fileuri,    NS.po.fileSize, filesize),
-                 (fileuri,    NS.po.fileName, filename),
-                 (fileuri,    NS.po.fileFormat, format_),
-                 (fileuri,    NS.po.expressedStructure, expressed_structure),
+                 (snapshoturi, a, po.FacebookSnapshot),
+                 (snapshoturi, po.snapshotID, snapshotid),
+                 (snapshoturi, po.humanizedName, name_humanized),
+                 (snapshoturi, po.dateObtained, date_obtained),
+                 (snapshoturi, po.rawFile, fileuri),
+                 (snapshoturi, po.expressedReference, expressed_reference),
+                 (fileuri,     po.fileSize, filesize),
+                 (fileuri,     po.fileName, filename),
+                 (fileuri,     po.fileFormat, format_),
+                 ]+[
+                 (fileuri,    po.expressedClass, expressed_class) for expressed_class in expressed_classes
                  ]
-        # get metadata for files
-        metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
-        if metadata[0]:
-            triples+=[(snapshoturi,po.numericID,metadata[0])]
-        if metadata[1]:
-            triple+=[(snapshoturi,po.stringID,metadata[1])]
-        if len(metadata)==3:
-            if not metadata[2]:
-                c("group data without a publishing link: ",filename)
-            else:
-                triples+=[(snapshoturi,po.publishedURL,metadata[2])]
         note=theNote(filename) # for avlab and posavlab
         if note:
             triples+=[
@@ -119,7 +143,17 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     P.context("social_facebook","remove")
     P.add(triples,context="social_facebook")
     c("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
-    print("parsed {} facebook files ({} snapshots) are in percolation graph and 'social_facebook' context".format(nfiles,nsnapshots))
+    c("percolation graph have {} triples ({} in social_facebook context)".format(len(P.percolation_graph),len(P.context("social_facebook"))))
+    negos=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isEgo true } ")
+    ngroups=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isGroup true } ")
+    nfriendships=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isFriendship true } ")
+    ninteractions=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isInteraction true } ")
+    nposts=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isPost true } ")
+    totalsize=sum(P.query(r" SELECT ?size WHERE { ?s po:fileSize ?size } "))
+    c("""{} are ego snapshots, {} are group snapshots
+{} have a friendship network. {} have an interaction network. {} have post texts and reaction counts
+Total raw data size is {:.2f}MB""".format(negos,ngroups,nfriendships,ninteractions,nposts,totalsize))
+
     return snapshots
 
 def theNote(filename):

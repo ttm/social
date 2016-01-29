@@ -3,6 +3,7 @@ from .gml2rdf import GmlRdfPublishing
 from percolation.rdf import NS, a
 import percolation as P, social as S
 c=P.check
+po=NS.po
 
 social_facebook_inferred="social_facebook"
 def gdfFile(filename):
@@ -26,24 +27,24 @@ def publishAny(snapshoturi):
     # publish to percolationdir
     # get friendship and interaction of the snapshoturi
     triples=[
-            (snapshoturi,    NS.po.rawFile, "?fileurifoo"),
-            (snapshoturi,    NS.po.snapshotID, "?snapshotid"),
-            ("?fileurifoo",    NS.po.expressedStructure, NS.po.FriendshipNetwork),
-            ("?fileurifoo",    NS.po.fileFormat, "?fileformat"),
-            ("?fileurifoo",    NS.po.fileName, "?filename"),
+            (snapshoturi,      po.rawFile, "?fileurifoo"),
+            (snapshoturi,      po.snapshotID, "?snapshotid"),
+            ("?fileurifoo",    po.expressedClass, po.Friendship),
+            ("?fileurifoo",    po.fileFormat, "?fileformat"),
+            ("?fileurifoo",    po.fileName, "?filename"),
             ]
-    fileformat,friendship_filename,snapshotid=P.get(triples,context=social_facebook_inferred)
+    fileformat,friendship_filename,snapshotid=P.get(triples)
 
     triples=[
             (snapshoturi, NS.po.rawFile, "?fileurifoo"),
-            ("?fileurifoo",    NS.po.expressedStructure, NS.po.InteractionNetwork),
+            ("?fileurifoo",    po.expressedClass, po.Interaction),
             ("?fileurifoo",    NS.po.fileName, "?filename"),
             ]
     interaction_filename=P.get(triples,context=social_facebook_inferred)
 
     triples=[
             (snapshoturi, NS.po.rawFile, "?fileurifoo"),
-            ("?fileurifoo",    NS.po.expressedStructure, NS.po.GroupPosts),
+            ("?fileurifoo",    po.expressedClass, po.Post),
             ("?fileurifoo",    NS.po.fileName, "?filename"),
             ]
     posts_filename=P.get(triples,context=social_facebook_inferred)
@@ -54,7 +55,7 @@ def publishAny(snapshoturi):
         return GdfRdfPublishing(snapshoturi,snapshotid,friendship_filename,interaction_filename,posts_filename)
     elif fileformat=="gml":
         c("publish gml", snapshoturi)
-        GMLRDFPublishing(datadir,friendship_filename,snapshoturi,snapshotid)
+        return GmlRdfPublishing(snapshoturi,snapshotid,friendship_filename)
 
 #GDFTriplification(data_path="../data/fb/",filename_friendship="foo.gdf",filename_interaction="foo_interaction.gdf",
 #    final_path="./fb/",scriptpath=None,numericid=None,stringid=None,fb_link=None,isego=None,umbrella_dir=None)
@@ -63,30 +64,17 @@ def publishAll(snapshoturis=None):
     #P.add(triples,context="facebook_snapshots_ontology")
     #P.rdf.inference.performRdfsInference("social_facebook","facebook_snapshots_ontology",social_facebook_inferred,False)
     if not snapshoturis:
-        # get snapshots
         c("getting facebook snapshots, implementation needs verification TTM")
-        # make inference from social_facebook with ontology
-        # get all snapshots in new graph
-        snapshots=P.get((None,a,po.Snapshot),context=social_facebook_inferred)
-    count=0
-    #triples=[
-    #        ("?s",a,NS.po.Snapshot),
-    #        ("?s",NS.po.rawFile,"?rawfoo"),
-    #        ("?rawfoo",NS.po.expressedStructure,NS.po.GroupPosts),
-    #        ("?rawfoo",NS.po.fileSize,"?flesize"),
-    #        ]
-    ##snapshoturis=P.get(triples,modifier1=" ORDER BY DESC(?filesizefoo) ") # nao funciona
-    #snapshoturis=P.get(triples)
-    #snapshoturis.sort(key=lambda x: x[0])
-    #snapshoturis=[i[1] for i in snapshoturis]
-    uridict={}
-    for snapshoturi in P.get(None,a,NS.po.Snapshot,minimized=True):
-        uridict[snapshoturi]=0
-        for rawFile in P.get(snapshoturi,NS.po.rawFile,strict=True,minimized=True):
-            uridict[snapshoturi]+=P.get(rawFile,NS.po.fileSize,minimized=True).toPython()
-    snapshoturis=[i for i in list(uridict.keys()) if i.endswith(".gml")]
-    snapshoturis.sort(key=lambda x: uridict[x])
+        uridict={}
+        for snapshoturi in P.get(None,a,NS.po.Snapshot,minimized=True):
+            uridict[snapshoturi]=0
+            for rawFile in P.get(snapshoturi,NS.po.rawFile,strict=True,minimized=True):
+                uridict[snapshoturi]+=P.get(rawFile,NS.po.fileSize,minimized=True).toPython()
+        snapshoturis=[i for i in list(uridict.keys()) if i.endswith(".gml")]
+        snapshoturis.sort(key=lambda x: uridict[x])
+#    snapshoturis=[i for i in snapshoturis if i.endswith("gml")]
     c("snapuris:",snapshoturis)
+    count=0
     for snapshoturi in snapshoturis:
         triplification_class=publishAny(snapshoturi)
         count+=1

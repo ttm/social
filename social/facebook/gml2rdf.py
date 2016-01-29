@@ -1,4 +1,4 @@
-import percolation as P, datetime, os, shutil
+import percolation as P, social as S, networkx as x, datetime, os, shutil
 from percolation.rdf import NS, a
 po=NS.po
 c=P.check
@@ -25,16 +25,13 @@ class GmlRdfPublishing:
         self.isinteraction=False
         self.hastext=False
         self.friendships_anonymized=True
-        self.nfriends=self.nfriendships=self.ninteracted=self.ninteractions=self.nposts=0
 
         friendship_network=x.read_gml(data_path+filename_friendships)
         locals_=locals().copy()
         for i in locals_:
             if i !="self":
-                if isinstance(locals_[i],str):
-                    exec("self.{}='{}'".format(i,locals_[i]))
-                else:
-                    exec("self.{}={}".format(i,locals_[i]))
+                exec("self.{}={}".format(i,i))
+
         self.rdfFriendshipNetwork(friendship_network)
         self.makeMetadata()
         self.writeAllFB()
@@ -65,6 +62,12 @@ class GmlRdfPublishing:
                  (self.snapshoturi,po.nMetaTriples,ntriples+1)      ,
                  ]
         P.add(triples,context=self.meta_graph)
+        g.namespace_manager.bind("po",NS.po)
+        g.namespace_manager.bind("facebook",NS.facebook)
+        g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
+        g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
+        c("serialized meta")
+
         if not os.path.isdir(self.final_path_+"scripts"):
             os.mkdir(self.final_path_+"scripts")
         shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py",self.final_path_+"scripts/triplify.py")
@@ -75,20 +78,20 @@ class GmlRdfPublishing:
 
         originals="base/{}".format(self.filename_friendships)
         tfriendship="""\n\n{nf} individuals with metadata {fvars}
-and {nfsiendships constitute the friendship network in the RDF/XML file:
+and {nfs} friendships constitute the friendship network in the RDF/XML file:
 {frdf} \in the Turtle file: \n{fttl}
-(anonymi {fan}).""".format(
+(anonymized {fan}).""".format(
                         nf=self.nfriends,fvars=str(self.friendsvars),
                         nfs=self.nfriendships,
                         frdf=self.frdf,fttl=self.fttl,
                         fan=self.friendships_anonymized,
                     )
-        datetime_string=P.get(r.URIRef(self.snapshoturi),po.dateObtained,None,context="social_facebook")[2]
+        datetime_string=P.get(self.snapshoturi,po.dateObtained,None,context="social_facebook")[2]
 
         with open(self.final_path_+"README","w") as f:
             f.write("""::: Open Linked Social Data publication
 \nThis repository is a RDF data expression of the facebook
-snapshot {snapid} collected around {date}.{tfriendship}{tinteraction}{tposts}
+snapshot {snapid} collected around {date}.{tfriendship}
 \nMetadata for discovery in the RDF/XML file:
 {mrdf} \nor in the Turtle file:\n{mttl}
 \nOriginal file(s):
@@ -105,8 +108,6 @@ Has text/posts: {ist}
 The script that rendered this data publication is on the script/ directory.\n:::""".format(
                 snapid=self.snapshotid,date=datetime_string,
                         tfriendship=tfriendship,
-                        tinteraction=tinteraction,
-                        tposts=tposts,
                         mrdf=self.mrdf,
                         mttl=self.mttl,
                         origs=originals,
@@ -120,26 +121,25 @@ The script that rendered this data publication is on the script/ directory.\n:::
                         ))
     def rdfFriendshipNetwork(self,friendship_network):
         c("test variables to be the expected")
-        for node in friendship_network.nodes():
+        for node_ in friendship_network.nodes(data=True):
+            node=node_[1]
             assert len(node)==6
             assert isinstance(node["id"],int)
             assert isinstance(node["agerank"],int)
             assert isinstance(node["wallcount"],int)
             assert isinstance(node["label"],str) and len(node["label"])
             assert isinstance(node["locale"],str) and len(node["locale"])
-            assert isinstance(node["sex"],str) and len(node["sex"])
+            assert isinstance(node["sex"],str)
         for edge in friendship_network.edges(data=True):
             assert isinstance(edge[0],int)
             assert isinstance(edge[1],int)
             assert isinstance(edge[2],dict) and len(edge[2])==0
+        self.friendsvars=["name","ageRank","wallCount","locale","sex"]
         c("create uris for each partcipant, with po:Participant#snapshoturi-localid")
-        for node in friendship_network.nodes():
-            localid=node["id"]
-            agerank=node["agerank"]
-            wallcount=node["wallcount"]
-            name=node["label"]
-            locale=node["locale"]
-            sex=node["sex"]
+        count=0
+        for node_ in friendship_network.nodes(data=True):
+            node=node_[1]
+            localid=str(node["id"])
             participant_uri=P.rdf.ic(po.Participant,self.snapshotid+"-"+localid,self.friendship_graph,self.snapshoturi)
             triples=[
                     (participant_uri,po.ageRank,node["agerank"]),
@@ -149,18 +149,27 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     (participant_uri,po.sex,node["sex"]),
                     ]
             P.rdf.add(triples,context=self.friendship_graph)
-        for localid1,localid2 in friendship_network.edges():
+            if count%300==0:
+                c("participants:",count)
+            count+=1
+        count=0
+        for localid1_,localid2_ in friendship_network.edges():
+            localid1=str(localid1_)
+            localid2=str(localid2_)
             friendship_uri=P.rdf.ic(po.Friendship,self.snapshotid+"-"+localid1+"-"+localid2,self.friendship_graph,self.snapshoturi)
-            participant_uri1=po.Participant,self.snapshotid+"-"+localid1
-            participant_uri2=po.Participant,self.snapshotid+"-"+localid2
+            participant_uri1=po.Participant+"#"+self.snapshotid+"-"+localid1
+            participant_uri2=po.Participant+"#"+self.snapshotid+"-"+localid2
             triples=[
                     (friendship_uri,po.member,participant_uri1),
                     (friendship_uri,po.member,participant_uri2),
                     ]
             P.rdf.add(triples,context=self.friendship_graph)
+            if count%1000==0:
+                c("friendships:",count)
+            count+=1
         self.nfriends=friendship_network.number_of_nodes()
         self.nfriendships=friendship_network.number_of_edges()
-    def makeMetadata(self,friendship_network):
+    def makeMetadata(self):
         triples=P.get(self.snapshoturi,None,None,"social_facebook")
         for rawfile in P.get(self.snapshoturi,po.rawFile,None,"social_facebook",strict=True,minimized=True):
             triples+=P.get(rawfile,None,None,"social_facebook")
@@ -209,14 +218,3 @@ The script that rendered this data publication is on the script/ directory.\n:::
                 (self.snapshoturi, NS.rdfs.comment,         self.desc),
                 ]
         P.add(triples,self.meta_graph)
-        #[NS.facebook.frienshipParticipantAttribute]*len(self.friendsvars)
-
-
-        # write about the friendship network
-        # write about the snapshot
-        # and about files
-        pass
-
-
-
-
