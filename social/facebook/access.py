@@ -41,6 +41,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             (platformuri, po.dataDir,datadir),
             ]
     filenames=os.listdir(datadir)
+    filenames=[i for i in filenames if not i.endswith("swp")]
     # clean filenames: if they are equal except for extension, keep gml file
     snapshots=set()
     regex=re.compile(r"^(avlab_|ego_|posavlab_|page_)*(.*?)(\d{8})(_interactions|_comments){0,1}\.(gdf|tab|gml)$")

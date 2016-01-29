@@ -26,12 +26,14 @@ class GmlRdfPublishing:
         self.hastext=False
         self.friendships_anonymized=True
 
-        friendship_network=x.read_gml(data_path+filename_friendships)
+        #friendship_network=x.read_gml(data_path+filename_friendships)
+        with open(data_path+filename_friendships) as f:
+            lines=f.readlines()
+        friendship_network=x.readwrite.gml.parse_gml_lines(lines,"id",None)
         locals_=locals().copy()
         for i in locals_:
             if i !="self":
                 exec("self.{}={}".format(i,i))
-
         self.rdfFriendshipNetwork(friendship_network)
         self.makeMetadata()
         self.writeAllFB()
@@ -123,8 +125,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
         c("test variables to be the expected")
         for node_ in friendship_network.nodes(data=True):
             node=node_[1]
-            assert len(node)==6 or (("RicardoFabbri18022013" in self.snapshotid) and (len(node)==5))
-            assert isinstance(node["id"],int)
+            assert len(node)==5 or (("RicardoFabbri18022013" in self.snapshotid) and (len(node)==4))
+            assert isinstance(node_[0],int)
             assert isinstance(node["agerank"],int)
             assert isinstance(node["wallcount"],int)
             assert isinstance(node["label"],str) and len(node["label"])
@@ -141,7 +143,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         count=0
         for node_ in friendship_network.nodes(data=True):
             node=node_[1]
-            localid=str(node["id"])
+            localid=str(node_[0])
             participant_uri=P.rdf.ic(po.Participant,self.snapshotid+"-"+localid,self.friendship_graph,self.snapshoturi)
             triples=[
                     (participant_uri,po.ageRank,node["agerank"]),
