@@ -110,18 +110,18 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
 
         fileuri=NS.po.File+"#"+snapshotid+"-_file_-"+filename
         triples+=[
+                 (snapshoturi, a, po.Snapshot),
+                 (snapshoturi, a, po.FacebookSnapshot),
+                 (snapshoturi, po.snapshotID, snapshotid),
                  (snapshoturi, po.isEgo, isego),
                  (snapshoturi, po.isGroup, isgroup),
                  (snapshoturi, po.isFriendship, isfriendship),
                  (snapshoturi, po.isInteraction, isinteraction),
                  (snapshoturi, po.isPost, isposts),
-                 (snapshoturi, a, po.Snapshot),
-                 (snapshoturi, a, po.FacebookSnapshot),
-                 (snapshoturi, po.snapshotID, snapshotid),
                  (snapshoturi, po.humanizedName, name_humanized),
                  (snapshoturi, po.dateObtained, date_obtained),
-                 (snapshoturi, po.rawFile, fileuri),
                  (snapshoturi, po.expressedReference, expressed_reference),
+                 (snapshoturi, po.rawFile, fileuri),
                  (fileuri,     po.fileSize, filesize),
                  (fileuri,     po.fileName, filename),
                  (fileuri,     po.fileFormat, format_),
