@@ -75,7 +75,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             expressed_classes=(po.Friendship,po.Participant)
 
             if metadata[0]:
-                expressed_reference=po.FacebookParticipant+"#"+metadata[0]
+                expressed_reference=po.FacebookParticipant+"#"+snapshotid+"-"+metadata[0]
             else:
                 if "Mirtes" in filename:
                     expressed_reference=po.FacebookParticipant+"#"+"anon_mirtes"
