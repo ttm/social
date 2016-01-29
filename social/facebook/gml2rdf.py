@@ -10,7 +10,7 @@ class GmlRdfPublishing:
     the tree in the directory final_path."""
 
     def __init__(self,snapshoturi,snapshotid,filename_friendships="foo.gml",\
-            data_path="../data/facebook/",final_path="./fb/",umbrella_dir="facebook_networks/"):
+            data_path="../data/facebook/",final_path="./facebook_networks/",umbrella_dir="facebook_networks/"):
         self.friendship_graph="social_facebook_friendships"
         self.meta_graph="social_facebook_meta"
         self.social_graph="social_facebook"
@@ -64,8 +64,7 @@ class GmlRdfPublishing:
                  (self.snapshoturi,po.nMetaTriples,ntriples+1)      ,
                  ]
         P.add(triples,context=self.meta_graph)
-        g.namespace_manager.bind("po",NS.po)
-        g.namespace_manager.bind("facebook",NS.facebook)
+        g.namespace_manager.bind("po",po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
         c("serialized meta")

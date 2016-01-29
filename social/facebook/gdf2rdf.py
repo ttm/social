@@ -2,6 +2,7 @@ import percolation as P, social as S, rdflib as r, builtins as B, re, datetime, 
 from percolation.rdf import NS, a
 from .read import readGDF
 c=P.check
+po=NS.po
 
 class GdfRdfPublishing:
     """Produce a linked data publication tree from GDF and TAB files expressing ego and group structures.
@@ -12,7 +13,7 @@ class GdfRdfPublishing:
 
     def __init__(self,snapshoturi,snapshotid,filename_friendships=None,\
             filename_interactions=None,filename_posts=None,\
-            data_path="../data/facebook/",final_path="./fb/",umbrella_dir="facebook_networks/"):
+            data_path="../data/facebook/",final_path="./facebook_networks/",umbrella_dir="facebook_networks/"):
 
         self.friendship_graph="social_facebook_friendships"
         self.interaction_graph="social_facebook_interactions"
@@ -63,22 +64,22 @@ class GdfRdfPublishing:
         nchars_all=[]
         ntokens_all=[]
         for post in data:
-            ind=P.rdf.ic(NS.facebook.Post,post[0],self.posts_graph,self.snapshoturi)
+            ind=P.rdf.ic(po.Post,post[0],self.posts_graph,self.snapshoturi)
             ptext=post[2].replace("_","\n")
             nchars=len(ptext)
             nchars_all+=[nchars]
             ntokens=len(k.tokenize.wordpunct_tokenize(ptext))
             ntokens_all+=[ntokens]
             triples+=[
-                     (ind,NS.po.snapshot,self.snapshoturi),
-                     (ind,NS.facebook.postID,post[0]),
-                     (ind,NS.facebook.postType,post[1]),
-                     (ind,NS.facebook.postText,ptext),
-                     (ind,NS.facebook.createdAt,dateutil.parser.parse(post[3])),
-                     (ind,NS.facebook.nComments,int(post[4])),
-                     (ind,NS.facebook.nLikes,int(post[5])),
-                     (ind,NS.facebook.nChars,nchars),
-                     (ind,NS.facebook.nTokens,ntokens),
+                     (ind,po.snapshot,self.snapshoturi),
+                     (ind,po.postID,post[0]),
+                     (ind,po.postType,post[1]),
+                     (ind,po.postText,ptext),
+                     (ind,po.createdAt,dateutil.parser.parse(post[3])),
+                     (ind,po.nComments,int(post[4])),
+                     (ind,po.nLikes,int(post[5])),
+                     (ind,po.nChars,nchars),
+                     (ind,po.nTokens,ntokens),
                      ]
             if self.nposts%200==0:
                 c("posts: ",self.nposts)
@@ -91,13 +92,13 @@ class GdfRdfPublishing:
         self.dtokensposts=n.std( ntokens_all)
         self.totaltokens=n.sum(  ntokens_all)
         #triples+=[ # went to meta file
-        #         (self.snapshoturi,NS.po.mCharsPosts,self.mcharsposts),
-        #         (self.snapshoturi,NS.po.dCharsPosts,self.dcharsposts),
-        #         (self.snapshoturi,NS.po.totalCharsPosts,self.totalchars),
+        #         (self.snapshoturi,po.mCharsPosts,self.mcharsposts),
+        #         (self.snapshoturi,po.dCharsPosts,self.dcharsposts),
+        #         (self.snapshoturi,po.totalCharsPosts,self.totalchars),
 
-        #         (self.snapshoturi,NS.po.mTokensPosts,self.mtokensposts),
-        #         (self.snapshoturi,NS.po.dTokensPosts,self.dtokensposts),
-        #         (self.snapshoturi,NS.po.totalTokensPosts,self.totaltokens),
+        #         (self.snapshoturi,po.mTokensPosts,self.mtokensposts),
+        #         (self.snapshoturi,po.dTokensPosts,self.dtokensposts),
+        #         (self.snapshoturi,po.totalTokensPosts,self.totaltokens),
         #         ]
         P.add(triples,context=self.posts_graph)
 
@@ -110,8 +111,7 @@ class GdfRdfPublishing:
         triples=[]
         if self.isfriendship:
             g=P.context(self.friendship_graph)
-            g.namespace_manager.bind("po",NS.po)
-            g.namespace_manager.bind("facebook",NS.facebook)
+            g.namespace_manager.bind("po",po)
             g.serialize(self.final_path_+self.snapshotid+"Friendship.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Friendship.rdf","xml")
             c("serialized friendships")
@@ -120,14 +120,13 @@ class GdfRdfPublishing:
             filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Friendship.ttl")/(10**6)
             ntriples=len(g)
             triples+=[
-                     (self.snapshoturi,NS.po.friendshipXMLFileSizeMB,filesizerdf),
-                     (self.snapshoturi,NS.po.friendshipTTLFileSizeMB,filesizettl),
-                     (self.snapshoturi,NS.po.nFriendshipTriples,ntriples),
+                     (self.snapshoturi,po.friendshipXMLFileSizeMB,filesizerdf),
+                     (self.snapshoturi,po.friendshipTTLFileSizeMB,filesizettl),
+                     (self.snapshoturi,po.nFriendshipTriples,ntriples),
                      ]
         if self.isinteraction:
             g=P.context(self.interaction_graph)
-            g.namespace_manager.bind("po",NS.po)
-            g.namespace_manager.bind("facebook",NS.facebook)
+            g.namespace_manager.bind("po",po)
             g.serialize(self.final_path_+self.snapshotid+"Interaction.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Interaction.rdf","xml")
             c("serialized interaction")
@@ -135,14 +134,13 @@ class GdfRdfPublishing:
             filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Interaction.ttl")/(10**6)
             ntriples=len(g)
             triples+=[
-                     (self.snapshoturi,NS.po.interactionXMLFileSizeMB,filesizerdf),
-                     (self.snapshoturi,NS.po.interactionTTLFileSizeMB,filesizettl),
-                     (self.snapshoturi,NS.po.nInteractionTriples,ntriples),
+                     (self.snapshoturi,po.interactionXMLFileSizeMB,filesizerdf),
+                     (self.snapshoturi,po.interactionTTLFileSizeMB,filesizettl),
+                     (self.snapshoturi,po.nInteractionTriples,ntriples),
                      ]
         if self.hastext:
             g=P.context(self.posts_graph)
-            g.namespace_manager.bind("po",NS.po)
-            g.namespace_manager.bind("facebook",NS.facebook)
+            g.namespace_manager.bind("po",po)
             g.serialize(self.final_path_+self.snapshotid+"Posts.ttl","turtle"); c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Posts.rdf","xml")
             c("serialized posts")
@@ -150,18 +148,17 @@ class GdfRdfPublishing:
             filesizettl=os.path.getsize(self.final_path_+self.snapshotid+"Posts.ttl")/(10**6)
             ntriples=len(g)
             triples+=[
-                     (self.snapshoturi,NS.po.postsXMLFileSizeMB,filesizerdf),
-                     (self.snapshoturi,NS.po.postsTTLFileSizeMB,filesizettl),
-                     (self.snapshoturi,NS.po.nPostsTriples,ntriples)      ,
+                     (self.snapshoturi,po.postsXMLFileSizeMB,filesizerdf),
+                     (self.snapshoturi,po.postsTTLFileSizeMB,filesizettl),
+                     (self.snapshoturi,po.nPostsTriples,ntriples)      ,
                      ]
         g=P.context(self.meta_graph)
         ntriples=len(g)
         triples+=[
-                 (self.snapshoturi,NS.po.nMetaTriples,ntriples)      ,
+                 (self.snapshoturi,po.nMetaTriples,ntriples)      ,
                  ]
         P.add(triples,context=self.meta_graph)
-        g.namespace_manager.bind("po",NS.po)
-        g.namespace_manager.bind("facebook",NS.facebook)
+        g.namespace_manager.bind("po",po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
         c("serialized meta")
@@ -221,7 +218,7 @@ or in the Turtle file:
 
 #        P.rdf.writeAll(mnet,aname+"Meta",fpath_,1)
         # faz um README
-        datetime_string=P.get(r.URIRef(self.snapshoturi),NS.po.dateObtained,None,context="social_facebook")[2]
+        datetime_string=P.get(r.URIRef(self.snapshoturi),po.dateObtained,None,context="social_facebook")[2]
 #        if not os.path.isdir(self.final_path+"base"):
 #            os.mkdir(self.final_path+"base")
         with open(self.final_path_+"README","w") as f:
@@ -266,23 +263,23 @@ The script that rendered this data publication is on the script/ directory.\n:::
         #g2=P.context(self.meta_graph)
         #for subject, predicate, object_ in g1.triples((self.snapshoturi))
         triples=P.get(self.snapshoturi,None,None,"social_facebook")
-        for rawfile in P.get(self.snapshoturi,NS.po.rawFile,None,"social_facebook",strict=True,minimized=True):
+        for rawfile in P.get(self.snapshoturi,po.rawFile,None,"social_facebook",strict=True,minimized=True):
             triples+=P.get(rawfile,None,None,"social_facebook")
         P.add(triples,context=self.meta_graph)
         foo={"uris":[],"vals":[]}
         if self.isfriendship:
             foo["uris"]+=[
-                         NS.facebook.onlineOriginalFriendshipFile,
-                         NS.facebook.originalFriendshipFileName,
-                         NS.po.onlineFriendshipXMLFile,
-                         NS.po.onlineFriendshipTTLFile,
-                         NS.po.friendshipXMLFileName,
-                         NS.po.friendshipTTLFileName,
-                         NS.facebook.nFriends,
-                         NS.facebook.nFriendships,
-                         NS.facebook.friendshipsAnonymized 
+                         po.onlineOriginalFriendshipFile,
+                         po.originalFriendshipFileName,
+                         po.onlineFriendshipXMLFile,
+                         po.onlineFriendshipTTLFile,
+                         po.friendshipXMLFileName,
+                         po.friendshipTTLFileName,
+                         po.nFriends,
+                         po.nFriendships,
+                         po.friendshipsAnonymized 
                          ]+\
-                         [NS.facebook.frienshipParticipantAttribute]*len(self.friendsvars)
+                         [po.frienshipParticipantAttribute]*len(self.friendsvars)
             self.ffile="base/"+self.filename_friendships
             self.frdf=self.snapshotid+"Friendship.rdf"
             self.fttl=self.snapshotid+"Friendship.ttl"
@@ -300,18 +297,18 @@ The script that rendered this data publication is on the script/ directory.\n:::
 
         if self.isinteraction:
             foo["uris"]+=[
-                         NS.facebook.onlineOriginalInteractionFile,
-                         NS.facebook.originalInteractionFileName,
-                         NS.po.onlineInteractionXMLFile,
-                         NS.po.onlineInteractionTTLFile,
-                         NS.po.interactionXMLFileName,
-                         NS.po.interactionTTLFileName,
-                         NS.facebook.nInteracted,
-                         NS.facebook.nInteractions,
-                         NS.facebook.interactionsAnonymized 
+                         po.onlineOriginalInteractionFile,
+                         po.originalInteractionFileName,
+                         po.onlineInteractionXMLFile,
+                         po.onlineInteractionTTLFile,
+                         po.interactionXMLFileName,
+                         po.interactionTTLFileName,
+                         po.nInteracted,
+                         po.nInteractions,
+                         po.interactionsAnonymized 
                          ]+\
-                         [NS.facebook.interactionParticipantAttribute]*len(self.interactionsvars)
-            self.ifile="base/"+self.snapshotid
+                         [po.interactionParticipantAttribute]*len(self.interactionsvars)
+            self.ifile="base/"+self.filename_interactions
             self.irdf=irdf=self.snapshotid+"Interaction.rdf"
             self.ittl=ittl=self.snapshotid+"Interaction.ttl"
             foo["vals"]+=[
@@ -327,21 +324,21 @@ The script that rendered this data publication is on the script/ directory.\n:::
                           ]+list(self.interactionsvars)
         if self.hastext:
             foo["uris"]+=[
-                         NS.facebook.onlineOriginalPostsFile,
-                         NS.facebook.originalPostsFileName,
-                         NS.po.onlinePostsXMLFile,
-                         NS.po.onlinePostsTTLFile,
-                         NS.po.postsXMLFileName,
-                         NS.po.postsTTLFileName,
-                         NS.facebook.nPosts,
-                         NS.facebook.nCharsOverall,
-                         NS.facebook.mCharsPostsOverall,
-                         NS.facebook.dCharsPostsOverall,
-                         NS.facebook.nTokensOverall,
-                         NS.facebook.mTokensPostsOverall,
-                         NS.facebook.dTokensPostsOverall,
+                         po.onlineOriginalPostsFile,
+                         po.originalPostsFileName,
+                         po.onlinePostsXMLFile,
+                         po.onlinePostsTTLFile,
+                         po.postsXMLFileName,
+                         po.postsTTLFileName,
+                         po.nPosts,
+                         po.nCharsOverall,
+                         po.mCharsPostsOverall,
+                         po.dCharsPostsOverall,
+                         po.nTokensOverall,
+                         po.mTokensPostsOverall,
+                         po.dTokensPostsOverall,
                          ]+\
-                         [NS.facebook.postAttribute]*len(self.postsvars)
+                         [po.postAttribute]*len(self.postsvars)
             self.pfile="base/"+self.filename_posts
             self.prdf=self.snapshotid+"Post.rdf"
             self.pttl=self.snapshotid+"Post.ttl"
@@ -361,15 +358,15 @@ The script that rendered this data publication is on the script/ directory.\n:::
                           self.dtokensposts,
                           ]+list(self.postsvars)
         foo["uris"]+=[
-                     NS.facebook.isGroup,
-                     NS.facebook.isEgo,
-                     NS.facebook.isFriendship,
-                     NS.facebook.isInteraction,
-                     NS.facebook.hasText,
-                     NS.facebook.isPost,
+                     po.isGroup,
+                     po.isEgo,
+                     po.isFriendship,
+                     po.isInteraction,
+                     po.hasText,
+                     po.isPost,
                      ]
-        self.isego=  bool(P.get(r.URIRef(self.snapshoturi),a,NS.po.EgoSnapshot  ))
-        self.isgroup=bool(P.get(r.URIRef(self.snapshoturi),a,NS.po.GroupSnapshot))
+        self.isego=  bool(P.get(r.URIRef(self.snapshoturi),a,po.EgoSnapshot  ))
+        self.isgroup=bool(P.get(r.URIRef(self.snapshoturi),a,po.GroupSnapshot))
         foo["vals"]+=[self.isgroup,self.isego,self.isfriendship,self.isinteraction,self.hastext,self.hastext]
 
         self.mrdf=self.snapshotid+"Meta.rdf"
@@ -393,17 +390,17 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     )
         
         P.rdf.triplesScaffolding(self.snapshoturi,[ 
-                                  NS.po.triplifiedIn,
-                                  NS.po.triplifiedBy,
-                                  NS.po.donatedBy,
-                                  NS.po.availableAt,
-                                  NS.po.onlineMetaXMLFile,
-                                  NS.po.onlineMetaTTLFile,
-                                  NS.po.metaXMLFileName,
-                                  NS.po.metaTTLFileName,
-                                  NS.po.acquiredThrough,
-                                  NS.po.socialProtocolTag,
-                                  NS.po.socialProtocol,
+                                  po.triplifiedIn,
+                                  po.triplifiedBy,
+                                  po.donatedBy,
+                                  po.availableAt,
+                                  po.onlineMetaXMLFile,
+                                  po.onlineMetaTTLFile,
+                                  po.metaXMLFileName,
+                                  po.metaTTLFileName,
+                                  po.acquiredThrough,
+                                  po.socialProtocolTag,
+                                  po.socialProtocol,
                                   NS.rdfs.comment,
                                   ]+foo["uris"],
                                   [
@@ -417,7 +414,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                                   self.mttl,
                                   "Netvizz",
                                   "Facebook",
-                                  P.rdf.ic(NS.po.Platform,"Facebook",self.meta_graph,self.snapshoturi),
+                                  P.rdf.ic(po.Platform,"Facebook",self.meta_graph,self.snapshoturi),
                                   self.desc,
                                   ]+foo["vals"],
                                   self.meta_graph)
@@ -435,14 +432,14 @@ The script that rendered this data publication is on the script/ directory.\n:::
             self.groupid=None
         iname= tkeys.index("name")
         ilabel=tkeys.index("label")
-        insert={"uris":[],"vals":[]}
         if self.friendships_anonymized:
             self.friendsvars=[trans(i) for j,i in enumerate(tkeys) if j not in (ilabel,iname)]
         else:
             self.friendsvars=[trans(i) for i in tkeys]
+        insert={"uris":[],"vals":[]}
         count=0
         for tkey in tkeys:
-            insert["uris"]+=[eval("NS.facebook."+trans(tkey))]
+            insert["uris"]+=[eval("po."+trans(tkey))]
             insert["vals"]+=[fnet["individuals"][tkey]]
             count+=1
         self.nfriends=len(insert["vals"][0])
@@ -457,16 +454,16 @@ The script that rendered this data publication is on the script/ directory.\n:::
             else:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
                 vals_=[el for el in vals_ if el]
-            ind=P.rdf.ic(NS.facebook.Participant,name_,self.friendship_graph,self.snapshoturi)
+            ind=P.rdf.ic(po.Participant,name_,self.friendship_graph,self.snapshoturi)
             P.rdf.triplesScaffolding(ind,insert_uris_,vals_,context=self.friendship_graph)
         c("escritos participantes")
         friendships_=[fnet["relations"][i] for i in ("node1","node2")]
         i=0
         for uid1,uid2 in zip(*friendships_):
-            uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
+            uids=[r.URIRef(po.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
             flabel="{}-{}-{}".format(self.snapshotid,uid1,uid2)
-            friendship_uri=P.rdf.ic(NS.facebook.Friendship,flabel,self.friendship_graph,self.snapshoturi)
-            P.rdf.triplesScaffolding(friendship_uri,[NS.facebook.member]*2,
+            friendship_uri=P.rdf.ic(po.Friendship,flabel,self.friendship_graph,self.snapshoturi)
+            P.rdf.triplesScaffolding(friendship_uri,[po.member]*2,
                                         uids,self.friendship_graph)
             if (i%1000)==0:
                 c("friendships",i)
@@ -475,7 +472,6 @@ The script that rendered this data publication is on the script/ directory.\n:::
         c("escritas amizades")
 
     def rdfInteractionNetwork(self,fnet):
-        #tg=P.rdf.makeBasicGraph([["po","fb"],[NS.po,NS.facebook]])
         if sum([("user" in i) for i in fnet["individuals"]["label"]])==len(fnet["individuals"]["label"]):
             # nomes falsos, ids espurios
             self.interactions_anonymized=True
@@ -495,7 +491,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
             self.varsfriendsinteraction=[trans(i) for i in tkeys]
         insert={"uris":[],"vals":[]}
         for tkey in tkeys:
-            insert["uris"]+=[eval("NS.facebook."+trans(tkey))]
+            insert["uris"]+=[eval("po."+trans(tkey))]
             insert["vals"]+=[fnet["individuals"][tkey]]
         self.ninteracted=len(insert["vals"][0])
         insert_uris=insert["uris"][:]
@@ -507,7 +503,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
             else:
                 insert_uris_=[el for i,el in enumerate(insert_uris) if vals_[i]]
                 vals_=[el for i,el in enumerate(vals_) if vals_[i]]
-            ind=P.rdf.ic(NS.facebook.Participant,name_,self.interaction_graph,self.snapshoturi)
+            ind=P.rdf.ic(po.Participant,name_,self.interaction_graph,self.snapshoturi)
             P.rdf.triplesScaffolding(ind,insert_uris_,vals_,self.interaction_graph)
         c("escritos participantes")
         self.interactionsvarsfoo=["node1","node2","weight"]
@@ -520,21 +516,31 @@ The script that rendered this data publication is on the script/ directory.\n:::
             if weight_-weight != 0:
                 raise ValueError("float weights in fb interaction networks?")
             iid="{}-{}-{}".format(self.snapshotid,uid1,uid2)
-            ind=P.rdf.ic(NS.facebook.Interaction,iid,self.interaction_graph,self.snapshoturi)
+            ind=P.rdf.ic(po.Interaction,iid,self.interaction_graph,self.snapshoturi)
             
-            uids=[r.URIRef(NS.facebook.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
-            P.rdf.triplesScaffolding(ind,[NS.facebook.iFrom,NS.facebook.iTo]+[NS.facebook.weight],uids+[weight_],self.interaction_graph)
+            uids=[r.URIRef(po.Participant+"#{}-{}".format(self.snapshotid,i)) for i in (uid1,uid2)]
+            P.rdf.triplesScaffolding(ind,[po.interactionFrom,po.interactionTo]+[po.weight],uids+[weight_],self.interaction_graph)
             if (i%1000)==0:
                 c("interactions: ", i)
             i+=1
         c("escritas interações")
 
 def trans(tkey):
-    if tkey=="name":
+    if tkey=="agerank":
+        return "ageRank"
+    elif tkey=="wallcount":
+        return "wallCount"
+    elif tkey=="name":
         return "numericID"
-    if tkey=="label":
+    elif tkey=="label":
         return "name"
-    if tkey=="posts":
+    elif tkey=="posts":
         return "nPosts"
+    elif tkey=="locale":
+        return "locale"
+    elif tkey=="sex":
+        return "sex"
+    else:
+        raise KeyError("participant var not understood")
     return tkey
 
