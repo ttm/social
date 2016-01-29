@@ -36,7 +36,7 @@ data=[ # AVLAB
 ("JoaoMeirelles25022014.gdf",     None,"1194439813","joao.meirelles.10"),
 ("LucasOliveira26022014.gdf",     None,"1060987164",0),
 ('BarthorLaZule22022014.gdf',None,"100000077490764","barthor.la.zule"),
-("FideoFuturalista22022014.gdf",     None,"100005778367345","fideo.futuralista"),
+("FelipeVillela22022014.gdf",     None,"100005778367345","fideo.futuralista"),
 ]
 
 for snapshot in data:

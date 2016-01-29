@@ -123,18 +123,20 @@ The script that rendered this data publication is on the script/ directory.\n:::
         c("test variables to be the expected")
         for node_ in friendship_network.nodes(data=True):
             node=node_[1]
-            assert len(node)==6
+            assert len(node)==6 or (("RicardoFabbri18022013" in self.snapshotid) and (len(node)==5))
             assert isinstance(node["id"],int)
             assert isinstance(node["agerank"],int)
             assert isinstance(node["wallcount"],int)
             assert isinstance(node["label"],str) and len(node["label"])
-            assert isinstance(node["locale"],str) and len(node["locale"])
+            assert ("RicardoFabbri18022013" in self.snapshotid) or isinstance(node["locale"],str)
             assert isinstance(node["sex"],str)
         for edge in friendship_network.edges(data=True):
             assert isinstance(edge[0],int)
             assert isinstance(edge[1],int)
             assert isinstance(edge[2],dict) and len(edge[2])==0
-        self.friendsvars=["name","ageRank","wallCount","locale","sex"]
+        self.friendsvars=["name","ageRank","wallCount","sex"]
+        if ("RicardoFabbri18022013" not in self.snapshotid):
+            self.friendsvars+=["locale"]
         c("create uris for each partcipant, with po:Participant#snapshoturi-localid")
         count=0
         for node_ in friendship_network.nodes(data=True):
@@ -145,9 +147,11 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     (participant_uri,po.ageRank,node["agerank"]),
                     (participant_uri,po.wallCount,node["wallcount"]),
                     (participant_uri,po.name,node["label"]),
-                    (participant_uri,po.locale,node["locale"]),
                     (participant_uri,po.sex,node["sex"]),
                     ]
+            if ("RicardoFabbri18022013" not in self.snapshotid):
+                triples+=[(participant_uri,po.locale,node["locale"])]
+
             P.rdf.add(triples,context=self.friendship_graph)
             if count%300==0:
                 c("participants:",count)
