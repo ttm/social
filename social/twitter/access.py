@@ -1,4 +1,7 @@
-from social import DATADIR
+from social import DATADIR, os
+import percolation as P
+from percolation.rdf import NS, a, po
+c=P.check
 
 def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     """Parse legacy pickle files with Twitter tweets"""
@@ -15,13 +18,13 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
         expressed_classes=[po.Participant,po.Tweet,po.ReTweet]
         expressed_reference=filename.replace("_","").replace(".pickle","")
         name_humanized="Twitter"+expressed_reference
-        filesize=os.path.getsize(datadir+filename)
+        filesize=os.path.getsize(data_dir+filename)/10**6
         fileformat="pickle"
         fileuri=po.File+"#twitter-file-"+filename
         triples+=[
                  (snapshoturi,a,po.Snapshot),
                  (snapshoturi,a,po.TwitterSnapshot),
-                 (snapshoturi,po.snapshotID,snapshot),
+                 (snapshoturi,po.snapshotID,snapshotid),
                  (snapshoturi, po.isEgo, False),
                  (snapshoturi, po.isGroup, True),
                  (snapshoturi, po.isFriendship, False),
@@ -32,7 +35,7 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
                  (snapshoturi, po.rawFile, fileuri),
                  (fileuri,     po.fileSize, filesize),
                  (fileuri,     po.fileName, filename),
-                 (fileuri,     po.fileFormat, format_),
+                 (fileuri,     po.fileFormat, fileformat),
                  ]+[
                  (fileuri,    po.expressedClass, expressed_class) for expressed_class in expressed_classes
                  ]
@@ -60,20 +63,6 @@ Total raw data size is {:.2f}MB""".format(negos,ngroups,nfriendships,ninteractio
     return snapshots
 
 
-
-
-
-def groupTwitterFilesByEquivalents(files):
-    filesgroups=[]
-    radicals=set()
-    for afile in files:
-        radical=afile.split("_")[0]
-        if radical not in radicals:
-            radicals.add(radical)
-            tfiles=[i for i in files if i.startswith(radical)]
-            filesgroups+=[tfiles]
-    return filegroups
-
 def groupTwitterFileGroupsForPublishing(self,filegroups):
     filegroups_grouped=[]
     i=0
@@ -92,23 +81,7 @@ def groupTwitterFileGroupsForPublishing(self,filegroups):
                 filegroups_grouped.append(agroup)
                 agroup=[]
                 asize=0
-    is agroup:
-        filegroups_grouped.append(agroup)
     return silegroups_grouped
-
-def getTWFiles(data_dir="../data/twitter/"):
-    """Get data files with Twitter messages (tweets).
-    
-    Each file should be a pickle binary with tweets.
-    Use social.twitter.search and social.twitter.stream to get tweets.
-    Tweets are excluded from package to ease sharing."""
-
-    files=os.path.listdir(data_dir)
-    files=[i for i in files if os.path.getsize(i)]
-    files.sort(key=lambda i: os.path.getsize(i))
-    filegroups=self.groupTwitterFilesByEquivalents(files)
-    filegroups_grouped=self.groupTwitterFileGroupsForPublishing(filegroups)
-    return filegroups_grouped
 
 def search():
     """get recent tweets through standard search API"""

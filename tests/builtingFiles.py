@@ -8,6 +8,7 @@ for key in keys:
 
 import social as S, percolation as P
 from percolation.rdf import NS, a
-ss=S.facebook.access.parseLegacyFiles()
+#ss=S.facebook.access.parseLegacyFiles()
+ss=S.twitter.access.parseLegacyFiles()
 
 

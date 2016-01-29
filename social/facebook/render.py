@@ -24,7 +24,7 @@ def renderAny(snapshoturi):
     # render with appropriate functions
     pass
 def publishAny(snapshoturi):
-    # publish to percolationdir
+    # publish to umbrelladir
     # get friendship and interaction of the snapshoturi
     triples=[
             (snapshoturi,      po.rawFile, "?fileurifoo"),
@@ -66,7 +66,7 @@ def publishAll(snapshoturis=None):
     if not snapshoturis:
         c("getting facebook snapshots, implementation needs verification TTM")
         uridict={}
-        for snapshoturi in P.get(None,a,NS.po.Snapshot,minimized=True):
+        for snapshoturi in P.get(None,a,NS.po.FacebookSnapshot,minimized=True):
             uridict[snapshoturi]=0
             for rawFile in P.get(snapshoturi,NS.po.rawFile,strict=True,minimized=True):
                 uridict[snapshoturi]+=P.get(rawFile,NS.po.fileSize,minimized=True).toPython()

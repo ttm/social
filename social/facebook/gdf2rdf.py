@@ -13,7 +13,7 @@ class GdfRdfPublishing:
 
     def __init__(self,snapshoturi,snapshotid,filename_friendships=None,\
             filename_interactions=None,filename_posts=None,\
-            data_path="../data/facebook/",final_path="./facebook_networks/",umbrella_dir="facebook_networks/"):
+            data_path="../data/facebook/",final_path="./facebook_snapshots/",umbrella_dir="facebook_snapshots/"):
 
         self.friendship_graph="social_facebook_friendships"
         self.interaction_graph="social_facebook_interactions"

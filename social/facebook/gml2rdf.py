@@ -10,7 +10,7 @@ class GmlRdfPublishing:
     the tree in the directory final_path."""
 
     def __init__(self,snapshoturi,snapshotid,filename_friendships="foo.gml",\
-            data_path="../data/facebook/",final_path="./facebook_networks/",umbrella_dir="facebook_networks/"):
+            data_path="../data/facebook/",final_path="./facebook_snapshots/",umbrella_dir="facebook_snapshots/"):
         self.friendship_graph="social_facebook_friendships"
         self.meta_graph="social_facebook_meta"
         self.social_graph="social_facebook"
