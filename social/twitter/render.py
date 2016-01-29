@@ -61,10 +61,10 @@ class PicklePublishing:
         self.rdfTweets()
         self.makeMetadata()
         self.writeAllTW()
-    def rdfTweets()
+    def rdfTweets(self):
         tweets=[]
         if self.pickle_filename1:
-            tweets+=P.utils.pRead2( self.data_path+.self.fname)[0]
+            tweets+=P.utils.pRead2( self.data_path+self.fname)[0]
         if self.pickle_filename2:
             tweets,fopen=P.utils.pRead3(data_path+fname__,tweets,5000) # limit chuck to 5k tweets
         
