@@ -54,8 +54,8 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
         filesize=os.path.getsize(datadir+filename)/(10**6) # size in megabytes
         snapshotid=filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")+"_fb"
         snapshoturi=po.FacebookSnapshot+"#"+snapshotid # put on ontology as subclass of po:Snapshot
-        date_obtained=datetime.datetime(int(date[4:]),int(date[2:4]),int(date[:2]))
-        name_humanized=" ".join(regex2.findall(name)[0])
+        date_obtained=datetime.date(int(date[4:]),int(date[2:4]),int(date[:2]))
+        name_humanized=" ".join(regex2.findall(name))
         metadata=S.legacy.facebook.files.files_dict[filename.replace("_interactions.gdf",".gdf").replace(".tab",".gdf")]
         if metadata[0]:
             triples+=[(snapshoturi,po.numericID,metadata[0])]
