@@ -24,12 +24,69 @@ class PicklePublishing:
         P.context(meta_graph,"remove")
         locals_=locals().copy()
         final_path_="{}{}/".format(final_path,snapshotid)
+        tweet_rdf=[]
+        tweet_ttl=[]
         for i in locals_:
             if i !="self":
                 exec("self.{}={}".format(i,i))
         self.rdfTweets()
         self.makeMetadata()
         self.writeAllTW()
+    def makeMetadata(self):
+        triples=P.get(self.snapshoturi,None,None,self.social_graph)
+        for rawfile in P.get(self.snapshoturi,po.rawFile,None,self.social_graph,strict=True,minimized=True):
+            triples+=P.get(rawfile,None,None,self.social_graph)
+        P.add(triples,context=self.meta_graph)
+
+        triples=[
+                (self.snapshoturi, po.nParticipants,           self.nparticipants),
+                (self.snapshoturi, po.nTweets,                 self.ntweets),
+                (self.snapshoturi, po.nResponses,              self.nresponses),
+                (self.snapshoturi, po.nRetweets,               self.nretweets),
+                ]
+        P.add(triples,context=self.meta_graph)
+        P.rdf.triplesScaffolding(self.snapshoturi,
+                [po.tweetParticipantAttribute]*len(self.participantvars),
+                self.participantvars,context=self.meta_graph)
+        P.rdf.triplesScaffolding(self.snapshoturi,
+                [po.tweetXMLFilename]*len(self.tweet_rdf)+[po.tweetTTLFilename]*len(self.tweet_ttl),
+                self.tweet_rdf+self.tweet_ttl,context=self.meta_graph)
+        P.rdf.triplesScaffolding(self.snapshoturi,
+                [po.onlineTweetXMLFile]*len(self.tweet_rdf)+[po.onlineTweetTTLFile]*len(self.tweet_ttl),
+                [self.online_prefix+i for i in self.tweet_rdf+self.tweet_ttl],context=self.meta_graph)
+        self.ffile=["base/"+i for i in self.filenames]
+        P.rdf.triplesScaffolding(self.snapshoturi,
+                [po.originalTweetFileName]*len(self.ffile),
+                self.ffile,context=self.meta_graph)
+        P.rdf.triplesScaffolding(self.snapshoturi,
+                [po.onlineOriginalTweetFile]*len(self.ffile),
+                [self.online_prefix+i for i in self.ffile],context=self.meta_graph)
+
+        self.mrdf=self.snapshotid+"Meta.rdf"
+        self.mttl=self.snapshotid+"Meta.ttl"
+        self.desc="facebook network with snapshotID: {}\nsnapshotURI: {} \nisEgo: {}. isGroup: {}.".format(
+                                                self.snapshotid,self.snapshoturi,self.isego,self.isgroup,)
+        self.desc+="\nisFriendship: {}".format(self.isfriendship)
+        self.desc+="; nFriends: {}; nFrienships: {}.".format(self.nfriends,self.nfriendships,)
+        self.desc+="\nisInteraction: {}".format(self.isinteraction)
+        self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
+        triples=[
+                (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
+                (self.snapshoturi, po.triplifiedBy,      "scripts/"),
+                (self.snapshoturi, po.donatedBy,         self.snapshotid[:-4]),
+                (self.snapshoturi, po.availableAt,       self.online_prefix),
+                (self.snapshoturi, po.onlineMetaXMLFile, self.online_prefix+self.mrdf),
+                (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
+                (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
+                (self.snapshoturi, po.metaTTLFileName,   self.mttl),
+                (self.snapshoturi, po.acquiredThrough,   "Netvizz"),
+                (self.snapshoturi, po.socialProtocolTag, "Facebook"),
+                (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"Facebook",self.meta_graph,self.snapshoturi)),
+                (self.snapshoturi, NS.rdfs.comment,         self.desc),
+                ]
+        P.add(triples,self.meta_graph)
+    def writeAllTW(self):
+        pass
     def rdfTweets(self):
         tweets=[]
         if self.pickle_filename1:
@@ -58,8 +115,13 @@ class PicklePublishing:
         filename_=self.final_path_+filename
         g=P.context(self.tweet_graph)
         g.namespace_manager.bind("po",po)
-        g.serialize(filename+".ttl","turtle"); c("ttl")
-        g.serialize(filename+".rdf","xml")
+        tttl=filename+".ttl"
+        trdf=filename+".rdf"
+        g.serialize(tttl,"turtle"); c("ttl")
+        g.serialize(trdf+".rdf","xml")
+        self.tweet_ttl+=[tttl]
+        self.tweet_rdf+=[trdf]
+        
 
 
 def tweetTriples(tweet):
@@ -89,10 +151,6 @@ def tweetTriples(tweet):
             (useruri,po.utcOffset,tweet["user"]["utc_offset"]),
             ]
     return triples
-    def makeMetadata(self):
-        pass
-    def writeAllTW(self):
-        pass
 
 def twitterReadPickle(filename):
     """pickle read for the Dumper class"""
