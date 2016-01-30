@@ -22,10 +22,16 @@ class PicklePublishing:
         social_graph="social_twitter"
         P.context(tweet_graph,"remove")
         P.context(meta_graph,"remove")
-        locals_=locals().copy()
         final_path_="{}{}/".format(final_path,snapshotid)
         tweet_rdf=[]
         tweet_ttl=[]
+        nparticipants=0
+        nretweets=0
+        ntweets=0
+        nreplies=0
+        dates1=[]
+        dates2=[]
+        locals_=locals().copy()
         for i in locals_:
             if i !="self":
                 exec("self.{}={}".format(i,i))
@@ -37,7 +43,6 @@ class PicklePublishing:
         for rawfile in P.get(self.snapshoturi,po.rawFile,None,self.social_graph,strict=True,minimized=True):
             triples+=P.get(rawfile,None,None,self.social_graph)
         P.add(triples,context=self.meta_graph)
-
         triples=[
                 (self.snapshoturi, po.nParticipants,           self.nparticipants),
                 (self.snapshoturi, po.nTweets,                 self.ntweets),
@@ -100,6 +105,7 @@ class PicklePublishing:
             for tweet in tweets:
                 tweeturi,triples=tweetTriples(tweet)
                 if "retweeted_status" in dir(tweet):
+                    self.retweets+=1
                     tweeturi0,triples0=tweetTriples(tweet)
                     triples+=triples0
                     triples+=[(tweeturi,po.retweetOf,tweeturi0)]
@@ -121,36 +127,72 @@ class PicklePublishing:
         g.serialize(trdf+".rdf","xml")
         self.tweet_ttl+=[tttl]
         self.tweet_rdf+=[trdf]
-        
+    def tweetTriples(self,tweet):
+        tweetid_=tweet["id_str"]
+        # if tweetid_ in triples
+        userid_=tweet["user"]["id_str"]
+        userid=self.snapshotid+"-"+userid_
+        useruri=P.rdf.ic(po.Tweet,userid,self.tweet_graph,self.snapshoturi)
+        tweetid=userid_+"-"+tweetid_
+        tweeturi=P.rdf.ic(po.Tweet,tweetid,self.tweet_graph,self.snapshoturi)
+        triples=[]
+        if tweet["in_reply_to_user_id_str"] and tweet["in_reply_to_status_id_str"]:
+            self.nreplies+=1                
+            userid_reply=self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
+            useruri_reply=P.rdf.ic(po.Participant,userid_reply,self.tweet_graph,self.snapshoturi)
+            if not P.get(useruri_reply,po.numericID,None,context=self.tweet_graph): # new user
+                self.nparticipants+=1
+                triples+=[(useruri_reply,po.numericID,userid_reply)]
+            tweetid_reply=userid_reply+"-"+tweet["in_reply_to_status_id_str"]
+            tweeturi_reply=P.rdf.ic(po.Tweet,tweetid_reply,self.tweet_graph,self.snapshoturi)
+            if not P.get(tweeturi_reply,po.numericID,None,context=self.tweet_graph): # new message
+                self.ntweets+=1
+                triples+=[(tweeturi_reply,po.numericID,tweetid_reply)]
+            triples+=[
+                     (tweeturi,po.inReplyToUser,useruri_reply),
+                     (tweeturi,po.inReplyToStatus,tweeturi_reply),
+                     ]
+        elif tweet["in_reply_to_user_id_str"] and not tweet["in_reply_to_status_id_str"]:
+            raise ValueError("reply have no status id")
+        elif not tweet["in_reply_to_user_id_str"] and tweet["in_reply_to_status_id_str"]:
+            raise ValueError("reply have no user id")
+        query=[
+              ("?uri",a,po.Tweet),
+              ("?uri",po.stringID,tweetid_)
+              ]
+        tweet_known=P.get(query,context=self.tweet_graph)
+        query=[
+              ("?uri",a,po.Participant),
+              ("?uri",po.numericID,tweet["user"]["id_str"])
+              ]
+        participant_known=P.get(query,context=self.tweet_graph)
+        if not tweet_known:
+            self.ntweets+=1
+        if not participant_known:
+            self.nparticipants+=1
 
-
-def tweetTriples(tweet):
-    tweetid_=tweet["id_str"]
-    userid_=tweet["user"]["id_str"]
-    userid=self.snapshotid+"-"+userid_
-    tweetid=userid_+"-"+tweetid_
-    tweeturi=P.rdf.ic(po.Tweet,tweetid,self.tweet_graph,self.snapshoturi)
-    useruri=P.rdf.ic(po.Tweet,userid,self.tweet_graph,self.snapshoturi)
-    triples=[
-            (tweeturi,po.stringID,tweetid),
-            (tweeturi,po.createdAt,dateutil.parser.parse(tweet["created_at"])),
-            (tweeturi,po.message,tweet["text"]),
-            (tweeturi,po.retweetCount,tweet["retweet_count"]),
-            (tweeturi,po.language,tweet["lang"]),
-            (tweeturi,po.author,useruri),
-            (useruri,po.stringID,tweet["user"]["screen_name"]),
-            (useruri,po.numericID,tweet["user"]["id_str"]),
-            (useruri,po.favouritesCount,tweet["user"]["favourites_count"]),
-            (useruri,po.followersCount,tweet["user"]["followers_count"]),
-            (useruri,po.followersCount,tweet["user"]["friends_count"]),
-            (useruri,po.language,tweet["user"]["lang"]),
-            (useruri,po.listedCount,tweet["user"]["listed_count"]),
-            (useruri,po.name,tweet["user"]["name"]),
-            (useruri,po.statusesCount,tweet["user"]["statuses_count"]),
-            (useruri,po.createdAt,dateutil.parser.parse(tweet["user"]["created_at"])),
-            (useruri,po.utcOffset,tweet["user"]["utc_offset"]),
-            ]
-    return triples
+        triples+=[
+                 (tweeturi,po.stringID,tweetid),
+                 (tweeturi,po.createdAt,dateutil.parser.parse(tweet["created_at"])),
+                 (tweeturi,po.message,tweet["text"]),
+                 (tweeturi,po.retweetCount,tweet["retweet_count"]),
+                 (tweeturi,po.language,tweet["lang"]),
+                 (tweeturi,po.author,useruri),
+                 (tweeturi,po.author,useruri),
+                 (useruri,po.stringID,tweet["user"]["screen_name"]),
+                 (useruri,po.numericID,tweet["user"]["id_str"]),
+                 (useruri,po.favouritesCount,tweet["user"]["favourites_count"]),
+                 (useruri,po.followersCount,tweet["user"]["followers_count"]),
+                 (useruri,po.followersCount,tweet["user"]["friends_count"]),
+                 (useruri,po.language,tweet["user"]["lang"]),
+                 (useruri,po.listedCount,tweet["user"]["listed_count"]),
+                 (useruri,po.name,tweet["user"]["name"]),
+                 (useruri,po.statusesCount,tweet["user"]["statuses_count"]),
+                 (useruri,po.createdAt,dateutil.parser.parse(tweet["user"]["created_at"])),
+                 (useruri,po.utcOffset,tweet["user"]["utc_offset"]),
+                 ]
+        triples=[triple for triple in triples if triple[2]]
+        return triples
 
 def twitterReadPickle(filename):
     """pickle read for the Dumper class"""
