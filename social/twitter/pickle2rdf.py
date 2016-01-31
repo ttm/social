@@ -1,3 +1,6 @@
+import percolation as P, pickle, dateutil
+from percolation.rdf import NS, a, po
+c=P.check
 class PicklePublishing:
     def __init__(self,snapshoturi,snapshotid,filenames=("foo.pickle",),\
             data_path="../data/twitter/",final_path="./twitter_snapshots/",umbrella_dir="twitter_snapshots/"):
@@ -29,6 +32,7 @@ class PicklePublishing:
         nretweets=0
         ntweets=0
         nreplies=0
+        nanonymous_user_count=0
         dates1=[]
         dates2=[]
         locals_=locals().copy()
@@ -95,29 +99,30 @@ class PicklePublishing:
     def rdfTweets(self):
         tweets=[]
         if self.pickle_filename1:
-            tweets+=pickleReadFile( self.data_path+self.pickle_filename1)[0]
+            tweets+=readPickleTweetFile( self.data_path+self.pickle_filename1)[0]
         if self.pickle_filename2:
-            tweets,fopen=pickleReadChunks(data_path+self.pickle_filename2,tweets,5000) # limit chuck to 5k tweets
-        chunck_count=0
-        self.tweets=tweets
+            tweets,fopen=readPickleTweetChunk(data_path+self.pickle_filename2,tweets,None,5000) # limit chuck to 5k tweets
+        chunk_count=0
+        self.tweets=tweets # for probing only, remove to release memory
         while tweets:
-            c("rendering tweets, chunk:",chunck_count,"ntweets:",len(tweets))
+            c("rendering tweets, chunk:",chunk_count,"ntweets:",len(tweets))
             for tweet in tweets:
-                tweeturi,triples=tweetTriples(tweet)
+                tweeturi,triples=self.tweetTriples(tweet)
                 if "retweeted_status" in dir(tweet):
-                    self.retweets+=1
-                    tweeturi0,triples0=tweetTriples(tweet)
+                    tweeturi0,triples0=self.tweetTriples(tweet)
                     triples+=triples0
                     triples+=[(tweeturi,po.retweetOf,tweeturi0)]
+                    if self.ntweets%100==0:
+                        c("rendered",self.ntweets,"tweets")
                 P.add(triples,context=self.tweet_graph)
-                c("end of chunk:",chuck_count)
-                self.writeTweets(chunk_count)
-                c("chunck has been written")
-                chunck_count+=1
-                if self.pickle_filename2:
-                    tweets,fopen=P.utils.pickleReadChuck(None,tweets,fopen)
+            c("end of chunk:",chunk_count, "ntriples:",len(triples))
+            self.writeTweets(chunk_count)
+            c("chunk has been written")
+            chunk_count+=1
+            if self.pickle_filename2:
+                tweets,fopen=readPickleTweetChuck(None,None,fopen,5000)
     def writeTweets(self,chunk_count):
-        filename=self.snapshotid+"Tweet{:05d}".format(ccount)
+        filename=self.snapshotid+"Tweet{:05d}".format(chunk_count)
         filename_=self.final_path_+filename
         g=P.context(self.tweet_graph)
         g.namespace_manager.bind("po",po)
@@ -136,13 +141,18 @@ class PicklePublishing:
         tweetid=userid_+"-"+tweetid_
         tweeturi=P.rdf.ic(po.Tweet,tweetid,self.tweet_graph,self.snapshoturi)
         triples=[]
-        if tweet["in_reply_to_user_id_str"] and tweet["in_reply_to_status_id_str"]:
+        if tweet["in_reply_to_user_id_str"] or tweet["in_reply_to_status_id_str"]:
             self.nreplies+=1                
-            userid_reply=self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
-            useruri_reply=P.rdf.ic(po.Participant,userid_reply,self.tweet_graph,self.snapshoturi)
-            if not P.get(useruri_reply,po.numericID,None,context=self.tweet_graph): # new user
-                self.nparticipants+=1
-                triples+=[(useruri_reply,po.numericID,userid_reply)]
+            if tweet["in_reply_to_status_id_str"]>
+                userid_reply=self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
+                useruri_reply=P.rdf.ic(po.Participant,userid_reply,self.tweet_graph,self.snapshoturi)
+                if not P.get(useruri_reply,po.numericID,None,context=self.tweet_graph): # new user
+                    self.nparticipants+=1
+                    triples+=[(useruri_reply,po.numericID,userid_reply)]
+            else:
+                userid_reply=self.snapshotid+"-anonymous-"+str(self.anonymous_user_count)
+                useruri_reply=P.rdf.ic(po.AnonymousParticipant,userid_reply,self.tweet_graph,self.snapshoturi)
+                self.anonymous_user_count+=1
             tweetid_reply=userid_reply+"-"+tweet["in_reply_to_status_id_str"]
             tweeturi_reply=P.rdf.ic(po.Tweet,tweetid_reply,self.tweet_graph,self.snapshoturi)
             if not P.get(tweeturi_reply,po.numericID,None,context=self.tweet_graph): # new message
@@ -153,6 +163,7 @@ class PicklePublishing:
                      (tweeturi,po.inReplyToStatus,tweeturi_reply),
                      ]
         elif tweet["in_reply_to_user_id_str"] and not tweet["in_reply_to_status_id_str"]:
+            self.nreplies+=1                
             raise ValueError("reply have no status id")
         elif not tweet["in_reply_to_user_id_str"] and tweet["in_reply_to_status_id_str"]:
             raise ValueError("reply have no user id")
@@ -192,9 +203,9 @@ class PicklePublishing:
                  (useruri,po.utcOffset,tweet["user"]["utc_offset"]),
                  ]
         triples=[triple for triple in triples if triple[2]]
-        return triples
+        return tweeturi,triples
 
-def twitterReadPickle(filename):
+def readPickleTweetFile(filename):
     """pickle read for the Dumper class"""
     objs=[]
     with open(filename,"rb") as f:
@@ -204,7 +215,7 @@ def twitterReadPickle(filename):
             except EOFError:
                 break
     return objs
-def twitterReadPickleChunck(filename=None,tweets=[],fopen=None,ntweets=5000):
+def readPickleTweetChunck(filename=None,tweets=[],fopen=None,ntweets=5000):
     """Read ntweets from filename or fopen and add them to tweets list"""
     if not fopen:
         f=open(filename,"rb")

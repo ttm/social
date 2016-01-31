@@ -7,8 +7,10 @@ for key in keys:
 import social as S, percolation as P
 from percolation.rdf import NS, a
 po=NS.po
-ss=S.facebook.access.parseLegacyFiles()
+#ss=S.facebook.access.parseLegacyFiles()
+##ss=[i for i in ss if i.endswith("gdf_fb")]
+#last_triplification_class=S.facebook.render.publishAll(ss)
+
+ss=S.twitter.access.parseLegacyFiles()
 #ss=[i for i in ss if i.endswith("gdf_fb")]
-last_triplification_class=S.facebook.render.publishAll(ss)
-
-
+last_triplification_class=S.twitter.render.publishAll(ss)
