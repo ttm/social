@@ -1,4 +1,4 @@
-import percolation as P, pickle, dateutil
+import percolation as P, pickle, dateutil, nltk as k
 from percolation.rdf import NS, a, po
 c=P.check
 class PicklePublishing:
@@ -14,12 +14,12 @@ class PicklePublishing:
             pickle_filename1=""
             pickle_filename2=filenames[0]
         online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,snapshotid)
-        isego=True
-        isgroup=False
-        isfriendship=True
-        isinteraction=False
-        hastext=False
-        friendships_anonymized=True
+        isego=False
+        isgroup=True
+        isfriendship=False
+        isinteraction=True
+        hastext=True
+        interactions_anonymized=False
         tweet_graph="social_tweets"
         meta_graph="social_twitter_meta"
         social_graph="social_twitter"
@@ -32,7 +32,8 @@ class PicklePublishing:
         nretweets=0
         ntweets=0
         nreplies=0
-        nanonymous_user_count=0
+        anonymous_user_count=0
+        anonymous_tweet_count=0
         dates1=[]
         dates2=[]
         locals_=locals().copy()
@@ -50,7 +51,7 @@ class PicklePublishing:
         triples=[
                 (self.snapshoturi, po.nParticipants,           self.nparticipants),
                 (self.snapshoturi, po.nTweets,                 self.ntweets),
-                (self.snapshoturi, po.nResponses,              self.nresponses),
+                (self.snapshoturi, po.nReplies,              self.nreplies),
                 (self.snapshoturi, po.nRetweets,               self.nretweets),
                 ]
         P.add(triples,context=self.meta_graph)
@@ -76,9 +77,13 @@ class PicklePublishing:
         self.desc="facebook network with snapshotID: {}\nsnapshotURI: {} \nisEgo: {}. isGroup: {}.".format(
                                                 self.snapshotid,self.snapshoturi,self.isego,self.isgroup,)
         self.desc+="\nisFriendship: {}".format(self.isfriendship)
-        self.desc+="; nFriends: {}; nFrienships: {}.".format(self.nfriends,self.nfriendships,)
         self.desc+="\nisInteraction: {}".format(self.isinteraction)
+        self.desc+="; nParticipants: {}; nInteractions: {} (responses+retweets).".format(self.nparticipants,self.nresponses+self.nretweets,)
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
+        self.desc+="\n nTweets: {}; nResponses: {}; nRetweets: {}.".format(self.nfriends,self.nfriendships,)
+        self.desc+="\n nTokens: {}; mTokens: {}; dTokens: {};"
+        seld.desc+="\n nChars: {}; mChars: {}; dChars: {}.".format(self.nfriends,self.nfriendships,)
+        self.desc+="\n mTokens: {}; nChars: {}; nLinks: {}.".format(self.nfriends,self.nfriendships,)
         triples=[
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
                 (self.snapshoturi, po.triplifiedBy,      "scripts/"),
@@ -121,6 +126,8 @@ class PicklePublishing:
             chunk_count+=1
             if self.pickle_filename2:
                 tweets,fopen=readPickleTweetChuck(None,None,fopen,5000)
+            else:
+                tweets=[]
     def writeTweets(self,chunk_count):
         filename=self.snapshotid+"Tweet{:05d}".format(chunk_count)
         filename_=self.final_path_+filename
@@ -137,13 +144,13 @@ class PicklePublishing:
         # if tweetid_ in triples
         userid_=tweet["user"]["id_str"]
         userid=self.snapshotid+"-"+userid_
-        useruri=P.rdf.ic(po.Tweet,userid,self.tweet_graph,self.snapshoturi)
+        useruri=P.rdf.ic(po.Participant,userid,self.tweet_graph,self.snapshoturi)
         tweetid=userid_+"-"+tweetid_
         tweeturi=P.rdf.ic(po.Tweet,tweetid,self.tweet_graph,self.snapshoturi)
         triples=[]
         if tweet["in_reply_to_user_id_str"] or tweet["in_reply_to_status_id_str"]:
             self.nreplies+=1                
-            if tweet["in_reply_to_status_id_str"]>
+            if tweet["in_reply_to_status_id_str"]:
                 userid_reply=self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
                 useruri_reply=P.rdf.ic(po.Participant,userid_reply,self.tweet_graph,self.snapshoturi)
                 if not P.get(useruri_reply,po.numericID,None,context=self.tweet_graph): # new user
@@ -151,13 +158,20 @@ class PicklePublishing:
                     triples+=[(useruri_reply,po.numericID,userid_reply)]
             else:
                 userid_reply=self.snapshotid+"-anonymous-"+str(self.anonymous_user_count)
-                useruri_reply=P.rdf.ic(po.AnonymousParticipant,userid_reply,self.tweet_graph,self.snapshoturi)
+                useruri_reply=P.rdf.ic(po.Participant,userid_reply,self.tweet_graph,self.snapshoturi)
                 self.anonymous_user_count+=1
-            tweetid_reply=userid_reply+"-"+tweet["in_reply_to_status_id_str"]
-            tweeturi_reply=P.rdf.ic(po.Tweet,tweetid_reply,self.tweet_graph,self.snapshoturi)
-            if not P.get(tweeturi_reply,po.numericID,None,context=self.tweet_graph): # new message
-                self.ntweets+=1
-                triples+=[(tweeturi_reply,po.numericID,tweetid_reply)]
+                triples+=[(useruri_reply,po.anonymous,True)]
+            if tweet["in_reply_to_status_id_str"]:
+                tweetid_reply=userid_reply+"-"+tweet["in_reply_to_status_id_str"]
+                tweeturi_reply=P.rdf.ic(po.Tweet,tweetid_reply,self.tweet_graph,self.snapshoturi)
+                if not P.get(tweeturi_reply,po.numericID,None,context=self.tweet_graph): # new message
+                    self.ntweets+=1
+                    triples+=[(tweeturi_reply,po.numericID,tweetid_reply)]
+            else:
+                tweetid_reply=self.snapshotid+"-anonymous-"+str(self.anonymous_tweet_count)
+                tweeturi_reply=P.rdf.ic(po.Tweet,tweetid_reply,self.tweet_graph,self.snapshoturi)
+                self.anonymous_tweet_count+=1
+                triples+=[(tweeturi_reply,po.anonymous,True)]
             triples+=[
                      (tweeturi,po.inReplyToUser,useruri_reply),
                      (tweeturi,po.inReplyToStatus,tweeturi_reply),
@@ -182,7 +196,25 @@ class PicklePublishing:
         if not participant_known:
             self.nparticipants+=1
 
+        self.mcharsposts=n.mean(nchars_all)
+        self.dcharsposts=n.std(  nchars_all)
+        self.totalchars=n.sum(   nchars_all)
+        self.mtokensposts=n.mean(ntokens_all)
+        self.dtokensposts=n.std( ntokens_all)
+        self.totaltokens=n.sum(  ntokens_all)
+        tweet_text=tweet["text"]
+        nchars=len(tweet_text)
+        ntokens=len(k.tokenize.wordpunct_tokenize(tweet_text))
+        nchars_all+=[nchars]
+        ntokens_all+=[ntokens]
+        hashtags=[]
+        links=[]
+        user_mentions=[]
+        media=[]
+        #symbols?
         triples+=[
+                 (tweeturi,po.nChars,nchars),
+                 (tweeturi,po.nTokens,ntokens),
                  (tweeturi,po.stringID,tweetid),
                  (tweeturi,po.createdAt,dateutil.parser.parse(tweet["created_at"])),
                  (tweeturi,po.message,tweet["text"]),
@@ -194,7 +226,7 @@ class PicklePublishing:
                  (useruri,po.numericID,tweet["user"]["id_str"]),
                  (useruri,po.favouritesCount,tweet["user"]["favourites_count"]),
                  (useruri,po.followersCount,tweet["user"]["followers_count"]),
-                 (useruri,po.followersCount,tweet["user"]["friends_count"]),
+                 (useruri,po.friendsCount,tweet["user"]["friends_count"]),
                  (useruri,po.language,tweet["user"]["lang"]),
                  (useruri,po.listedCount,tweet["user"]["listed_count"]),
                  (useruri,po.name,tweet["user"]["name"]),
@@ -203,6 +235,8 @@ class PicklePublishing:
                  (useruri,po.utcOffset,tweet["user"]["utc_offset"]),
                  ]
         triples=[triple for triple in triples if triple[2]]
+        self.participantvars=["stringID","numericID","favouritesCount","followersCount","friendsCount",\
+                "language","listedCount","name","statusesCount","createdAt","utfOffset"]
         return tweeturi,triples
 
 def readPickleTweetFile(filename):
