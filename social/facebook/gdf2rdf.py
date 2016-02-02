@@ -332,11 +332,11 @@ The script that rendered this data publication is on the script/ directory.\n:::
                          po.postsTTLFileName,
                          po.nPosts,
                          po.nCharsOverall,
-                         po.mCharsPostsOverall,
-                         po.dCharsPostsOverall,
+                         po.mCharsOverall,
+                         po.dCharsOverall,
                          po.nTokensOverall,
-                         po.mTokensPostsOverall,
-                         po.dTokensPostsOverall,
+                         po.mTokensOverall,
+                         po.dTokensOverall,
                          ]+\
                          [po.postAttribute]*len(self.postsvars)
             self.pfile="base/"+self.filename_posts
