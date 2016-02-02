@@ -6,6 +6,7 @@ c=P.check
 def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     """Parse legacy pickle files with Twitter tweets"""
     filenames=os.listdir(data_dir)
+    filenames=[i for i in filenames if i!="ipython_log.py" and not i.endswith(".swp")]
 
     platformuri=P.rdf.ic(po.Platform,"#Facebook",context="social_facebook")
     triples=[

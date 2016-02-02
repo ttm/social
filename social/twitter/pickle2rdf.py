@@ -24,7 +24,7 @@ class PicklePublishing:
         hastext=True
         interactions_anonymized=False
 
-        tweet_graph="social_tweets"
+        tweet_graph="social_tweets0"
         meta_graph="social_twitter_meta"
         social_graph="social_twitter"
         P.context(tweet_graph,"remove")
@@ -212,6 +212,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
                 tweets,fopen=readPickleTweetChunk(None,None,fopen,5000)
             else:
                 tweets=[]
+        for i in range(chunk_count): # free memory
+            P.context(self.tweet_graph[:-1]+str(i),"remove")
     def writeTweets(self,chunk_count):
         if not os.path.isdir(self.final_path):
             os.mkdir(self.final_path)
@@ -230,6 +232,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         self.size_ttl+=[filesizettl]
         self.tweet_rdf+=[trdf]
         self.size_rdf+=[filesizerdf]
+        self.tweet_graph+=str(chunk_count+1)
 
     def tweetTriples(self,tweet):
         triples=[]
@@ -277,7 +280,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         date=dateutil.parser.parse(tweet["created_at"])
         self.dates+=[date]
         triples=[
-                 (tweeturi,po.author,useruri),
+                (tweeturi,po.author,useruri),
                 (tweeturi,po.nChars,nchars),
                 (tweeturi,po.nTokens,ntokens),
                 (tweeturi,po.stringID,tweetid),
@@ -340,7 +343,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     (useruri_mention,po.screenName,screen_name_mention),
                     (useruri_mention,po.stringID,userid_mention),
                     ]
-            if not P.get(useruri_mention,po.numericID,None,context=self.tweet_graph): # new user
+            if not P.get(useruri_mention,po.numericID,None): # new user
                 self.nparticipants+=1
                 triples+=[(useruri_mention,po.numericID,userid_mention)]
         links=[]
@@ -367,12 +370,12 @@ The script that rendered this data publication is on the script/ directory.\n:::
               ("?uri",a,po.Tweet),
               ("?uri",po.stringID,tweetid)
               ]
-        tweet_known=P.get(query,context=self.tweet_graph)
+        tweet_known=P.get(query)
         query=[
               ("?uri",a,po.Participant),
               ("?uri",po.numericID,userid)
               ]
-        participant_known=P.get(query,context=self.tweet_graph)
+        participant_known=P.get(query)
         if not tweet_known:
             self.ntweets+=1
         if not participant_known:
