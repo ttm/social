@@ -210,7 +210,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
             c("chunk has been written")
             chunk_count+=1
             if self.pickle_filename2:
-                tweets,fopen=readPickleTweetChuck(None,None,fopen,5000)
+                tweets,fopen=readPickleTweetChunk(None,None,fopen,5000)
             else:
                 tweets=[]
     def writeTweets(self,chunk_count):
@@ -390,7 +390,7 @@ def readPickleTweetFile(filename):
             except EOFError:
                 break
     return objs
-def readPickleTweetChunck(filename=None,tweets=[],fopen=None,ntweets=5000):
+def readPickleTweetChunk(filename=None,tweets=[],fopen=None,ntweets=5000):
     """Read ntweets from filename or fopen and add them to tweets list"""
     if not fopen:
         f=open(filename,"rb")
