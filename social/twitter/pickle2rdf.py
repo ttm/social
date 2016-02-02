@@ -32,7 +32,7 @@ class PicklePublishing:
 
         final_path_="{}{}/".format(final_path,snapshotid)
         online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,snapshotid)
-        dates=[]; tweet_rdf=[]; tweet_ttl=[]; nchars_all=[]; ntokens_all=[]
+        dates=[]; size_rdf=[]; size_ttl=[]; tweet_rdf=[]; tweet_ttl=[]; nchars_all=[]; ntokens_all=[]
         ntriples=nhashtags=nmedia=nlinks=nuser_mentions=nparticipants=nretweets=ntweets=nreplies=anonymous_user_count=anonymous_tweet_count=0
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
@@ -89,11 +89,11 @@ class PicklePublishing:
         self.desc+="\nisInteraction: {}".format(self.isinteraction)
         self.desc+="; nParticipants: {}; nInteractions: {} (responses+retweets+user mentions).".format(self.nparticipants,self.nreplies+self.nretweets+self.nuser_mentions,)
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
-        self.desc+="\n nTweets: {}; ".format(self.ntweets)
+        self.desc+="\nnTweets: {}; ".format(self.ntweets)
         self.desc+="nReplies: {}; nRetweets: {}; nUserMentions: {}.".format(self.nreplies,self.nretweets,self.nuser_mentions)
-        self.desc+="\n nTokens: {}; mTokens: {}; dTokens: {};".format(self.totaltokens,self.mtokenstweets,self.dtokenstweets)
-        self.desc+="\n nChars: {}; mChars: {}; dChars: {}.".format(self.totalchars,self.mcharstweets,self.dcharstweets)
-        self.desc+="\n mHashtahs: {}; nMedia: {}; nLinks: {}.".format(self.nhashtags,self.nmedia,self.nlinks)
+        self.desc+="\nnTokens: {}; mTokens: {}; dTokens: {};".format(self.totaltokens,self.mtokenstweets,self.dtokenstweets)
+        self.desc+="\nnChars: {}; mChars: {}; dChars: {}.".format(self.totalchars,self.mcharstweets,self.dcharstweets)
+        self.desc+="\nnHashtags: {}; nMedia: {}; nLinks: {}.".format(self.nhashtags,self.nmedia,self.nlinks)
         triples=[
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
                 (self.snapshoturi, po.triplifiedBy,      "scripts/"),
@@ -103,6 +103,8 @@ class PicklePublishing:
                 (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
                 (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
                 (self.snapshoturi, po.metaTTLFileName,   self.mttl),
+                (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_rdf)),
+                (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
                 (self.snapshoturi, po.acquiredThrough,   "Twitter APIs"),
                 (self.snapshoturi, po.socialProtocolTag, "Twitter"),
                 (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"Twitter",self.meta_graph,self.snapshoturi)),
@@ -223,8 +225,12 @@ The script that rendered this data publication is on the script/ directory.\n:::
         trdf=filename+".rdf"
         g.serialize(self.final_path_+tttl,"turtle"); c("ttl")
         g.serialize(self.final_path_+trdf,"xml")
+        filesizettl=os.path.getsize(self.final_path_+tttl)/(10**6)
+        filesizerdf=os.path.getsize(self.final_path_+trdf)/(10**6)
         self.tweet_ttl+=[tttl]
+        self.size_ttl+=[filesizettl]
         self.tweet_rdf+=[trdf]
+        self.size_rdf+=[filesizerdf]
 
     def tweetTriples(self,tweet):
         triples=[]
