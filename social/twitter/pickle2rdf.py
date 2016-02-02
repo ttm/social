@@ -189,7 +189,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         if self.pickle_filename1:
             tweets+=readPickleTweetFile( self.data_path+self.pickle_filename1)[0]
         if self.pickle_filename2:
-            tweets,fopen=readPickleTweetChunk(self.data_path+self.pickle_filename2,tweets,None,5000) # limit chuck to 5k tweets
+            tweets,fopen=readPickleTweetChunk(self.data_path+self.pickle_filename2,tweets,None,3000) # limit chuck to 5k tweets
         chunk_count=0
         self.tweets=tweets # for probing only, remove to release memory
         while tweets:
@@ -204,12 +204,12 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     c("rendered",self.ntweets,"tweets")
                 self.ntriples+=len(triples)
                 P.add(triples,context=self.tweet_graph)
-            c("end of chunk:",chunk_count, "ntriples:",len(triples))
+            c("end of chunk:",chunk_count, "ntriples:",self.ntriples)
             self.writeTweets(chunk_count)
             c("chunk has been written")
             chunk_count+=1
             if self.pickle_filename2:
-                tweets,fopen=readPickleTweetChunk(None,None,fopen,5000)
+                tweets,fopen=readPickleTweetChunk(None,[],fopen,3000)
             else:
                 tweets=[]
     def writeTweets(self,chunk_count):
@@ -295,7 +295,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
             if tweet["in_reply_to_status_id_str"]:
                 userid_reply=self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
                 useruri_reply=P.rdf.ic(po.Participant,userid_reply,self.tweet_graph,self.snapshoturi)
-                if not P.get(useruri_reply,po.numericID,None,context=self.tweet_graph): # new user
+                if not P.get(useruri_reply,po.numericID,None): # new user
                     self.nparticipants+=1
                     triples+=[(useruri_reply,po.numericID,userid_reply)]
             else:
@@ -306,7 +306,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
             if tweet["in_reply_to_status_id_str"]:
                 tweetid_reply=userid_reply+"-"+tweet["in_reply_to_status_id_str"]
                 tweeturi_reply=P.rdf.ic(po.Tweet,tweetid_reply,self.tweet_graph,self.snapshoturi)
-                if not P.get(tweeturi_reply,po.numericID,None,context=self.tweet_graph): # new message
+                if not P.get(tweeturi_reply,po.numericID,None): # new message
                     self.ntweets+=1
                     triples+=[(tweeturi_reply,po.numericID,tweetid_reply)]
             else:
@@ -340,7 +340,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     (useruri_mention,po.screenName,screen_name_mention),
                     (useruri_mention,po.stringID,userid_mention),
                     ]
-            if not P.get(useruri_mention,po.numericID,None,context=self.tweet_graph): # new user
+            if not P.get(useruri_mention,po.numericID,None): # new user
                 self.nparticipants+=1
                 triples+=[(useruri_mention,po.numericID,userid_mention)]
         links=[]
@@ -367,12 +367,12 @@ The script that rendered this data publication is on the script/ directory.\n:::
               ("?uri",a,po.Tweet),
               ("?uri",po.stringID,tweetid)
               ]
-        tweet_known=P.get(query,context=self.tweet_graph)
+        tweet_known=P.get(query)
         query=[
               ("?uri",a,po.Participant),
               ("?uri",po.numericID,userid)
               ]
-        participant_known=P.get(query,context=self.tweet_graph)
+        participant_known=P.get(query)
         if not tweet_known:
             self.ntweets+=1
         if not participant_known:
