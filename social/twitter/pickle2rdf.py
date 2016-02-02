@@ -189,11 +189,11 @@ The script that rendered this data publication is on the script/ directory.\n:::
         if self.pickle_filename1:
             tweets+=readPickleTweetFile( self.data_path+self.pickle_filename1)[0]
         if self.pickle_filename2:
-            tweets,fopen=readPickleTweetChunk(data_path+self.pickle_filename2,tweets,None,5000) # limit chuck to 5k tweets
+            tweets,fopen=readPickleTweetChunk(self.data_path+self.pickle_filename2,tweets,None,5000) # limit chuck to 5k tweets
         chunk_count=0
         self.tweets=tweets # for probing only, remove to release memory
         while tweets:
-            c("rendering tweets, chunk:",chunk_count,"ntweets:",len(tweets))
+            c("rendering tweets, chunk:",chunk_count,"ntweets:",len(tweets),"snapshotid",self.snapshotid)
             for tweet in tweets:
                 tweeturi,triples=self.tweetTriples(tweet)
                 if "retweeted_status" in tweet.keys():
@@ -201,8 +201,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     tweeturi0,triples0=self.tweetTriples(tweet)
                     triples+=triples0
                     triples+=[(tweeturi,po.retweetOf,tweeturi0)]
-                    if self.ntweets%100==0:
-                        c("rendered",self.ntweets,"tweets")
+                    c("rendered",self.ntweets,"tweets")
                 self.ntriples+=len(triples)
                 P.add(triples,context=self.tweet_graph)
             c("end of chunk:",chunk_count, "ntriples:",len(triples))

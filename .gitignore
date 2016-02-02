@@ -3,3 +3,4 @@ ipython_log.py
 *.pyc
 *.pyo
 *.swp
+*.pickle

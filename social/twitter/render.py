@@ -27,7 +27,6 @@ def publishAny(snapshoturi):
     filenames=P.get(triples,join_queries="list",strict=True)
     filenames.sort()
     triples=[
-            (snapshoturi,      po.rawFile, "?fileurifoo"),
             (snapshoturi,      po.snapshotID, "?snapshotid"),
             ]
     snapshotid=P.get(triples)
