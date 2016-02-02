@@ -24,7 +24,7 @@ class PicklePublishing:
         hastext=True
         interactions_anonymized=False
 
-        tweet_graph="social_tweets"
+        tweet_graph="social_tweets0"
         meta_graph="social_twitter_meta"
         social_graph="social_twitter"
         P.context(tweet_graph,"remove")
@@ -212,6 +212,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
                 tweets,fopen=readPickleTweetChunk(None,[],fopen,3000)
             else:
                 tweets=[]
+        for i in range(chunk_count): # free memory
+            P.context(self.tweet_graph[:-1]+str(i),"remove")
     def writeTweets(self,chunk_count):
         if not os.path.isdir(self.final_path):
             os.mkdir(self.final_path)
@@ -230,6 +232,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         self.size_ttl+=[filesizettl]
         self.tweet_rdf+=[trdf]
         self.size_rdf+=[filesizerdf]
+        self.tweet_graph+=str(chunk_count+1)
 
     def tweetTriples(self,tweet):
         triples=[]
@@ -277,7 +280,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         date=dateutil.parser.parse(tweet["created_at"])
         self.dates+=[date]
         triples=[
-                 (tweeturi,po.author,useruri),
+                (tweeturi,po.author,useruri),
                 (tweeturi,po.nChars,nchars),
                 (tweeturi,po.nTokens,ntokens),
                 (tweeturi,po.stringID,tweetid),
