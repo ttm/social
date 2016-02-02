@@ -89,7 +89,7 @@ class PicklePublishing:
         self.desc+="\nisInteraction: {}".format(self.isinteraction)
         self.desc+="; nParticipants: {}; nInteractions: {} (responses+retweets+user mentions).".format(self.nparticipants,self.nreplies+self.nretweets+self.nuser_mentions,)
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
-        self.desc+="\n nTweets: {};".format(self.ntweets)
+        self.desc+="\n nTweets: {}; ".format(self.ntweets)
         self.desc+="nReplies: {}; nRetweets: {}; nUserMentions: {}.".format(self.nreplies,self.nretweets,self.nuser_mentions)
         self.desc+="\n nTokens: {}; mTokens: {}; dTokens: {};".format(self.totaltokens,self.mtokenstweets,self.dtokenstweets)
         self.desc+="\n nChars: {}; mChars: {}; dChars: {}.".format(self.totalchars,self.mcharstweets,self.dcharstweets)
@@ -103,9 +103,9 @@ class PicklePublishing:
                 (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
                 (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
                 (self.snapshoturi, po.metaTTLFileName,   self.mttl),
-                (self.snapshoturi, po.acquiredThrough,   "Netvizz"),
-                (self.snapshoturi, po.socialProtocolTag, "Facebook"),
-                (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"Facebook",self.meta_graph,self.snapshoturi)),
+                (self.snapshoturi, po.acquiredThrough,   "Twitter APIs"),
+                (self.snapshoturi, po.socialProtocolTag, "Twitter"),
+                (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"Twitter",self.meta_graph,self.snapshoturi)),
                 (self.snapshoturi, po.nTriples,         self.ntriples),
                 (self.snapshoturi, NS.rdfs.comment,         self.desc),
                 ]
@@ -130,33 +130,32 @@ class PicklePublishing:
         tinteraction="""\n\n{} individuals with metadata {}
 and {} interactions (retweets: {}, replies: {}, user_mentions: {}) 
 constitute the interaction 
-network in the RDF/XML file:
+network in the RDF/XML file(s):
 {}
-and the Turtle file:
+and the Turtle file(s):
 {}
 (anonymized: {}).""".format( self.nparticipants,str(self.participantvars),
                     self.nretweets+self.nreplies+self.nuser_mentions,self.nretweets,self.nreplies,self.nuser_mentions,
                     self.tweet_rdf,
                     self.tweet_ttl,
                     self.interactions_anonymized)
-        for filename in self.filenames:
-            shutil.copy(self.data_path+filename,self.final_path_+"base/")
-        tposts="""\n\nThe dataset consists ofd {} tweets with metadata {}
+        tposts="""\n\nThe dataset consists of {} tweets with metadata {}
 {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
 {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}""".format(
-                        str(self.tweetvars),
-                        self.ntweets,self.mcharstweets,self.dcharstweets,self.totalchars,
+                        self.ntweets,str(self.tweetvars),
+                        self.mcharstweets,self.dcharstweets,self.totalchars,
                         self.mtokenstweets,self.dtokenstweets,self.totaltokens,
                         )
+        self.dates=[i.isoformat() for i in self.dates]
         date1=min(self.dates)
         date2=max(self.dates)
         with open(self.final_path_+"README","w") as f:
             f.write("""::: Open Linked Social Data publication
 \nThis repository is a RDF data expression of the twitter
-snapshot {snapid} with tweets from {date1} to {date2}.{tinteraction}{tposts}
+snapshot {snapid} with tweets from {date1} to {date2}
+(total of {ntrip} triples).{tinteraction}{tposts}
 \nMetadata for discovery in the RDF/XML file:
 {mrdf} \nor in the Turtle file:\n{mttl}
-\nOriginal file(s):
 \nEgo network: {ise}
 Group network: {isg}
 Friendship network: {isf}
@@ -167,7 +166,7 @@ Has text/posts: {ist}
 \n{desc}
 
 The script that rendered this data publication is on the script/ directory.\n:::""".format(
-                snapid=self.snapshotid,date1=date1.isoformat(),date2=date2.isoformat(),
+                snapid=self.snapshotid,date1=date1,date2=date2,ntrip=self.ntriples,
                         tinteraction=tinteraction,
                         tposts=tposts,
                         mrdf=self.mrdf,
@@ -195,7 +194,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
             c("rendering tweets, chunk:",chunk_count,"ntweets:",len(tweets))
             for tweet in tweets:
                 tweeturi,triples=self.tweetTriples(tweet)
-                if "retweeted_status" in dir(tweet):
+                if "retweeted_status" in tweet.keys():
+                    self.nretweets+=1
                     tweeturi0,triples0=self.tweetTriples(tweet)
                     triples+=triples0
                     triples+=[(tweeturi,po.retweetOf,tweeturi0)]
@@ -217,13 +217,12 @@ The script that rendered this data publication is on the script/ directory.\n:::
         if not os.path.isdir(self.final_path_):
             os.mkdir(self.final_path_)
         filename=self.snapshotid+"Tweet{:05d}".format(chunk_count)
-        filename_=self.final_path_+filename
         g=P.context(self.tweet_graph)
         g.namespace_manager.bind("po",po)
-        tttl=filename_+".ttl"
-        trdf=filename_+".rdf"
-        g.serialize(tttl,"turtle"); c("ttl")
-        g.serialize(trdf+".rdf","xml")
+        tttl=filename+".ttl"
+        trdf=filename+".rdf"
+        g.serialize(self.final_path_+tttl,"turtle"); c("ttl")
+        g.serialize(self.final_path_+trdf,"xml")
         self.tweet_ttl+=[tttl]
         self.tweet_rdf+=[trdf]
 
@@ -245,7 +244,8 @@ The script that rendered this data publication is on the script/ directory.\n:::
         userid=self.snapshotid+"-"+userid_
         useruri=P.rdf.ic(po.Participant,userid,self.tweet_graph,self.snapshoturi)
         triples=[
-                 (useruri,po.stringID,tweet["user"]["screen_name"]),
+                 (useruri,po.stringID,userid),
+                 (useruri,po.screenName,tweet["user"]["screen_name"]),
                  (useruri,po.numericID,tweet["user"]["id_str"]),
                  (useruri,po.favouritesCount,tweet["user"]["favourites_count"]),
                  (useruri,po.followersCount,tweet["user"]["followers_count"]),
@@ -315,12 +315,48 @@ The script that rendered this data publication is on the script/ directory.\n:::
                      ]
         return triples
     def entityTriples(self,tweet,tweeturi):
-        hashtags=[]
+        triples=[]
+        for hashtag_ in tweet["entities"]["hashtags"]:
+            self.nhashtags+=1
+            hashtag=hashtag_["text"]
+            triples+=[
+                    (tweeturi,po.hashtag,hashtag),
+                    ]
+        for user_mention in tweet["entities"]["user_mentions"]:
+            self.nuser_mentions+=1
+            userid_mention_=user_mention["id_str"]
+            name_mention=user_mention["name"]
+            screen_name_mention=user_mention["screen_name"]
+            userid_mention=self.snapshotid+"-"+userid_mention_
+            useruri_mention=P.rdf.ic(po.Participant,userid_mention,self.tweet_graph,self.snapshoturi)
+            triples+=[
+                    (tweeturi,po.userMention,useruri_mention),
+                    (useruri_mention,po.name,name_mention),
+                    (useruri_mention,po.screenName,screen_name_mention),
+                    (useruri_mention,po.stringID,userid_mention),
+                    ]
+            if not P.get(useruri_mention,po.numericID,None,context=self.tweet_graph): # new user
+                self.nparticipants+=1
+                triples+=[(useruri_mention,po.numericID,userid_mention)]
         links=[]
-        user_mentions=[]
-        media=[]
+        for link in tweet["entities"]["urls"]:
+            self.nlinks+=1
+            url=link["url"]
+            triples+=[
+                     (tweeturi,po.expandedURL,link["expanded_url"])
+                     ]
+        if "media" in tweet["entities"].keys():
+            for media in tweet["entities"]["media"]:
+                self.nmedia+=1
+                mediaid=self.snapshoturi+"-"+str(self.nmedia)
+                mediauri=P.rdf.ic(po.Media,mediaid,self.tweet_graph,self.snapshoturi)
+                triples+=[
+                        (tweeturi,po.media,mediauri),
+                        (mediauri,po.type,media["type"]),
+                        (mediauri,po.expandedURL,media["expanded_url"]),
+                        ]
         #symbols?
-        return []
+        return triples
     def countNew(self,tweetid,userid):
         query=[
               ("?uri",a,po.Tweet),

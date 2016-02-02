@@ -15,8 +15,6 @@ def publishAll(snapshoturis=None):
         snapshoturis.sort(key=lambda x: uridict[x])
     for snapshoturi in snapshoturis:
         triplification_class=publishAny(snapshoturi)
-        break
-        count+=1
     #writePublishingReadme()
     return triplification_class
 

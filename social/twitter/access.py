@@ -15,7 +15,7 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     for filename in filenames:
         snapshotid="twitter-legacy-"+filename.replace("_","")
         snapshoturi=po.TwitterSnapshot+"#"+snapshotid
-        expressed_classes=[po.Participant,po.Tweet,po.ReTweet]
+        expressed_classes=[po.Participant,po.Tweet]
         expressed_reference=filename.replace("_","").replace(".pickle","")
         name_humanized="Twitter"+expressed_reference
         filesize=os.path.getsize(data_dir+filename)/10**6
