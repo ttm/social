@@ -19,8 +19,10 @@ class LogPublishing:
         final_path_="{}{}/".format(final_path,snapshotid)
         online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,snapshotid)
         naamessages=nurls=ndirect=nmention=0
-        nchars_all=[]; ntokens_all=[]; nsentences_all=[]
+        dates=[]; nchars_all=[]; ntokens_all=[]; nsentences_all=[]
         participantvars=["nick"]
+        messagevars=["author","createdAt","mentions","directedTo","systemMessage","messageText","cleanMessageText","nChars","nTokens","nSentences","url","emptyMessage"]
+        messagevars.sort()
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
             exec("self.{}={}".format(i,i))
@@ -52,6 +54,15 @@ class LogPublishing:
         for message in messages:
             year, month, day, hour, minute, second, nick, text=message
             nick=Q(nick)
+            datetime_=datetime.datetime(*[int(i) for i in (year,month,day,hour,minute,second)])
+            self.dates+=[datetime_]
+            timestamp=datetime_.isoformat()
+            messageid="{}-{}-{}".format(self.snapshotid,nick,timestamp)
+            while messageid in messageids:
+                messageid+='_r_%05x' % random.randrange(16**5)
+            messageids.add(messageid)
+            messageuri=P.rdf.ic(po.IRCMessage,messageid,self.irc_graph,self.snapshoturi)
+
             # achar direct message com virgula! TTM
 
             tokens=k.word_tokenize(text)
@@ -67,6 +78,11 @@ class LogPublishing:
                         direct_nicks+=[token]
                     else:
                         mention_nicks+=[token]
+            for nick in direct_nicks:
+                useruri2=po.Participant+"#{}-{}".format(self.snapshotid,nick)
+                triples+=[
+                         (messageuri,po.directedTo,useruri2),
+                         ]
             if direct_nicks:
                 self.ndirect+=1
                 text_=text[text.index(direct_nicks[-1])+len(direct_nicks[-1])+1:].lstrip()
@@ -79,13 +95,6 @@ class LogPublishing:
                          ]
             self.nmention+=len(mention_nicks)
 
-            datetime_=datetime.datetime(*[int(i) for i in (year,month,day,hour,minute,second)])
-            timestamp=datetime_.isoformat()
-            messageid="{}-{}-{}".format(self.snapshotid,nick,timestamp)
-            while messageid in messageids:
-                messageid+='_r_%05x' % random.randrange(16**5)
-            messageids.add(messageid)
-            messageuri=P.rdf.ic(po.IRCMessage,messageid,self.irc_graph,self.snapshoturi)
             useruri=po.Participant+"#{}-{}".format(self.snapshotid,nick)
             triples+=[
                      (messageuri,po.author,useruri),
@@ -95,11 +104,6 @@ class LogPublishing:
             if text:
                 triples+=[
                          (messageuri,po.messageText,text),
-                         ]
-            for nick in direct_nicks:
-                useruri2=po.Participant+"#{}-{}".format(self.snapshotid,nick)
-                triples+=[
-                         (messageuri,po.directedTo,useruri2),
                          ]
             if text_:
                 nchars=len(text_)
@@ -140,6 +144,7 @@ class LogPublishing:
             useruri=po.Participant+"#{}-{}".format(self.snapshotid,nick)
 
             datetime_=datetime.datetime(*[int(i) for i in (year,month,day,hour,minute,second)])
+            self.dates+=[datetime_]
             timestamp=datetime_.isoformat()
             messageid="{}-{}".format(self.snapshotid,timestamp)
             while messageid in messageids:
@@ -159,7 +164,11 @@ class LogPublishing:
             if msgcount%1000==0:
                 c("finished system message. Total messages:",msgcount)
         self.messageids=messageids
-        self.log_xml, self.size_xml, self.log_ttl, self.size_ttl=P.rdf.writeByChunks(self.final_path+self.snapshotid+"Log",triples=triples)
+        if not os.path.isdir(self.final_path):
+            os.mkdir(self.final_path)
+        if not os.path.isdir(self.final_path_):
+            os.mkdir(self.final_path_)
+        self.log_xml, self.size_xml, self.log_ttl, self.size_ttl=P.rdf.writeByChunks(self.final_path_+self.snapshotid+"Log",ntriples=5,triples=triples)
 
     def makeMetadata(self):
         triples=P.get(self.snapshoturi,None,None,self.social_graph)
@@ -217,7 +226,7 @@ class LogPublishing:
         self.desc+="\nnCharsOverall: {}; mCharsOverall: {}; dCharsOverall: {}.".format(self.totalchars,self.mcharsmessages,self.dcharsmessages)
         self.desc+="\nnTokensOverall: {}; mTokensOverall: {}; dTokensOverall: {};".format(self.totaltokens,self.mtokensmessages,self.dtokensmessages)
         self.desc+="\nnSentencesOverall: {}; mSentencesOverall: {}; dSentencesOverall: {};".format(self.totalsentences,self.msentencesmessages,self.dsentencesmessages)
-        self.desc+="\nnLinks: {}; nAAMessages.".format(self.nurls,self.naamessages)
+        self.desc+="\nnURLs: {}; nAAMessages {}.".format(self.nurls,self.naamessages)
         triples=[
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
                 (self.snapshoturi, po.triplifiedBy,      "scripts/"),
@@ -237,7 +246,77 @@ class LogPublishing:
                 ]
         P.add(triples,self.meta_graph)
     def writeAllIRC(self):
-        pass
+        g=P.context(self.meta_graph)
+        ntriples=len(g)
+        triples=[
+                 (self.snapshoturi,po.nMetaTriples,ntriples)      ,
+                 ]
+        P.add(triples,context=self.meta_graph)
+        g.namespace_manager.bind("po",po)
+        g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
+        g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
+        c("serialized meta")
+        if not os.path.isdir(self.final_path_+"scripts"):
+            os.mkdir(self.final_path_+"scripts")
+        shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py",self.final_path_+"scripts/triplify.py")
+        # copia do base data
+        tinteraction="""\n\n{} individuals with metadata {}
+and {} interactions (direct messages: {}, user mentions: {}) 
+constitute the interaction 
+structure in the RDF/XML file(s):
+{}
+and the Turtle file(s):
+{}
+(anonymized: {}).""".format( self.nparticipants,str(self.participantvars),
+                    self.ndirect+self.nmention,self.ndirect,self.nmention,
+                    self.log_xml,
+                    self.log_ttl,
+                    self.interactions_anonymized)
+        tposts="""\n\nThe dataset consists of {} irc messages with metadata {}
+{:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
+{:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
+{:.3f} sentences in average (std: {:.3f}) and total sentences in snapshot: {}""".format(
+                        self.nmessages,str(self.messagevars),
+                         self.mcharsmessages, self.dcharsmessages,self.totalchars,
+                        self.mtokensmessages,self.dtokensmessages,self.totaltokens,
+                        self.msentencesmessages,self.dsentencesmessages,self.totalsentences,
+                        )
+        self.dates=[i.isoformat() for i in self.dates]
+        date1=min(self.dates)
+        date2=max(self.dates)
+        with open(self.final_path_+"README","w") as f:
+            f.write("""::: Open Linked Social Data publication
+\nThis repository is a RDF data expression of the IRC
+snapshot {snapid} with tweets from {date1} to {date2}
+(total of {ntrip} triples).{tinteraction}{tposts}
+\nMetadata for discovery in the RDF/XML file:
+{mrdf} \nor in the Turtle file:\n{mttl}
+\nEgo network: {ise}
+Group network: {isg}
+Friendship network: {isf}
+Interaction network: {isi}
+Has text/posts: {ist}
+\nAll files should be available at the git repository:
+{ava}
+\n{desc}
+
+The script that rendered this data publication is on the script/ directory.\n:::""".format(
+                snapid=self.snapshotid,date1=date1,date2=date2,ntrip=self.ntriples,
+                        tinteraction=tinteraction,
+                        tposts=tposts,
+                        mrdf=self.log_xml,
+                        mttl=self.log_ttl,
+                        ise=self.isego,
+                        isg=self.isgroup,
+                        isf=self.isfriendship,
+                        isi=self.isinteraction,
+                        ist=self.hastext,
+                        ava=self.online_prefix,
+                        desc=self.desc
+                        ))
+
+
+
 
 strange="Ã¡","Ã ","Ã¢","Ã£","Ã¤","Ã©","Ã¨","Ãª","Ã«","Ã­","Ã¬","Ã®","Ã¯","Ã³","Ã²","Ã´","Ãµ","Ã¶","Ãº","Ã¹","Ã»","Ã¼","Ã§","Ã","Ã€","Ã‚","Ãƒ","Ã„","Ã‰","Ãˆ","ÃŠ","Ã‹","Ã","ÃŒ","ÃŽ","Ã","Ã“","Ã’","Ã”","Ã•","Ã–","Ãš","Ã™","Ã›","Ãœ","Ã‡","Ã"
 correct="á", "à", "â", "ã", "ä", "é", "è", "ê", "ë", "í", "ì", "î", "ï", "ó", "ò", "ô", "õ", "ö", "ú", "ù", "û", "ü", "ç", "Á", "À", "Â", "Ã", "Ä", "É", "È", "Ê", "Ë", "Í", "Ì", "Î", "Ï", "Ó", "Ò", "Ô", "Õ", "Ö", "Ú", "Ù", "Û", "Ü", "Ç","Ú"

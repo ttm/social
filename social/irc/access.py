@@ -59,7 +59,6 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     c("""{} are ego snapshots, {} are group snapshots
 {} have a friendship structures. {} have an interaction structures. {} have texts 
 Total raw data size is {:.2f}MB""".format(negos,ngroups,nfriendships,ninteractions,nposts,totalsize))
-
     return snapshots
 
 

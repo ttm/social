@@ -175,9 +175,6 @@ The script that rendered this data publication is on the script/ directory.\n:::
                         ava=self.online_prefix,
                         desc=self.desc
                         ))
-
-
-        pass
     def rdfTweets(self):
         tweets=[]
         if self.pickle_filename1:
