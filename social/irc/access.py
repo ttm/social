@@ -8,23 +8,19 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     filenames=os.listdir(data_dir)
     filenames=[i for i in filenames if i!="ipython_log.py" and not i.endswith(".swp")]
 
-    platformuri=P.rdf.ic(po.Platform,"#IRC",context="social_facebook")
-    triples=[
-            (platformuri, po.dataDir,data_dir),
-            ]
     snapshots=set()
     for filename in filenames:
-        snapshotid="irc-legacy-"+filename.replace("_","")
+        snapshotid="irc-legacy-"+filename.replace("#","")
         snapshoturi=po.TwitterSnapshot+"#"+snapshotid
-        expressed_classes=[po.Participant,po.Tweet]
-        expressed_reference=filename.replace("_","").replace(".pickle","")
-        name_humanized="Twitter"+expressed_reference
+        expressed_classes=[po.Participant,po.IRCMessage]
+        expressed_reference=filename.replace("#","").replace(".txt","").replace(".log","")
+        name_humanized="IRC log of channel "+expressed_reference
         filesize=os.path.getsize(data_dir+filename)/10**6
-        fileformat="pickle"
-        fileuri=po.File+"#twitter-file-"+filename
+        fileformat="txt"
+        fileuri=po.File+"#Irc-log-"+filename.replace("#","")
         triples+=[
                  (snapshoturi,a,po.Snapshot),
-                 (snapshoturi,a,po.TwitterSnapshot),
+                 (snapshoturi,a,po.IRCSnapshot),
                  (snapshoturi,po.snapshotID,snapshotid),
                  (snapshoturi, po.isEgo, False),
                  (snapshoturi, po.isGroup, True),
@@ -43,10 +39,28 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
         snapshots.add(snapshoturi)
     nfiles=len(filenames)
     nsnapshots=len(snapshots)
+    P.context("social_irc","remove")
+    platformuri=P.rdf.ic(po.Platform,"#IRC",context="social_irc")
     triples+=[
              (NS.social.Session,NS.social.nTwitterParsedFiles,nfiles),
              (NS.social.Session,NS.social.nTwitterSnapshots,nsnapshots),
+             (platformuri, po.dataDir,data_dir),
              ]
+    P.add(triples,context="social_irc")
+    c("parsed {} irc logs files ({} snapshots) are in percolation graph and 'irc_twitter' context".format(nfiles,nsnapshots))
+    c("percolation graph have {} triples ({} in social_irc context)".format(len(P.percolation_graph),len(P.context("social_irc"))))
+    negos=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE         { GRAPH <social_irc> { ?s po:isEgo true         } } ")
+    ngroups=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE       { GRAPH <social_irc> { ?s po:isGroup true       } } ")
+    nfriendships=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE  { GRAPH <social_irc> { ?s po:isFriendship true  } } ")
+    ninteractions=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { GRAPH <social_irc> { ?s po:isInteraction true } } ")
+    nposts=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE        { GRAPH <social_irc> { ?s po:isPost true        } } ")
+    totalsize=sum(P.query(r" SELECT ?size WHERE              { GRAPH <social_irc> { ?s po:fileSize ?size     } } "))
+    c("""{} are ego snapshots, {} are group snapshots
+{} have a friendship structures. {} have an interaction structures. {} have texts 
+Total raw data size is {:.2f}MB""".format(negos,ngroups,nfriendships,ninteractions,nposts,totalsize))
+
+    return snapshots
+
 
 
 

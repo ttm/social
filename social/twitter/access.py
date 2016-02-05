@@ -8,11 +8,8 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     filenames=os.listdir(data_dir)
     filenames=[i for i in filenames if i!="ipython_log.py" and not i.endswith(".swp")]
 
-    platformuri=P.rdf.ic(po.Platform,"#Facebook",context="social_facebook")
-    triples=[
-            (platformuri, po.dataDir,data_dir),
-            ]
     snapshots=set()
+    triples=[]
     for filename in filenames:
         snapshotid="twitter-legacy-"+filename.replace("_","")
         snapshoturi=po.TwitterSnapshot+"#"+snapshotid
@@ -43,14 +40,16 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
         snapshots.add(snapshoturi)
     nfiles=len(filenames)
     nsnapshots=len(snapshots)
-    triples+=[
-             (NS.social.Session,NS.social.nTwitterParsedFiles,nfiles),
-             (NS.social.Session,NS.social.nTwitterSnapshots,nsnapshots),
-             ]
     P.context("social_twitter","remove")
+    platformuri=P.rdf.ic(po.Platform,"#Twitter",context="social_twitter")
+    triples+=[
+             (NS.social.Session,NS.social.nIRCParsedFiles,nfiles),
+             (NS.social.Session,NS.social.nIRCSnapshots,nsnapshots),
+             (platformuri, po.dataDir,data_dir),
+             ]
     P.add(triples,context="social_twitter")
     c("parsed {} twitter files ({} snapshots) are in percolation graph and 'social_twitter' context".format(nfiles,nsnapshots))
-    c("percolation graph have {} triples ({} in social_facebook context)".format(len(P.percolation_graph),len(P.context("social_twitter"))))
+    c("percolation graph have {} triples ({} in social_twitter context)".format(len(P.percolation_graph),len(P.context("social_twitter"))))
     negos=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE         { GRAPH <social_twitter> { ?s po:isEgo true         } } ")
     ngroups=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE       { GRAPH <social_twitter> { ?s po:isGroup true       } } ")
     nfriendships=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE  { GRAPH <social_twitter> { ?s po:isFriendship true  } } ")
