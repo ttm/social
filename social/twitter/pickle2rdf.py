@@ -1,6 +1,5 @@
 import percolation as P, social as S, numpy as n, pickle, dateutil, nltk as k, os, datetime, shutil, rdflib as r
-from percolation.rdf import NS, a, po
-c=P.check
+from percolation.rdf import NS, U, a, po, c
 class PicklePublishing:
     def __init__(self,snapshoturi,snapshotid,filenames=("foo.pickle",),\
             data_path="../data/twitter/",final_path="./twitter_snapshots/",umbrella_dir="twitter_snapshots/"):
@@ -73,10 +72,6 @@ class PicklePublishing:
         P.rdf.triplesScaffolding(self.snapshoturi,
                 [po.onlineTweetXMLFile]*len(self.tweet_rdf)+[po.onlineTweetTTLFile]*len(self.tweet_ttl),
                 [self.online_prefix+i for i in self.tweet_rdf+self.tweet_ttl],context=self.meta_graph)
-        self.ffile=["base/"+i for i in self.filenames]
-        P.rdf.triplesScaffolding(self.snapshoturi,
-                [po.originalTweetFileName]*len(self.ffile),
-                self.ffile,context=self.meta_graph)
         P.rdf.triplesScaffolding(self.snapshoturi,
                 [po.onlineOriginalTweetFile]*len(self.ffile),
                 [self.online_prefix+i for i in self.ffile],context=self.meta_graph)
@@ -85,9 +80,9 @@ class PicklePublishing:
         self.mttl=self.snapshotid+"Meta.ttl"
         self.desc="twitter dataset with snapshotID: {}\nsnapshotURI: {} \nisEgo: {}. isGroup: {}.".format(
                                                 self.snapshotid,self.snapshoturi,self.isego,self.isgroup,)
-        self.desc+="\nisFriendship: {}".format(self.isfriendship)
-        self.desc+="\nisInteraction: {}".format(self.isinteraction)
-        self.desc+="; nParticipants: {}; nInteractions: {} (responses+retweets+user mentions).".format(self.nparticipants,self.nreplies+self.nretweets+self.nuser_mentions,)
+        self.desc+="\nisFriendship: {}; ".format(self.isfriendship)
+        self.desc+="isInteraction: {}.".format(self.isinteraction)
+        self.desc+="\nnParticipants: {}; nInteractions: {} (responses+retweets+user mentions).".format(self.nparticipants,self.nreplies+self.nretweets+self.nuser_mentions,)
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
         self.desc+="\nnTweets: {}; ".format(self.ntweets)
         self.desc+="nReplies: {}; nRetweets: {}; nUserMentions: {}.".format(self.nreplies,self.nretweets,self.nuser_mentions)
@@ -189,7 +184,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         if self.pickle_filename1:
             tweets+=readPickleTweetFile( self.data_path+self.pickle_filename1)[0]
         if self.pickle_filename2:
-            tweets,fopen=readPickleTweetChunk(self.data_path+self.pickle_filename2,tweets,None,3000) # limit chuck to 5k tweets
+            tweets,fopen=readPickleTweetChunk(self.data_path+self.pickle_filename2,tweets,None,10000) # limit chuck to 5k tweets
         chunk_count=0
         self.tweets=tweets # for probing only, remove to release memory
         while tweets:
@@ -204,12 +199,14 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     c("rendered",self.ntweets,"tweets")
                 self.ntriples+=len(triples)
                 P.add(triples,context=self.tweet_graph)
-            c("end of chunk:",chunk_count, "ntriples:",self.ntriples)
+            c("end of chunk:",chunk_count,"ntriples:",self.ntriples)
             self.writeTweets(chunk_count)
             c("chunk has been written")
             chunk_count+=1
+            if chunk_count==2:
+                break
             if self.pickle_filename2:
-                tweets,fopen=readPickleTweetChunk(None,[],fopen,3000)
+                tweets,fopen=readPickleTweetChunk(None,[],fopen,10000)
             else:
                 tweets=[]
         for i in range(chunk_count): # free memory
@@ -232,7 +229,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
         self.size_ttl+=[filesizettl]
         self.tweet_rdf+=[trdf]
         self.size_rdf+=[filesizerdf]
-        self.tweet_graph+=str(chunk_count+1)
+        self.tweet_graph=self.tweet_graph[:-1]+str(chunk_count+1)
 
     def tweetTriples(self,tweet):
         triples=[]

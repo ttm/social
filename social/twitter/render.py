@@ -26,11 +26,13 @@ def publishAny(snapshoturi):
             ]
     filenames=P.get(triples,join_queries="list",strict=True)
     filenames.sort()
+    filenames=[i for i in filenames if i.count("_")==2]
     triples=[
             (snapshoturi,      po.snapshotID, "?snapshotid"),
             ]
     snapshotid=P.get(triples)
-    return PicklePublishing(snapshoturi,snapshotid,filenames)
-    return snapshotid, snapshoturi, filenames
+    if filenames:
+        return PicklePublishing(snapshoturi,snapshotid,filenames)
+#    return snapshotid, snapshoturi, filenames
 
 
