@@ -18,8 +18,9 @@ class LogPublishing:
         P.context(meta_graph,"remove")
         final_path_="{}{}/".format(final_path,snapshotid)
         online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,snapshotid)
-        nurls=ndirect=nmention=0
+        naamessages=nurls=ndirect=nmention=0
         nchars_all=[]; ntokens_all=[]; nsentences_all=[]
+        participantvars=["nick"]
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
             exec("self.{}={}".format(i,i))
@@ -36,16 +37,18 @@ class LogPublishing:
         rsysmsg=r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \*\*\* (\S+) (.*)" # system message (?)
         rmsg=r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\> (.*)" # message
         rurl='http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-        messages=re.findall(rmsg,logtext)
-        system_messages=re.findall(rsysmsg,logtext)
+        messages=re.findall(rmsg,logtext)[:10]
+        system_messages=re.findall(rsysmsg,logtext)[:10]
         self.NICKS=set([Q(i[-2]) for i in messages]+[Q(i[-2]) for i in system_messages])
         triples=[]
         for nick in self.NICKS:
-            useruri=P.rdf.ic(po.Participant,"{}-{}".format(self.snapshoturi,nick),self.irc_graph,self.snapshoturi)
+            useruri=P.rdf.ic(po.Participant,"{}-{}".format(self.snapshotid,nick),self.irc_graph,self.snapshoturi)
             triples+=[
                     (useruri,po.nick,nick),
                     ]
         messageids=set()
+        msgcount=0
+        c("starting translation of log with",len(messages)+len(system_messages),"messages")
         for message in messages:
             year, month, day, hour, minute, second, nick, text=message
             nick=Q(nick)
@@ -70,7 +73,7 @@ class LogPublishing:
             else:
                 text_=text
             for nick in mention_nicks:
-                useruri2=po.Participant+"#{}-{}".format(self.snapshoturi,nick)
+                useruri2=po.Participant+"#{}-{}".format(self.snapshotid,nick)
                 triples+=[
                          (messageuri,po.mentions,useruri2),
                          ]
@@ -78,12 +81,12 @@ class LogPublishing:
 
             datetime_=datetime.datetime(*[int(i) for i in (year,month,day,hour,minute,second)])
             timestamp=datetime_.isoformat()
-            messageid="{}-{}-{}".format(self.snapshoturi,nick,timestamp)
+            messageid="{}-{}-{}".format(self.snapshotid,nick,timestamp)
             while messageid in messageids:
                 messageid+='_r_%05x' % random.randrange(16**5)
             messageids.add(messageid)
             messageuri=P.rdf.ic(po.IRCMessage,messageid,self.irc_graph,self.snapshoturi)
-            useruri=po.Participant+"#{}-{}".format(self.snapshoturi,nick)
+            useruri=po.Participant+"#{}-{}".format(self.snapshotid,nick)
             triples+=[
                      (messageuri,po.author,useruri),
                      (messageuri,po.systemMessage,False),
@@ -94,7 +97,7 @@ class LogPublishing:
                          (messageuri,po.messageText,text),
                          ]
             for nick in direct_nicks:
-                useruri2=po.Participant+"#{}-{}".format(self.snapshoturi,nick)
+                useruri2=po.Participant+"#{}-{}".format(self.snapshotid,nick)
                 triples+=[
                          (messageuri,po.directedTo,useruri2),
                          ]
@@ -123,13 +126,18 @@ class LogPublishing:
                          (messageuri,po.emptyMessage,True),
                          ]
             if text.startswith(";aa ") or text.startswith("lalenia, aa ") or text.startswith("lalenia: aa "):
+                self.naamessages+=1
                 triples+=[
                          (messageuri,a,po.AAIRCMessage),
                          ]
+            msgcount+=1
+            if msgcount%1000==0:
+                c("finished user message",msgcount)
+        msgcount=0
         for message in system_messages:
             year, month, day, hour, minute, second, nick, text=message
             nick=Q(nick)
-            useruri=po.Participant+"#{}-{}".format(self.snapshot,nick)
+            useruri=po.Participant+"#{}-{}".format(self.snapshotid,nick)
 
             datetime_=datetime.datetime(*[int(i) for i in (year,month,day,hour,minute,second)])
             timestamp=datetime_.isoformat()
@@ -137,23 +145,27 @@ class LogPublishing:
             while messageid in messageids:
                 messageid+='_r_%05x' % random.randrange(16**5)
             messageids.update([messageid])
-            messageuri=P.rdf.ic(po.IRCMessage,messageid,self.snapshoturi)
+            messageuri=P.rdf.ic(po.IRCMessage,messageid,self.irc_graph,self.snapshoturi)
             triples+=[
-                    (messageuri,po.impliedUser,useruri)
-                    (messageuri,po.sentAt,datetime_)
-                    (messageuri,po.systemMessage,True)
-                    ]
+                     (messageuri,po.impliedUser,useruri),
+                     (messageuri,po.sentAt,datetime_),
+                     (messageuri,po.systemMessage,True)
+                     ]
             if text:
                 triples+=[
-                        (messageuri,po.messageText,text)
-                        ]
+                         (messageuri,po.messageText,text)
+                         ]
+            msgcount+=1
+            if msgcount%1000==0:
+                c("finished system message. Total messages:",msgcount)
         self.messageids=messageids
-        self.log_rdf, self.log_ttl=P.rdf.writeByChunks(self.final_path+self.snapshotid+"Log",triples)
+        self.log_xml, self.size_xml, self.log_ttl, self.size_ttl=P.rdf.writeByChunks(self.final_path+self.snapshotid+"Log",triples=triples)
 
     def makeMetadata(self):
         triples=P.get(self.snapshoturi,None,None,self.social_graph)
         for rawfile in P.get(self.snapshoturi,po.rawFile,None,self.social_graph,strict=True,minimized=True):
             triples+=P.get(rawfile,None,None,self.social_graph)
+        P.add(triples,context=self.meta_graph)
         self.totalchars=sum(self.nchars_all)
         self.mcharsmessages=n.mean(self.nchars_all)
         self.dcharsmessages=n.std(self.nchars_all)
@@ -161,12 +173,14 @@ class LogPublishing:
         self.mtokensmessages=n.mean(self.ntokens_all)
         self.dtokensmessages=n.std(self.ntokens_all)
         self.totalsentences=sum(self.nsentences_all)
-        self.msentecesmessages=n.mean(self.nsentences_all)
-        self.dsentecesmessages=n.std( self.nsentences_all)
-        P.add(triples,context=self.meta_graph)
+        self.msentencesmessages=n.mean(self.nsentences_all)
+        self.dsentencesmessages=n.std( self.nsentences_all)
+        self.nparticipants=len(self.NICKS)
+        self.nmessages=len(self.messageids)
+        self.ntriples=len(P.context(self.irc_graph))
         triples=[
-                (self.snapshoturi, po.nParticipants,           len(self.NICKS)),
-                (self.snapshoturi, po.nMessages,                 len(self.messageids)),
+                (self.snapshoturi, po.nParticipants,           self.nparticipants),
+                (self.snapshoturi, po.nMessages,                 self.nmessages),
                 (self.snapshoturi, po.nDirectMessages,              self.ndirect),
                 (self.snapshoturi, po.nUserMentions,              self.nmention),
                 (self.snapshoturi, po.nCharsOverall, self.totalchars),
@@ -184,11 +198,11 @@ class LogPublishing:
                 [po.ircParticipantAttribute]*len(self.participantvars),
                 self.participantvars,context=self.meta_graph)
         P.rdf.triplesScaffolding(self.snapshoturi,
-                [po.logXMLFilename]*len(self.log_rdf)+[po.logTTLFilename]*len(self.log_ttl),
-                self.log_rdf+self.log_ttl,context=self.meta_graph)
+                [po.logXMLFilename]*len(self.log_xml)+[po.logTTLFilename]*len(self.log_ttl),
+                self.log_xml+self.log_ttl,context=self.meta_graph)
         P.rdf.triplesScaffolding(self.snapshoturi,
-                [po.onlineLogXMLFile]*len(self.tweet_rdf)+[po.onlineLogTTLFile]*len(self.tweet_ttl),
-                [self.online_prefix+i for i in self.log_rdf+self.log_ttl],context=self.meta_graph)
+                [po.onlineLogXMLFile]*len(self.log_xml)+[po.onlineLogTTLFile]*len(self.log_ttl),
+                [self.online_prefix+i for i in self.log_xml+self.log_ttl],context=self.meta_graph)
 
         self.mrdf=self.snapshotid+"Meta.rdf"
         self.mttl=self.snapshotid+"Meta.ttl"
@@ -200,10 +214,10 @@ class LogPublishing:
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
         self.desc+="\nnMessages: {}; ".format(self.nmessages)
         self.desc+="nDirectedMessages: {}; nUserMentions: {};".format(self.ndirect,self.nmention)
-        self.desc+="\nnCharsOverall: {}; mCharsOverall: {}; dCharsOverall: {}.".format(self.totalchars,self.mcharstweets,self.dcharstweets)
-        self.desc+="\nnTokensOverall: {}; mTokensOverall: {}; dTokensOverall: {};".format(self.totaltokens,self.mtokensmessges,self.dtokensmessages)
-        self.desc+="\nnSentencesOverall: {}; mSentencesOverall: {}; dSentencesOverall: {};".format(self.totaltokens,self.mtokensmessges,self.dtokensmessages)
-        self.desc+="\nnHashtags: {}; nMedia: {}; nLinks: {}.".format(self.aamessages,self.nlinks)
+        self.desc+="\nnCharsOverall: {}; mCharsOverall: {}; dCharsOverall: {}.".format(self.totalchars,self.mcharsmessages,self.dcharsmessages)
+        self.desc+="\nnTokensOverall: {}; mTokensOverall: {}; dTokensOverall: {};".format(self.totaltokens,self.mtokensmessages,self.dtokensmessages)
+        self.desc+="\nnSentencesOverall: {}; mSentencesOverall: {}; dSentencesOverall: {};".format(self.totalsentences,self.msentencesmessages,self.dsentencesmessages)
+        self.desc+="\nnLinks: {}; nAAMessages.".format(self.nurls,self.naamessages)
         triples=[
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
                 (self.snapshoturi, po.triplifiedBy,      "scripts/"),
@@ -213,17 +227,15 @@ class LogPublishing:
                 (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
                 (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
                 (self.snapshoturi, po.metaTTLFileName,   self.mttl),
-                (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_rdf)),
+                (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_xml)),
                 (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
-                (self.snapshoturi, po.acquiredThrough,   "Twitter APIs"),
-                (self.snapshoturi, po.socialProtocolTag, "Twitter"),
-                (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"Twitter",self.meta_graph,self.snapshoturi)),
+                (self.snapshoturi, po.acquiredThrough,   "channel text log"),
+                (self.snapshoturi, po.socialProtocolTag, "IRC"),
+                (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"IRC",self.meta_graph,self.snapshoturi)),
                 (self.snapshoturi, po.nTriples,         self.ntriples),
                 (self.snapshoturi, NS.rdfs.comment,         self.desc),
                 ]
         P.add(triples,self.meta_graph)
-
-        pass
     def writeAllIRC(self):
         pass
 
