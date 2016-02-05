@@ -195,9 +195,9 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     tweeturi0,triples0=self.tweetTriples(tweet)
                     triples+=triples0
                     triples+=[(tweeturi,po.retweetOf,tweeturi0)]
-                    c("rendered",self.ntweets,"tweets")
                 self.ntriples+=len(triples)
                 P.set_(triples,context=self.tweet_graph)
+                c("rendered",self.ntweets,"tweets")
             c("end of chunk:",chunk_count,"ntriples:",self.ntriples)
             self.writeTweets(chunk_count)
             c("chunk has been written")

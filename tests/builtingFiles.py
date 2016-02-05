@@ -8,7 +8,9 @@ for key in keys:
 
 import social as S, percolation as P
 from percolation.rdf import NS, a
-#ss=S.facebook.access.parseLegacyFiles()
-ss=S.twitter.access.parseLegacyFiles()
+#ss=S.facebook.access.parseLegacyFiles() # parse all gdf gml tab files under social/data/facebook/
+#ss=S.twitter.access.parseLegacyFiles() # parse all pickle files under social/data/twitter/
+ss=S.irc.access.parseLegacyFiles() # parse all log files under social/data/irc/
+
 
 
