@@ -12,7 +12,8 @@ class PicklePublishing:
         elif filenames[0].count("_")==2:
             pickle_filename1=""
             pickle_filename2=filenames[0]
-
+        else:
+            raise ValueError("Filenames not understood")
         participantvars=["stringID","numericID","screenName","favouritesCount","followersCount","friendsCount",\
                 "language","listedCount","name","statusesCount","createdAt","utfOffset","snapshot"]
         participantvars.sort()
@@ -73,9 +74,6 @@ class PicklePublishing:
         P.rdf.triplesScaffolding(self.snapshoturi,
                 [po.onlineTweetXMLFile]*len(self.tweet_rdf)+[po.onlineTweetTTLFile]*len(self.tweet_ttl),
                 [self.online_prefix+i for i in self.tweet_rdf+self.tweet_ttl],context=self.meta_graph)
-        P.rdf.triplesScaffolding(self.snapshoturi,
-                [po.onlineOriginalTweetFile]*len(self.ffile),
-                [self.online_prefix+i for i in self.ffile],context=self.meta_graph)
 
         self.mrdf=self.snapshotid+"Meta.rdf"
         self.mttl=self.snapshotid+"Meta.ttl"

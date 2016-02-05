@@ -5,7 +5,7 @@ c=P.check
 def publishAll(snapshoturis=None):
     """express tweets as RDF for publishing"""
     if not snapshoturis:
-        c("getting facebook snapshots, implementation needs verification TTM")
+        c("getting twitter snapshots, implementation needs verification TTM")
         uridict={}
         for snapshoturi in P.get(None,a,NS.po.TwitterSnapshot,minimized=True):
             uridict[snapshoturi]=0
@@ -26,7 +26,7 @@ def publishAny(snapshoturi):
             ]
     filenames=P.get(triples,join_queries="list",strict=True)
     filenames.sort()
-    filenames=[i for i in filenames if i.count("_")==2]
+#    filenames=[i for i in filenames if i.count("_")==2]
     triples=[
             (snapshoturi,      po.snapshotID, "?snapshotid"),
             ]
