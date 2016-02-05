@@ -13,9 +13,10 @@ class PicklePublishing:
             pickle_filename1=""
             pickle_filename2=filenames[0]
 
-        participantvars=["stringID","numericID","favouritesCount","followersCount","friendsCount",\
-                "language","listedCount","name","statusesCount","createdAt","utfOffset"]
-        self.tweetvars=["author","nChars","nTokens","stringID","createdAt","message","retweetCount","language","inReplyToTweet","retweetOf"]
+        participantvars=["stringID","numericID","screenName","favouritesCount","followersCount","friendsCount",\
+                "language","listedCount","name","statusesCount","createdAt","utfOffset","snapshot"]
+        participantvars.sort()
+        tweetvars=["author","nChars","nTokens","stringID","createdAt","message","retweetCount","language","inReplyToTweet","retweetOf","expandedURL","hashtag","snapshot","stringID","retweetOf","userMention","media"]
         isego=False
         isgroup=True
         isfriendship=False
@@ -198,7 +199,7 @@ The script that rendered this data publication is on the script/ directory.\n:::
                     triples+=[(tweeturi,po.retweetOf,tweeturi0)]
                     c("rendered",self.ntweets,"tweets")
                 self.ntriples+=len(triples)
-                P.add(triples,context=self.tweet_graph)
+                P.set_(triples,context=self.tweet_graph)
             c("end of chunk:",chunk_count,"ntriples:",self.ntriples)
             self.writeTweets(chunk_count)
             c("chunk has been written")
