@@ -9,6 +9,7 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     filenames=[i for i in filenames if i!="ipython_log.py" and not i.endswith(".swp")]
 
     snapshots=set()
+    triples=[]
     for filename in filenames:
         snapshotid="irc-legacy-"+filename.replace("#","")
         snapshoturi=po.TwitterSnapshot+"#"+snapshotid
