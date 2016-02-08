@@ -1,7 +1,6 @@
 import percolation as P
-from percolation.rdf import NS, a, po
+from percolation.rdf import NS, a, po, c
 from .pickle2rdf import PicklePublishing
-c=P.check
 def publishAll(snapshoturis=None):
     """express tweets as RDF for publishing"""
     if not snapshoturis:

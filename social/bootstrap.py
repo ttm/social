@@ -1,6 +1,5 @@
 import os, percolation as P
 from percolation.rdf import NS
-QUIET=False
 PERCOLATIONDIR="~/.percolation/rdf/"
 PACKAGEDIR=os.path.dirname(__file__)
 DATADIR=PACKAGEDIR+"/../data/"

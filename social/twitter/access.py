@@ -41,7 +41,7 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     nfiles=len(filenames)
     nsnapshots=len(snapshots)
     P.context("social_twitter","remove")
-    platformuri=P.rdf.ic(po.Platform,"#Twitter",context="social_twitter")
+    platformuri=P.rdf.ic(po.Platform,"Twitter",context="social_twitter")
     triples+=[
              (NS.social.Session,NS.social.nIRCParsedFiles,nfiles),
              (NS.social.Session,NS.social.nIRCSnapshots,nsnapshots),

@@ -267,11 +267,10 @@ structure in the RDF/XML file(s):
 {}
 and the Turtle file(s):
 {}
-(anonymized: {}).""".format( self.nparticipants,str(self.participantvars),
+(anonymized: "nicks inteface").""".format( self.nparticipants,str(self.participantvars),
                     self.ndirect+self.nmention,self.ndirect,self.nmention,
                     self.log_xml,
-                    self.log_ttl,
-                    self.interactions_anonymized)
+                    self.log_ttl)
         tposts="""\n\nThe dataset consists of {} irc messages with metadata {}
 {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
 {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}

@@ -36,7 +36,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     ToDo:
        *) Implement parsing of page files.
        *) Implement parsing of new group files."""
-    platformuri=P.rdf.ic(po.Platform,"#Facebook",context="social_facebook")
+    platformuri=P.rdf.ic(po.Platform,"Facebook",context="social_facebook")
     triples=[
             (platformuri, po.dataDir,datadir),
             ]

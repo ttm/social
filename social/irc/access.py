@@ -1,7 +1,6 @@
 from social import DATADIR, os
 import percolation as P
-from percolation.rdf import NS, a, po
-c=P.check
+from percolation.rdf import NS, a, po, c
 
 def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     """Parse legacy txt files with irc logs"""
@@ -41,10 +40,10 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     nfiles=len(filenames)
     nsnapshots=len(snapshots)
     P.context("social_irc","remove")
-    platformuri=P.rdf.ic(po.Platform,"#IRC",context="social_irc")
+    platformuri=P.rdf.ic(po.Platform,"IRC",context="social_irc")
     triples+=[
-             (NS.social.Session,NS.social.nTwitterParsedFiles,nfiles),
-             (NS.social.Session,NS.social.nTwitterSnapshots,nsnapshots),
+             (NS.social.Session,NS.social.nIRCParsedFiles,nfiles),
+             (NS.social.Session,NS.social.nIRCSnapshots,nsnapshots),
              (platformuri, po.dataDir,data_dir),
              ]
     P.add(triples,context="social_irc")
