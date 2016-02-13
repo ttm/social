@@ -119,7 +119,7 @@ class LogPublishing:
                 urls = re.findall(rurl, text_)
                 for url in urls:
                     triples+=[
-                             (messageuri,po.url,url),
+                             (messageuri,po.hasUrl,url),
                              ]
                 self.nchars_all+=[nchars]
                 self.ntokens_all+=[ntokens]

@@ -81,7 +81,7 @@ class PicklePublishing:
                                                 self.snapshotid,self.snapshoturi,self.isego,self.isgroup,)
         self.desc+="\nisFriendship: {}; ".format(self.isfriendship)
         self.desc+="isInteraction: {}.".format(self.isinteraction)
-        self.desc+="\nnParticipants: {}; nInteractions: {} (responses+retweets+user mentions).".format(self.nparticipants,self.nreplies+self.nretweets+self.nuser_mentions,)
+        self.desc+="\nnParticipants: {}; nInteractions: {} (replies+retweets+user mentions).".format(self.nparticipants,self.nreplies+self.nretweets+self.nuser_mentions,)
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
         self.desc+="\nnTweets: {}; ".format(self.ntweets)
         self.desc+="nReplies: {}; nRetweets: {}; nUserMentions: {}.".format(self.nreplies,self.nretweets,self.nuser_mentions)
