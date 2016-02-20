@@ -99,7 +99,7 @@ class LogPublishing:
             triples+=[
                      (messageuri,po.author,useruri),
                      (messageuri,po.systemMessage,False),
-                     (messageuri,po.sentAt,datetime_),
+                     (messageuri,po.createdAt,datetime_),
                      ]
             if text:
                 triples+=[
