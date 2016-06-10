@@ -153,10 +153,10 @@ The script that rendered this data publication is on the script/ directory.\n:::
             if ("RicardoFabbri18022013" not in self.snapshotid):
                 triples+=[(participant_uri,po.locale,node["locale"])]
 
-            P.rdf.add(triples,context=self.friendship_graph)
             if count%300==0:
                 c("participants:",count)
             count+=1
+            P.rdf.add(triples,context=self.friendship_graph)
         count=0
         for localid1_,localid2_ in friendship_network.edges():
             localid1=str(localid1_)

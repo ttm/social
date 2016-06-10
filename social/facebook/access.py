@@ -6,7 +6,7 @@ import social as S
 c=P.check
 def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     """Parse legacy gdf, gml and tab files of facebook structures
-    
+
     Synthax of facebook filenames is:
     <prefix><name><date><suffix><extension> where:
 
@@ -41,7 +41,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             (platformuri, po.dataDir,datadir),
             ]
     filenames=os.listdir(datadir)
-    filenames=[i for i in filenames if not i.endswith("swp")]
+    filenames=[i for i in filenames if not i.endswith("swp") and "ipython_log.py"!=i]
     # clean filenames: if they are equal except for extension, keep gml file
     snapshots=set()
     regex=re.compile(r"^(avlab_|ego_|posavlab_|page_)*(.*?)(\d{8})(_interactions|_comments){0,1}\.(gdf|tab|gml)$")

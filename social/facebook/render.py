@@ -183,3 +183,10 @@ Overview of core entities:
 
 def botData(filename):
     pass
+if __name__ == "__main__":
+    from .access import parseLegacyFiles
+    c("started access")
+    ss=parseLegacyFiles()
+    c("started rendering")
+    publishAll(ss)
+    c("finished publication of all facebook files")
