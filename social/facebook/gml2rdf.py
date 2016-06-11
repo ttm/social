@@ -1,7 +1,14 @@
-import percolation as P, social as S, networkx as x, datetime, os, shutil
-from percolation.rdf import NS, a
-po=NS.po
-c=P.check
+import percolation as P
+import social as S
+import networkx as x
+import datetime
+import os
+import shutil
+from percolation.rdf import NS
+po = NS.po
+c = P.check
+
+
 class GmlRdfPublishing:
     """Produce a linked data publication tree from a GML file expressing a facebook ego friendship network.
 
@@ -63,8 +70,6 @@ class GmlRdfPublishing:
         triples+=[
                  (self.snapshoturi,po.nMetaTriples,ntriples+1)      ,
                  ]
-        P.add(triples,context=self.meta_graph)
-        g.namespace_manager.bind("po",po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl","turtle"); c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf","xml")
         c("serialized meta")
