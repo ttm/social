@@ -1,64 +1,68 @@
-import networkx as x, percolation as P, re
-c=P.check
+import networkx as x
+import percolation as P
+import re
+c = P.check
+
+
 def readGML2(filename="../data/RenatoFabbri06022014.gml"):
-    with open(filename,"r") as f:
-        data=f.read()
-    lines=data.split("\n")
-    nodes=[] # list of dicts, each a node
-    edges=[] # list of tuples
-    state="receive"
+    with open(filename, "r") as f:
+        data = f.read()
+    lines = data.split("\n")
+    nodes = []  # list of dicts, each a node
+    edges = []  # list of tuples
+    state = "receive"
     for line in lines:
-        if state=="receive":
+        if state == "receive":
             if "node" in line:
-                state="node"
+                state = "node"
                 nodes.append({})
             if "edge" in line:
-                state="edge"
+                state = "edge"
                 edges.append({})
         elif "]" in line:
-            state="receive"
+            state = "receive"
         elif "[" in line:
             pass
-        elif state=="node":
-            var,val=re.findall(r"(.*?) (.*)",line.strip())[0]
-            if var=="id":
-                var="name"
-                val="user_{}".format(val)
+        elif state == "node":
+            var, val = re.findall(r"(.*?) (.*)", line.strip())[0]
+            if var == "id":
+                var = "name"
+                val = "user_{}".format(val)
             elif '"' in val:
-                val=val.replace('"',"")
+                val = val.replace('"', "")
             else:
-                val=int(val)
-            nodes[-1][var]=val
-        elif state=="edge":
-            var,val=line.strip().split()
-            edges[-1][var]=val
+                val = int(val)
+            nodes[-1][var] = val
+        elif state == "edge":
+            var, val = line.strip().split()
+            edges[-1][var] = val
         else:
             c("SPURIOUS LINE: "+line)
-    keys=set([j for i in nodes for j in i.keys()])
-    nodes_={}
+    keys = set([j for i in nodes for j in i.keys()])
+    nodes_ = {}
     for key in keys:
         if key == "id":
-            nodes_["name"]=[None]*len(nodes)
-            i=0
+            nodes_["name"] = [None]*len(nodes)
+            i = 0
             for node in nodes:
-                nodes_["name"][i]="user_{}".format(node[key])
-                i+=1
+                nodes_["name"][i] = "user_{}".format(node[key])
+                i += 1
         else:
-            nodes_[key]=[None]*len(nodes)
-            i=0
+            nodes_[key] = [None]*len(nodes)
+            i = 0
             for node in nodes:
                 if key in node.keys():
-                    nodes_[key][i]=node[key]
-                i+=1
+                    nodes_[key][i] = node[key]
+                i += 1
     c("para carregar as amizades")
-    edges_={"node1":[None]*len(edges), "node2":[None]*len(edges)}
-    i=0
+    edges_ = {"node1": [None]*len(edges), "node2": [None]*len(edges)}
+    i = 0
     for edge in edges:
-        u1="user_{}".format(edge["source"])
-        u2="user_{}".format(edge["target"])
-        edges_["node1"][i]=u1
-        edges_["node2"][i]=u2
-        i+=1
+        u1 = "user_{}".format(edge["source"])
+        u2 = "user_{}".format(edge["target"])
+        edges_["node1"][i] = u1
+        edges_["node2"][i] = u2
+        i += 1
 
     return {"relations": edges_,
             "individuals": nodes_}
@@ -110,7 +114,7 @@ def readGML2(filename="../data/RenatoFabbri06022014.gml"):
 #       edges__[key]=[]
 #       for edge in edges_:
 #           edges__[key]+=[edge[key]]
-   
+
     return {"relations": edges_,
             "individuals": nodes__}
 
@@ -157,7 +161,7 @@ def readGML(filename="../data/RenatoFabbri06022014.gml"):
 #       edges__[key]=[]
 #       for edge in edges_:
 #           edges__[key]+=[edge[key]]
-   
+
     return {"relations": edges_,
             "individuals": nodes__}
     return gg

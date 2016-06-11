@@ -16,7 +16,7 @@ po = NS.po
 class GdfRdfPublishing:
     """Produce a linked data publication tree from GDF and TAB files
 
-    expressing ego and group structures.
+    expressing either ego or group structure.
 
     OUTPUTS:
     =======

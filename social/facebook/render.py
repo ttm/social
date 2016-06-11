@@ -1,95 +1,109 @@
 from .gdf2rdf import GdfRdfPublishing
 from .gml2rdf import GmlRdfPublishing
 from percolation.rdf import NS, a
-import percolation as P, social as S
-c=P.check
-po=NS.po
+import percolation as P
+c = P.check
+po = NS.po
+social_facebook_inferred = "social_facebook"
 
-social_facebook_inferred="social_facebook"
+
 def gdfFile(filename):
     # gdf files can be tagged by the prefixes
     # and have associated interaction files
     pass
+
+
 def gmlFile(filename):
-    # gml files are always ego friendship networks 
+    # gml files are always ego friendship networks
     pass
+
+
 def tabFile(filename):
     # tab files are associated to group data
     pass
+
+
 def publish(filegroup):
     pass
+
 
 def renderAny(snapshoturi):
     # get associated files
     # render with appropriate functions
     pass
+
+
 def publishAny(snapshoturi):
     # publish to umbrelladir
     # get friendship and interaction of the snapshoturi
-    triples=[
+    triples = [
             (snapshoturi,      po.rawFile, "?fileurifoo"),
             (snapshoturi,      po.snapshotID, "?snapshotid"),
             ("?fileurifoo",    po.expressedClass, po.Friendship),
             ("?fileurifoo",    po.fileFormat, "?fileformat"),
             ("?fileurifoo",    po.fileName, "?filename"),
             ]
-    fileformat,friendship_filename,snapshotid=P.get(triples)
+    fileformat, friendship_filename, snapshotid = P.get(triples)
 
-    triples=[
+    triples = [
             (snapshoturi, NS.po.rawFile, "?fileurifoo"),
             ("?fileurifoo",    po.expressedClass, po.Interaction),
             ("?fileurifoo",    NS.po.fileName, "?filename"),
             ]
-    interaction_filename=P.get(triples,context=social_facebook_inferred)
+    interaction_filename = P.get(triples, context=social_facebook_inferred)
 
-    triples=[
+    triples = [
             (snapshoturi, NS.po.rawFile, "?fileurifoo"),
             ("?fileurifoo",    po.expressedClass, po.Post),
             ("?fileurifoo",    NS.po.fileName, "?filename"),
             ]
-    posts_filename=P.get(triples,context=social_facebook_inferred)
+    posts_filename = P.get(triples, context=social_facebook_inferred)
     c(fileformat)
     if "gdf" in fileformat:
         c("publish gdf", snapshoturi)
-#        friendship_filename,interaction_filename=None,None
-        return GdfRdfPublishing(snapshoturi,snapshotid,friendship_filename,interaction_filename,posts_filename)
-    elif fileformat=="gml":
+        return GdfRdfPublishing(snapshoturi, snapshotid, friendship_filename,
+                                interaction_filename, posts_filename)
+    elif fileformat == "gml":
         c("publish gml", snapshoturi)
-        return GmlRdfPublishing(snapshoturi,snapshotid,friendship_filename)
+        return GmlRdfPublishing(snapshoturi, snapshotid, friendship_filename)
 
-#GDFTriplification(data_path="../data/fb/",filename_friendship="foo.gdf",filename_interaction="foo_interaction.gdf",
-#    final_path="./fb/",scriptpath=None,numericid=None,stringid=None,fb_link=None,isego=None,umbrella_dir=None)
+
 def publishAll(snapshoturis=None):
-    #triples=S.facebook.ontology.snapshots()
-    #P.add(triples,context="facebook_snapshots_ontology")
-    #P.rdf.inference.performRdfsInference("social_facebook","facebook_snapshots_ontology",social_facebook_inferred,False)
     if not snapshoturis:
         c("getting facebook snapshots, implementation needs verification TTM")
-        uridict={}
-        for snapshoturi in P.get(None,a,NS.po.FacebookSnapshot,minimized=True):
-            uridict[snapshoturi]=0
-            for rawFile in P.get(snapshoturi,NS.po.rawFile,strict=True,minimized=True):
-                uridict[snapshoturi]+=P.get(rawFile,NS.po.fileSize,minimized=True).toPython()
-        snapshoturis=[i for i in list(uridict.keys()) if i.endswith(".gml")]
+        uridict = {}
+        for snapshoturi in P.get(None, a, NS.po.FacebookSnapshot,
+                                 minimized=True):
+            uridict[snapshoturi] = 0
+            for rawFile in P.get(snapshoturi, NS.po.rawFile, strict=True,
+                                 minimized=True):
+                uridict[snapshoturi] += P.get(rawFile, NS.po.fileSize,
+                                              minimized=True).toPython()
+        snapshoturis = [i for i in list(uridict.keys()) if i.endswith(".gml")]
         snapshoturis.sort(key=lambda x: uridict[x])
-#    snapshoturis=[i for i in snapshoturis if i.endswith("gml")]
-    c("snapuris:",snapshoturis)
-    count=0
+    c("snapuris:", snapshoturis)
+    count = 0
     for snapshoturi in snapshoturis:
-        triplification_class=publishAny(snapshoturi)
-        count+=1
-    #writePublishingReadme()
+        triplification_class = publishAny(snapshoturi)
+        count += 1
     return triplification_class
+
+
 def writePublishingReadme(final_path="./fb/"):
-    nfriendship= P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:Snapshot . ?s facebook:isFriendship true . }")
-    ninteraction=P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:InteractionSnapshot }")
-    nposts=      P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:PostsSnapshot }")
-    nego=        P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:EgoSnapshot }")
-    ngroup=      P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { ?s a po:GroupSnapshot }")
-    nfriendship_group=nfriendship-nego
+    nfriendship = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+        ?s a po:Snapshot . ?s facebook:isFriendship true . }")
+    ninteraction = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+                               ?s a po:InteractionSnapshot }")
+    nposts = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+                         ?s a po:PostsSnapshot }")
+    nego = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+                       ?s a po:EgoSnapshot }")
+    ngroup = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+                         ?s a po:GroupSnapshot }")
+    nfriendship_group = nfriendship-nego
     c("got snapshot counts")
 
-    body="""::: Open Linked Social Data publication\n
+    body = """::: Open Linked Social Data publication\n
 This repository provides linked data for:
 {} friendship snapshots (*Friendship.ttl and .rdf)
 {} interaction snapshots (*Interaction.ttl and .rdf)
@@ -126,67 +140,69 @@ it provides data about.
         )
 
     # n participants
-    nparticipants=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
+    nparticipants = P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a po:Participant }")
-    nparticipants_a0=P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+    nparticipants_a0 = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
                             ?s a facebook:Participant . \
                             ?s po:name ?namefoo . \
                     }")
-    nparticipants_a=nparticipants-nparticipants_a0
-    nparticipants_unique=P.rdf.query("SELECT (COUNT(?numeric_id) as ?total) WHERE { \
+    nparticipants_a = nparticipants-nparticipants_a0
+    nparticipants_unique = P.rdf.query("SELECT (COUNT(?numeric_id) as ?total) WHERE { \
                             ?sfoo a facebook:Participant . \
                             ?sfoo po:numericID ?numeric_id . \
                     }")
-    nfriendships=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
+    nfriendships = P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Friendship }")
-    nfriendships_a=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
+    nfriendships_a = P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Friendship . \
                             ?s po:snapshot ?snapfoo . \
                             ?snapfoo po:friendshipsAnonymized true . \
                     }")
-    ninteractions=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
+    ninteractions = P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                         WHERE { ?s a facebook:Interaction }")
 
-    ninteractions_a=P.rdf.query("SELECT (COUNT(?s) as ?cs) \
+    ninteractions_a = P.rdf.query("SELECT (COUNT(?s) as ?cs) \
                     WHERE { ?s a facebook:Interaction . \
                             ?s po:snapshot ?snapfoo . \
                             ?snapfoo po:interactionsAnonymized true }")
 
-    nposts=P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
+    nposts = P.rdf.query("SELECT (COUNT(?s) as ?cs) WHERE { \
                             ?s a facebook:Post . \
                     }")
 
-    ntokens=sum(P.rdf.query("SELECT ?val WHERE { \
+    ntokens = sum(P.rdf.query("SELECT ?val WHERE { \
             ?foosnapshot facebook:nTokensOverall ?val . \
                     }"))
-    nlikes=sum(P.rdf.query("SELECT ?val WHERE { \
+    nlikes = sum(P.rdf.query("SELECT ?val WHERE { \
             ?foosnapshot facebook:nLikes ?val . \
                     }"))
-    ncomments=sum(P.rdf.query("SELECT ?val WHERE { \
+    ncomments = sum(P.rdf.query("SELECT ?val WHERE { \
             ?foosnapshot facebook:nComments ?val . \
                     }"))
-    nreactions=nlikes+ncomments
+    nreactions = nlikes+ncomments
     c("got entities counts")
 
-    body+="""
+    body += """
 Overview of core entities:
 {} participants ({} anonymized; {} unique numericID)
 {} friendships ({} anonymized)
 {} interaction ({} anonymized)
-{} posts with a total of {} tokens and {} reaction counts ({} comments+ {} likes)
+{} posts with a total of {} tokens and {} reaction counts \
+    ({} comments+ {} likes)
 :::""".format(nparticipants, nparticipants_a, nparticipants_unique,
-        nfriendships, nfriendships_a,
-        ninteractions, ninteractions_a,
-        nposts, ntokens, nreactions, ncomments, nlikes)
-    with open(final_path+"README","w") as f:
+              nfriendships, nfriendships_a,
+              ninteractions, ninteractions_a,
+              nposts, ntokens, nreactions, ncomments, nlikes)
+    with open(final_path+"README", "w") as f:
         f.write(body)
+
 
 def botData(filename):
     pass
 if __name__ == "__main__":
     from .access import parseLegacyFiles
     c("started access")
-    ss=parseLegacyFiles()
+    ss = parseLegacyFiles()
     c("started rendering")
     publishAll(ss)
     c("finished publication of all facebook files")
