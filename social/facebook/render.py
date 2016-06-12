@@ -44,14 +44,12 @@ def publishAny(snapshoturi):
             ("?fileurifoo",    po.fileName, "?filename"),
             ]
     fileformat, friendship_filename, snapshotid = P.get(triples)
-
     triples = [
             (snapshoturi, NS.po.rawFile, "?fileurifoo"),
             ("?fileurifoo",    po.expressedClass, po.Interaction),
             ("?fileurifoo",    NS.po.fileName, "?filename"),
             ]
     interaction_filename = P.get(triples, context=social_facebook_inferred)
-
     triples = [
             (snapshoturi, NS.po.rawFile, "?fileurifoo"),
             ("?fileurifoo",    po.expressedClass, po.Post),
