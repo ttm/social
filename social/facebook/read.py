@@ -2,6 +2,11 @@ import percolation as P
 c = P.check
 
 
+trans = {'agerank': 'ageRank', 'wallcount': 'wallCount', 'label': 'name',
+         'sex': 'sex', 'locale': 'locale',
+         'name': 'numericID', 'posts': 'nPosts'}
+
+
 def readGDF(filename="../data/RenatoFabbri06022014.gdf"):
     """Made to work with gdf files from my own network and friends and groups"""
     with open(filename, "r") as f:

@@ -8,7 +8,7 @@ import shutil
 import numpy as n
 import nltk as k
 from percolation.rdf import NS, a
-from .read import readGDF
+from .read import readGDF, trans
 c = P.check
 po = NS.po
 
@@ -27,7 +27,6 @@ class GdfRdfPublishing:
                  data_path="../data/facebook/",
                  final_path="./facebook_snapshots/",
                  umbrella_dir="facebook_snapshots/"):
-
         self.friendship_graph = "social_facebook_friendships"
         self.interaction_graph = "social_facebook_interactions"
         self.meta_graph = "social_facebook_meta"
@@ -58,7 +57,6 @@ class GdfRdfPublishing:
             self.groupid2 = 0
         if self.hastext:
             self.rdfGroupPosts(data_path+filename_posts)  # to self.posts_graph
-
         locals_ = locals().copy()
         for i in locals_:
             if i != "self":
@@ -75,8 +73,9 @@ class GdfRdfPublishing:
         tvars = data[0]
         standard_vars = ['id', 'type', 'message', 'created_time',
                          'comments', 'likes', 'commentsandlikes']
-        if len(tvars) != sum([i == j for i, j in zip(tvars, standard_vars)]):
-            raise ValueError("the tab file format was not understood")
+        assert len(tvars) == \
+            sum([i == j for i, j in zip(tvars, standard_vars)]),\
+            "the tab file format was not understood"
         data = data[1:]
         triples = []
         self.nposts = 0
@@ -86,10 +85,10 @@ class GdfRdfPublishing:
             ind = P.rdf.ic(po.Post, post[0], self.posts_graph, self.snapshoturi)
             ptext = post[2].replace("_", "\n")
             nchars = len(ptext)
-            nchars_all += [nchars]
+            nchars_all.append(nchars)
             ntokens = len(k.tokenize.wordpunct_tokenize(ptext))
-            ntokens_all += [ntokens]
-            triples += [
+            ntokens_all.append(ntokens)
+            triples.extend(
                         (ind, po.snapshot, self.snapshoturi),
                         (ind, po.postID, post[0]),
                         (ind, po.postType, post[1]),
@@ -99,7 +98,7 @@ class GdfRdfPublishing:
                         (ind, po.nLikes, int(post[5])),
                         (ind, po.nChars, nchars),
                         (ind, po.nTokens, ntokens),
-                       ]
+            )
             if self.nposts % 200 == 0:
                 c("posts: ", self.nposts)
             self.nposts += 1
@@ -134,11 +133,11 @@ class GdfRdfPublishing:
             filesizettl = os.path.getsize(
                 self.final_path_+self.snapshotid+"Friendship.ttl")/(10**6)
             ntriples = len(g)
-            triples += [
+            triples.extend((
                     (self.snapshoturi, po.friendshipXMLFileSizeMB, filesizerdf),
                     (self.snapshoturi, po.friendshipTTLFileSizeMB, filesizettl),
                     (self.snapshoturi, po.nFriendshipTriples, ntriples),
-                       ]
+            ))
         if self.isinteraction:
             g = P.context(self.interaction_graph)
             g.namespace_manager.bind("po", po)
@@ -153,11 +152,11 @@ class GdfRdfPublishing:
             filesizettl = os.path.getsize(
                 self.final_path_+self.snapshotid+"Interaction.ttl")/(10**6)
             ntriples = len(g)
-            triples += [
+            triples.extend((
                 (self.snapshoturi, po.interactionXMLFileSizeMB, filesizerdf),
                 (self.snapshoturi, po.interactionTTLFileSizeMB, filesizettl),
                 (self.snapshoturi, po.nInteractionTriples, ntriples),
-                       ]
+            ))
         if self.hastext:
             g = P.context(self.posts_graph)
             g.namespace_manager.bind("po", po)
@@ -171,16 +170,16 @@ class GdfRdfPublishing:
             filesizettl = os.path.getsize(
                 self.final_path_+self.snapshotid+"Posts.ttl")/(10**6)
             ntriples = len(g)
-            triples += [
+            triples.extend((
                 (self.snapshoturi, po.postsXMLFileSizeMB, filesizerdf),
                 (self.snapshoturi, po.postsTTLFileSizeMB, filesizettl),
                 (self.snapshoturi, po.nPostsTriples, ntriples),
-                       ]
-            g = P.context(self.meta_graph)
+            ))
+        g = P.context(self.meta_graph)
         ntriples = len(g)
-        triples += [
+        triples.extend((
             (self.snapshoturi, po.nMetaTriples, ntriples),
-                   ]
+        ))
         P.add(triples, context=self.meta_graph)
         g.namespace_manager.bind("po", po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
@@ -246,7 +245,7 @@ or in the Turtle file:
         else:
             tposts = ""
         datetime_string = P.get(r.URIRef(self.snapshoturi), po.dateObtained,
-                                None, context="social_facebook")[2]
+                                None, context=self.social_graph)[2]
         with open(self.final_path_+"README", "w") as f:
             f.write("""::: Open Linked Social Data publication
                     \nThis repository is a RDF data expression of the facebook
@@ -287,10 +286,10 @@ The script that rendered this data publication is on the script/ \
         if self.isfriendship and self.groupid and self.groupid2 and \
                 (self.groupid != self.groupid2):
             raise ValueError("Group IDS are different")
-        triples = P.get(self.snapshoturi, None, None, "social_facebook")
+        triples = P.get(self.snapshoturi, None, None, self.social_graph)
         for rawfile in P.get(self.snapshoturi, po.rawFile, None,
-                             "social_facebook", strict=True, minimized=True):
-            triples += P.get(rawfile, None, None, "social_facebook")
+                             self.social_graph, strict=True, minimized=True):
+            triples += P.get(rawfile, None, None, self.social_graph)
         P.add(triples, context=self.meta_graph)
         foo = {"uris": [], "vals": []}
         if self.isfriendship:
@@ -463,41 +462,38 @@ The script that rendered this data publication is on the script/ \
             tkeys.remove("groupid")
         else:
             self.groupid = None
-        iname = tkeys.index("name")
-        ilabel = tkeys.index("label")
         if self.friendships_anonymized:
-            self.friendsvars = [trans(i) for j, i in enumerate(tkeys) if
-                                j not in (ilabel, iname)]
+            self.friendsvars = [trans(i) for i in tkeys if
+                                i not in ('label', 'name')]
         else:
             self.friendsvars = [trans(i) for i in tkeys]
         insert = {"uris": [], "vals": []}
-        count = 0
+        # values for each participant are in the same order as insert['uris']
         for tkey in tkeys:
             insert["uris"] += [eval("po."+trans(tkey))]
             insert["vals"] += [fnet["individuals"][tkey]]
-            count += 1
         self.nfriends = len(insert["vals"][0])
-        insert_uris = insert["uris"][:]
-        # values for each participant are held in the same order as insert_uris
+        iname = tkeys.index("name")
+        ilabel = tkeys.index("label")
         for vals_ in zip(*insert["vals"]):
             name_ = "{}-{}".format(self.snapshotid, vals_[iname])
             if self.friendships_anonymized:
                 if vals_[ilabel] and ("user" not in vals_[ilabel]):
                     raise ValueError("Anonymized networks should have no \
                                      informative name. Found: "+vals_[ilabel])
-                insert_uris_ = [el for i, el in enumerate(insert_uris) if
+                insert_uris_ = [el for i, el in enumerate(insert['uris']) if
                                 i not in (ilabel, iname) and vals_[i]]
                 vals_ = [el for i, el in enumerate(vals_) if
                          (i not in (ilabel, iname)) and el]
             else:
-                insert_uris_ = [el for i, el in enumerate(insert_uris)
+                insert_uris_ = [el for i, el in enumerate(insert['uris'])
                                 if vals_[i]]
                 vals_ = [el for el in vals_ if el]
             ind = P.rdf.ic(po.Participant, name_, self.friendship_graph,
                            self.snapshoturi)
             P.rdf.triplesScaffolding(ind, insert_uris_, vals_,
-                                     context=self.friendship_graph)
-        c("participants are written to rdflib graph")
+                                     self.friendship_graph)
+        c("participants written")
         friendships_ = [fnet["relations"][i] for i in ("node1", "node2")]
         i = 0
         for uid1, uid2 in zip(*friendships_):
@@ -508,16 +504,16 @@ The script that rendered this data publication is on the script/ \
                                       self.friendship_graph, self.snapshoturi)
             P.rdf.triplesScaffolding(friendship_uri, [po.member]*2,
                                      uids, self.friendship_graph)
+            i += 1
             if (i % 1000) == 0:
                 c("friendships", i)
-            i += 1
         self.nfriendships = len(friendships_[0])
-        c("escritas amizades")
+        c("friendships written")
 
     def rdfInteractionNetwork(self, fnet):
         if sum([("user" in i) for i in fnet["individuals"]["label"]]) == \
                 len(fnet["individuals"]["label"]):
-            # nomes falsos, ids espurios
+            # fake names and local ids
             self.interactions_anonymized = True
         else:
             self.interactions_anonymized = False
@@ -527,11 +523,9 @@ The script that rendered this data publication is on the script/ \
             tkeys.remove("groupid")
         else:
             self.groupid2 = None
-        iname = tkeys.index("name")
-        ilabel = tkeys.index("label")
         if self.interactions_anonymized:
-            self.varsfriendsinteraction = [trans(i) for j, i in enumerate(tkeys)
-                                           if j not in (ilabel, iname)]
+            self.varsfriendsinteraction = [trans(i) for i in tkeys
+                                           if i not in ('label', 'name')]
         else:
             self.varsfriendsinteraction = [trans(i) for i in tkeys]
         insert = {"uris": [], "vals": []}
@@ -539,17 +533,18 @@ The script that rendered this data publication is on the script/ \
             insert["uris"] += [eval("po."+trans(tkey))]
             insert["vals"] += [fnet["individuals"][tkey]]
         self.ninteracted = len(insert["vals"][0])
-        insert_uris = insert["uris"][:]
+        iname = tkeys.index("name")
+        ilabel = tkeys.index("label")
         for vals_ in zip(*insert["vals"]):
             if self.interactions_anonymized:
-                insert_uris_ = [el for i, el in enumerate(insert_uris) if
+                insert_uris_ = [el for i, el in enumerate(insert['uris']) if
                                 i not in (ilabel, iname) and vals_[i]]
                 vals__ = [el for i, el in enumerate(vals_) if
                           i not in (ilabel, iname) and vals_[i]]
             else:
-                insert_uris_ = [el for i, el in enumerate(insert_uris) if
+                insert_uris_ = [el for i, el in enumerate(insert['uris']) if
                                 vals_[i]]
-                vals__ = [el for i, el in enumerate(vals_) if vals_[i]]
+                vals__ = [el for el in vals_ if el]
             name_ = "{}-{}".format(self.snapshotid, vals_[iname])
             ind = P.rdf.ic(po.Participant, name_, self.interaction_graph,
                            self.snapshoturi)
@@ -560,7 +555,7 @@ The script that rendered this data publication is on the script/ \
                 c("anonymous participant without attributes (besides local id). \
                   snapshotid:", self.snapshotid, "values:", vals_)
 
-        c("escritos participantes")
+        c("participant written")
         self.interactionsvarsfoo = ["node1", "node2", "weight"]
         interactions_ = [fnet["relations"][i] for i in self.interactionsvarsfoo]
         self.ninteractions = len(interactions_[0])
@@ -568,12 +563,11 @@ The script that rendered this data publication is on the script/ \
         i = 0
         for uid1, uid2, weight in zip(*interactions_):
             weight_ = int(weight)
-            if weight_-weight != 0:
-                raise ValueError("float weights in fb interaction networks?")
+            assert weight_-weight == 0, \
+                "float weights in fb interaction networks?"
             iid = "{}-{}-{}".format(self.snapshotid, uid1, uid2)
             ind = P.rdf.ic(po.Interaction, iid, self.interaction_graph,
                            self.snapshoturi)
-
             uids = [r.URIRef(po.Participant+"#{}-{}".format(self.snapshotid, i))
                     for i in (uid1, uid2)]
             P.rdf.triplesScaffolding(ind, [po.interactionFrom,
@@ -583,23 +577,3 @@ The script that rendered this data publication is on the script/ \
                 c("interactions: ", i)
             i += 1
         c("escritas interações")
-
-
-def trans(tkey):
-    if tkey == "agerank":
-        return "ageRank"
-    elif tkey == "wallcount":
-        return "wallCount"
-    elif tkey == "name":
-        return "numericID"
-    elif tkey == "label":
-        return "name"
-    elif tkey == "posts":
-        return "nPosts"
-    elif tkey == "locale":
-        return "locale"
-    elif tkey == "sex":
-        return "sex"
-    else:
-        raise KeyError("participant var not understood")
-    return tkey

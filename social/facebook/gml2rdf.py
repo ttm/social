@@ -5,6 +5,7 @@ import datetime
 import os
 import shutil
 from percolation.rdf import NS
+from .read import trans
 po = NS.po
 c = P.check
 
@@ -105,7 +106,7 @@ and {nfs} friendships constitute the friendship network in the RDF/XML file:
                         fan=self.friendships_anonymized,
                     )
         datetime_string = P.get(self.snapshoturi, po.dateObtained, None,
-                                context="social_facebook")[2]
+                                context=self.social_graph)[2]
 
         with open(self.final_path_+"README", "w") as f:
             f.write("""::: Open Linked Social Data publication
@@ -141,7 +142,6 @@ The script that rendered this data publication is on the script/ \
                 ))
 
     def rdfFriendshipNetwork(self, friendship_network):
-        c("test variables to be the expected")
         for node_ in friendship_network.nodes(data=True):
             node = node_[1]
             assert len(node) == 5 or (("RicardoFabbri18022013" in
@@ -163,50 +163,41 @@ The script that rendered this data publication is on the script/ \
         c("create uris for each partcipant, \
           with po:Participant#snapshoturi-localid")
         count = 0
+        trans = {'agerank': 'ageRank', 'wallcount': 'wallCount',
+                     'label': 'name', 'sex': 'sex', 'locale': 'locale'}
         for node_ in friendship_network.nodes(data=True):
             node = node_[1]
             localid = str(node_[0])
             participant_uri = P.rdf.ic(po.Participant, self.snapshotid +
                                        "-"+localid, self.friendship_graph,
                                        self.snapshoturi)
-            triples = [
-                    (participant_uri, po.ageRank, node["agerank"]),
-                    (participant_uri, po.wallCount, node["wallcount"]),
-                    (participant_uri, po.name, node["label"]),
-                    (participant_uri, po.sex, node["sex"]),
-                    ]
-            if ("RicardoFabbri18022013" not in self.snapshotid):
-                triples += [(participant_uri, po.locale, node["locale"])]
-
+            triples = [(participant_uri, eval('po.'+trans[i]), node[i])
+                       for i in node]
+            P.rdf.add(triples, context=self.friendship_graph)
+            count += 1
             if count % 300 == 0:
                 c("participants:", count)
-            count += 1
-            P.rdf.add(triples, context=self.friendship_graph)
         count = 0
         for localid1_, localid2_ in friendship_network.edges():
-            localid1 = str(localid1_)
-            localid2 = str(localid2_)
+            localid1, localid2 = str(localid1_), str(localid2_)
             friendship_uri = P.rdf.ic(po.Friendship,
                                       self.snapshotid+"-"+localid1+"-"+localid2,
                                       self.friendship_graph, self.snapshoturi)
-            participant_uri1 = po.Participant+"#"+self.snapshotid+"-"+localid1
-            participant_uri2 = po.Participant+"#"+self.snapshotid+"-"+localid2
-            triples = [
-                    (friendship_uri, po.member, participant_uri1),
-                    (friendship_uri, po.member, participant_uri2),
-                    ]
-            P.rdf.add(triples, context=self.friendship_graph)
+            uids = [r.URIRef(po.Participant+"#{}-{}".format(
+                self.snapshotid, i)) for i in (localid1, localid2)]
+            P.rdf.triplesScaffolding(friendship_uri, [po.member]*2,
+                                     uids, self.friendship_graph)
+            count += 1
             if count % 1000 == 0:
                 c("friendships:", count)
-            count += 1
         self.nfriends = friendship_network.number_of_nodes()
         self.nfriendships = friendship_network.number_of_edges()
 
     def makeMetadata(self):
-        triples = P.get(self.snapshoturi, None, None, "social_facebook")
+        triples = P.get(self.snapshoturi, None, None, self.social_graph)
         for rawfile in P.get(self.snapshoturi, po.rawFile, None,
-                             "social_facebook", strict=True, minimized=True):
-            triples += P.get(rawfile, None, None, "social_facebook")
+                             self.social_graph, strict=True, minimized=True):
+            triples += P.get(rawfile, None, None, self.social_graph)
         P.add(triples, context=self.meta_graph)
 
         self.ffile = "base/"+self.filename_friendships
@@ -232,10 +223,8 @@ The script that rendered this data publication is on the script/ \
                                  [po.frienshipParticipantAttribute] *
                                  len(self.friendsvars),
                                  self.friendsvars, context=self.meta_graph)
-
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
-
         self.desc = "facebook network with snapshotID: {}\nsnapshotURI: {} \n\
             isEgo: {}. isGroup: {}.".format(self.snapshotid, self.snapshoturi,
                                             self.isego, self.isgroup)
