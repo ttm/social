@@ -1,5 +1,20 @@
-import percolation as P, social as S, numpy as n, pickle, dateutil, nltk as k, os, datetime, shutil, rdflib as r, codecs, re, string, random
-from percolation.rdf import NS, U, a, po, c
+import os
+import shutil
+# import pickle
+import re
+import string
+import random
+import codecs
+# import dateutil
+import datetime
+# import rdflib as r
+import nltk as k
+import numpy as n
+import percolation as P
+import social as S
+from percolation.rdf import NS, a, po, c
+
+
 class LogPublishing:
     def __init__(self,snapshoturi,snapshotid,filename="foo.txt",\
             data_path="../data/irc/",final_path="./irc_snapshots/",umbrella_dir="irc_snapshots/"):

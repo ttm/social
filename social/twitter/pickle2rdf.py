@@ -4,7 +4,7 @@ import pickle
 import dateutil
 import datetime
 import numpy as n
-import nltk as k
+# import nltk as k
 import percolation as P
 import social as S
 from percolation.rdf import NS, a, po, c
@@ -195,8 +195,8 @@ and the Turtle file(s):
                         self.mtokenstweets, self.dtokenstweets, self.totaltokens,
                         )
         self.dates = [i.isoformat() for i in self.dates]
-        date1 = min(self.dates)
-        date2 = max(self.dates)
+        date1 = 0  # min(self.dates)
+        date2 = 0  # max(self.dates)
         with open(self.final_path_+"README", "w") as f:
             f.write("""::: Open Linked Social Data publication
 \nThis repository is a RDF data expression of the twitter
@@ -238,20 +238,23 @@ The script that rendered this data publication is on the script/ directory.
             tweets, fopen = readPickleTweetChunk(
                 self.data_path+self.pickle_filename2, tweets, None, 10000)
         chunk_count = 0
-        # self.tweets = tweets  # for probing only, remove to release memory
+        # self.tweets = tweets  # for debugging only, remove to release memory
         while tweets:
             c("rendering tweets, chunk:", chunk_count, "ntweets:",
               len(tweets), "snapshotid", self.snapshotid)
+            count = 0
             for tweet in tweets:
                 tweeturi, triples = self.tweetTriples(tweet)
                 if "retweeted_status" in tweet.keys():
-                    self.nretweets += 1
+                    # self.nretweets += 1
                     tweeturi0, triples0 = self.tweetTriples(tweet['retweeted_status'])
                     triples.extend(triples0)
                     triples.append((tweeturi, po.retweetOf, tweeturi0))
                 self.ntriples += len(triples)
                 P.add(triples, context=self.tweet_graph)
-                c("triplified", self.ntweets, "tweets")
+                count += 1
+                if count % 1000 == 0:
+                    c("triplified", count, "tweets")
             c("end of chunk:", chunk_count, "ntriples:", self.ntriples)
             self.writeTweets(chunk_count)
             c("chunk has been written")
@@ -262,8 +265,8 @@ The script that rendered this data publication is on the script/ directory.
                 tweets, fopen = readPickleTweetChunk(None, [], fopen, 10000)
             else:
                 tweets = []
-        for i in range(chunk_count):  # free memory
-            P.context(self.tweet_graph[:-1]+str(i), "remove")
+        # for i in range(chunk_count):  # free memory
+        #     P.context(self.tweet_graph[:-1]+str(i), "remove")
 
     def writeTweets(self, chunk_count):
         if not os.path.isdir(self.final_path):
@@ -284,7 +287,8 @@ The script that rendered this data publication is on the script/ directory.
         self.size_ttl += [filesizettl]
         self.tweet_rdf += [trdf]
         self.size_rdf += [filesizerdf]
-        self.tweet_graph = self.tweet_graph[:-1]+str(chunk_count+1)
+        # self.tweet_graph = self.tweet_graph[:-1]+str(chunk_count+1)
+        P.context(self.tweet_graph, 'remove')
 
     def tweetTriples(self, tweet):
         userid, useruri, triples = self.userTriples(tweet)
@@ -292,7 +296,7 @@ The script that rendered this data publication is on the script/ directory.
         triples.extend(triples_)
         triples.extend(self.replyTriples(tweet, tweeturi))
         triples.extend(self.entityTriples(tweet, tweeturi))
-        self.countNew(tweetid, userid)
+        # self.countNew(tweetid, userid)
         return tweeturi, triples
 
     def userTriples(self, tweet):
@@ -322,17 +326,17 @@ The script that rendered this data publication is on the script/ directory.
         # if tweetid_ in triples
         tweetid = userid+"-"+tweetid_
         tweeturi = P.rdf.ic(po.Tweet, tweetid, self.tweet_graph, self.snapshoturi)
-        tweet_text = tweet["text"]
-        nchars = len(tweet_text)
-        ntokens = len(k.tokenize.wordpunct_tokenize(tweet_text))
-        self.nchars_all += [nchars]
-        self.ntokens_all += [ntokens]
+        # tweet_text = tweet["text"]
+        nchars = len(tweet['text'])
+#        ntokens = len(k.tokenize.wordpunct_tokenize(tweet['text']))
+        # self.nchars_all += [nchars]
+        # self.ntokens_all += [ntokens]
         date = dateutil.parser.parse(tweet["created_at"])
-        self.dates += [date]
+        # self.dates += [date]
         triples = [
                 (tweeturi, po.author, useruri),
                 (tweeturi, po.nChars, nchars),
-                (tweeturi, po.nTokens, ntokens),
+#                (tweeturi, po.nTokens, ntokens),
                 (tweeturi, po.stringID, tweetid),
                 (tweeturi, po.createdAt, date),
                 (tweeturi, po.message, tweet["text"]),
@@ -344,14 +348,15 @@ The script that rendered this data publication is on the script/ directory.
     def replyTriples(self, tweet, tweeturi):
         triples = []
         if tweet["in_reply_to_user_id_str"] or tweet["in_reply_to_status_id_str"]:
-            self.nreplies += 1
+            # self.nreplies += 1
             if tweet["in_reply_to_status_id_str"]:
                 userid_reply = self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
                 useruri_reply = P.rdf.ic(po.Participant, userid_reply,
                                          self.tweet_graph, self.snapshoturi)
-                if not P.get(useruri_reply, po.numericID, None):  # new user
-                    self.nparticipants += 1
-                    triples += [(useruri_reply, po.numericID, userid_reply)]
+                # if not P.get(useruri_reply, po.numericID, None):  # new user
+                #     self.nparticipants += 1
+                #     triples += [(useruri_reply, po.numericID, userid_reply)]
+                triples.append((useruri_reply, po.numericID, userid_reply))
             else:
                 userid_reply = self.snapshotid+"-anonymous-"+str(
                     self.anonymous_user_count)
@@ -363,9 +368,10 @@ The script that rendered this data publication is on the script/ directory.
                 tweetid_reply = userid_reply+"-"+tweet["in_reply_to_status_id_str"]
                 tweeturi_reply = P.rdf.ic(po.Tweet, tweetid_reply,
                                           self.tweet_graph, self.snapshoturi)
-                if not P.get(tweeturi_reply, po.numericID, None):  # new message
-                    self.ntweets += 1
-                    triples += [(tweeturi_reply, po.numericID, tweetid_reply)]
+                # if not P.get(tweeturi_reply, po.numericID, None):  # new message
+                #     self.ntweets += 1
+                #     triples += [(tweeturi_reply, po.numericID, tweetid_reply)]
+                triples.append((tweeturi_reply, po.numericID, tweetid_reply))
             else:
                 tweetid_reply = self.snapshotid+"-noidmsg-"+str(self.anonymous_tweet_count)
                 tweeturi_reply = P.rdf.ic(po.Tweet, tweetid_reply,
@@ -387,25 +393,26 @@ The script that rendered this data publication is on the script/ directory.
                     (tweeturi, po.hashtag, hashtag),
             )
         for user_mention in tweet["entities"]["user_mentions"]:
-            self.nuser_mentions += 1
-            userid_mention_ = user_mention["id_str"]
-            name_mention = user_mention["name"]
-            screen_name_mention = user_mention["screen_name"]
-            userid_mention = self.snapshotid+"-"+userid_mention_
+            # self.nuser_mentions += 1
+            # userid_mention_ = user_mention["id_str"]
+            # name_mention = user_mention["name"]
+            # screen_name_mention = user_mention["screen_name"]
+            userid_mention = self.snapshotid+"-"+user_mention['id_str']
             useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                        self.tweet_graph, self.snapshoturi)
             triples.extend((
                     (tweeturi, po.userMention, useruri_mention),
-                    (useruri_mention, po.name, name_mention),
-                    (useruri_mention, po.screenName, screen_name_mention),
+                    (useruri_mention, po.name, user_mention['name']),
+                    (useruri_mention, po.screenName, user_mention['screen_name']),
                     (useruri_mention, po.stringID, userid_mention),
+                    (useruri_mention, po.numericID, user_mention['id_str'])
             ))
-            if not P.get(useruri_mention, po.numericID, None):  # new user
-                self.nparticipants += 1
-                triples.append((useruri_mention, po.numericID, userid_mention))
+            # if not P.get(useruri_mention, po.numericID, None):  # new user
+            #     self.nparticipants += 1
+            #     triples.append((useruri_mention, po.numericID, userid_mention))
         # links = []
         for link in tweet["entities"]["urls"]:
-            self.nlinks += 1
+            # self.nlinks += 1
             # url = link["url"]
             triples.append((tweeturi, po.expandedURL, link["expanded_url"]))
         if "media" in tweet["entities"].keys():
@@ -457,7 +464,6 @@ def readPickleTweetChunk(filename=None, tweets=[], fopen=None, ntweets=5000):
         f = open(filename, "rb")
     else:
         f = fopen
-    # while len(tweets)<9900:
     while len(tweets) < ntweets:
         try:
             tweets += pickle.load(f)
