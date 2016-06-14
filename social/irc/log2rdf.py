@@ -53,9 +53,14 @@ class LogPublishing:
         self.writeAllIRC()
 
     def rdfLog(self):
-        c('opening log {} as iso-8859-1'.format(self.snapshotid))
-        with codecs.open(self.data_path+self.filename, "rb", "iso-8859-1") as f:
-            logtext = textFix(f.read())
+        try:
+            with codecs.open(self.data_path+self.filename, "rb", "iso-8859-1") as f:
+                logtext = textFix(f.read())
+            c('opened log {} as iso-8859-1'.format(self.snapshotid))
+        except OSError:
+            with open(self.data_path+self.filename, "r") as f:
+                logtext = textFix(f.read())
+            c('opened log {} as utf8'.format(self.snapshotid))
         # msgregex=r"\[(\d{2}):(\d{2}):(\d{2})\] \* ([^ ?]*)[ ]*(.*)" # DELETE ???
         # rmessage= r"\[(\d{2}):(\d{2}):(\d{2})\] \<(.*?)\>[ ]*(.*)" # message
         # lista arquivos no dir
