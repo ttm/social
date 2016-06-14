@@ -59,9 +59,8 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     filenames = [i for i in filenames if
                  not i.endswith("swp") and "ipython_log.py" != i]
     snapshots = set()
-    regex = re.compile(r"^(avlab_|ego_|posavlab_|page_)*(.*?)(\d{8})\
-                       (_interactions|_comments){0,1}\.(gdf|tab|gml)$")
-    regex2 = re.compile(r'([A-Z]{2,}(? = [A-Z]|$)|[A-Z][a-z]*)')
+    regex = re.compile(r"^(avlab_|ego_|posavlab_|page_)*(.*?)(\d{8})(_interactions|_comments){0,1}\.(gdf|tab|gml)$")
+    regex2 = re.compile(r'([A-Z]{2,}(?=[A-Z]|$)|[A-Z][a-z]*)')
     for filename in filenames:
         prefix, name, date, sufix, format_ = regex.findall(filename)[0]
         if prefix == "page_":
@@ -117,11 +116,11 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             isinteraction = ifilename in filenames
             isposts = tfilename in filenames
             if metadata[0]:
-                expressed_reference = po.FacebookGroup+"#"+\
+                expressed_reference = po.FacebookGroup+"#" +\
                     snapshotid+"-"+metadata[0]
             else:
                 if metadata[1]:
-                    expressed_reference = po.FacebookGroup+"#"+\
+                    expressed_reference = po.FacebookGroup+"#" +\
                         snapshotid+"-"+metadata[1]
                 else:
                     raise ValueError("Numeric or string ID is needed\
@@ -176,12 +175,9 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
     c("percolation graph have {} triples ({} in social_facebook context\
       )".format(len(P.percolation_graph), len(P.context("social_facebook"))))
     negos = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isEgo true } ")
-    ngroups = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { \
-                      ?s po:isGroup true } ")
-    nfriendships = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { \
-                           ?s po:isFriendship true } ")
-    ninteractions = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { \
-                            ?s po:isInteraction true } ")
+    ngroups = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isGroup true } ")
+    nfriendships = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isFriendship true } ")
+    ninteractions = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isInteraction true } ")
     nposts = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { ?s po:isPost true } ")
     totalsize = sum(P.query(r" SELECT ?size WHERE { ?s po:fileSize ?size } "))
     c("""{} are ego snapshots, {} are group snapshots

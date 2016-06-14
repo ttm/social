@@ -1,28 +1,29 @@
 from social import DATADIR, os
 import percolation as P
 from percolation.rdf import NS, a, po
-c=P.check
+c = P.check
+
 
 def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     """Parse legacy pickle files with Twitter tweets"""
-    filenames=os.listdir(data_dir)
-    filenames=[i for i in filenames if i!="ipython_log.py" and not i.endswith(".swp")]
-
-    snapshots=set()
-    triples=[]
+    filenames = os.listdir(data_dir)
+    filenames = [i for i in filenames if i != "ipython_log.py" and
+                 not i.endswith(".swp")]
+    snapshots = set()
+    triples = []
     for filename in filenames:
-        snapshotid="twitter-legacy-"+filename.replace("_","")
-        snapshoturi=po.TwitterSnapshot+"#"+snapshotid
-        expressed_classes=[po.Participant,po.Tweet]
-        expressed_reference=filename.replace("_","").replace(".pickle","")
-        name_humanized="Twitter"+expressed_reference
-        filesize=os.path.getsize(data_dir+filename)/10**6
-        fileformat="pickle"
-        fileuri=po.File+"#twitter-file-"+filename
-        triples+=[
-                 (snapshoturi,a,po.Snapshot),
-                 (snapshoturi,a,po.TwitterSnapshot),
-                 (snapshoturi,po.snapshotID,snapshotid),
+        snapshotid = "twitter-legacy-"+filename.replace("_", "")
+        snapshoturi = po.TwitterSnapshot+"#"+snapshotid
+        expressed_classes = [po.Participant, po.Tweet]
+        expressed_reference = filename.replace("_", "").replace(".pickle", "")
+        name_humanized = "Twitter "+expressed_reference
+        filesize = os.path.getsize(data_dir+filename)/10**6
+        fileformat = "pickle"
+        fileuri = po.File+"#twitter-file-"+filename
+        triples += [
+                 (snapshoturi, a, po.Snapshot),
+                 (snapshoturi, a, po.TwitterSnapshot),
+                 (snapshoturi, po.snapshotID, snapshotid),
                  (snapshoturi, po.isEgo, False),
                  (snapshoturi, po.isGroup, True),
                  (snapshoturi, po.isFriendship, False),
@@ -35,57 +36,62 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
                  (fileuri,     po.fileName, filename),
                  (fileuri,     po.fileFormat, fileformat),
                  ]+[
-                 (fileuri,    po.expressedClass, expressed_class) for expressed_class in expressed_classes
+                 (fileuri,    po.expressedClass, expressed_class) for
+                 expressed_class in expressed_classes
                  ]
         snapshots.add(snapshoturi)
-    nfiles=len(filenames)
-    nsnapshots=len(snapshots)
-    P.context("social_twitter","remove")
-    platformuri=P.rdf.ic(po.Platform,"Twitter",context="social_twitter")
-    triples+=[
-             (NS.social.Session,NS.social.nIRCParsedFiles,nfiles),
-             (NS.social.Session,NS.social.nIRCSnapshots,nsnapshots),
-             (platformuri, po.dataDir,data_dir),
+    nfiles = len(filenames)
+    nsnapshots = len(snapshots)
+    P.context("social_twitter", "remove")
+    platformuri = P.rdf.ic(po.Platform, "Twitter", context="social_twitter")
+    triples += [
+             (NS.social.Session, NS.social.nTwitterParsedFiles, nfiles),
+             (NS.social.Session, NS.social.nTwitterSnapshots, nsnapshots),
+             (platformuri, po.dataDir, data_dir),
              ]
-    P.add(triples,context="social_twitter")
-    c("parsed {} twitter files ({} snapshots) are in percolation graph and 'social_twitter' context".format(nfiles,nsnapshots))
-    c("percolation graph have {} triples ({} in social_twitter context)".format(len(P.percolation_graph),len(P.context("social_twitter"))))
-    negos=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE         { GRAPH <social_twitter> { ?s po:isEgo true         } } ")
-    ngroups=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE       { GRAPH <social_twitter> { ?s po:isGroup true       } } ")
-    nfriendships=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE  { GRAPH <social_twitter> { ?s po:isFriendship true  } } ")
-    ninteractions=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { GRAPH <social_twitter> { ?s po:isInteraction true } } ")
-    nposts=P.query(r" SELECT (COUNT(?s) as ?cs) WHERE        { GRAPH <social_twitter> { ?s po:isPost true        } } ")
-    totalsize=sum(P.query(r" SELECT ?size WHERE              { GRAPH <social_twitter> { ?s po:fileSize ?size     } } "))
+    P.add(triples, context="social_twitter")
+    c("parsed {} twitter files ({} snapshots) are in percolation graph \
+      and 'social_twitter' context".format(nfiles, nsnapshots))
+    c("percolation graph have {} triples ({} in social_twitter context)".format(
+        len(P.percolation_graph), len(P.context("social_twitter"))))
+    negos = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE         { GRAPH <social_twitter> { ?s po:isEgo true         } } ")
+    ngroups = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE       { GRAPH <social_twitter> { ?s po:isGroup true       } } ")
+    nfriendships = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE  { GRAPH <social_twitter> { ?s po:isFriendship true  } } ")
+    ninteractions = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE { GRAPH <social_twitter> { ?s po:isInteraction true } } ")
+    nposts = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE        { GRAPH <social_twitter> { ?s po:isPost true        } } ")
+    totalsize = sum(P.query(r" SELECT ?size WHERE              { GRAPH <social_twitter> { ?s po:fileSize ?size     } } "))
     c("""{} are ego snapshots, {} are group snapshots
-{} have a friendship network. {} have an interaction network. {} have post texts and reaction counts
-Total raw data size is {:.2f}MB""".format(negos,ngroups,nfriendships,ninteractions,nposts,totalsize))
-
+{} have a friendship network. {} have an interaction network. \
+      {} have post texts and reaction counts. Total raw data size is {:.2f}MB""".format(
+          negos, ngroups, nfriendships, ninteractions, nposts, totalsize))
     return snapshots
 
 
-def groupTwitterFileGroupsForPublishing(self,filegroups):
-    filegroups_grouped=[]
-    i=0
-    agroup=[]
-    asize=0
+def groupTwitterFileGroupsForPublishing(self, filegroups):
+    filegroups_grouped = []
+    agroup = []
+    asize = 0
     for group in filegroups:
-        size=0
+        size = 0
         for afile in group:
-            size+=os.path.getsize(afile)
-        if size/10**9>.9: # if total size is bigger than 1GB, put it alone:
+            size += os.path.getsize(afile)
+        if size/10**9 > .9:  # if total size is bigger than 1GB, put it alone:
             filegroups_grouped.append([group])
         else:
-            asize+=size
+            asize += size
             agroup.append(group)
-            if asize/10**9>1: # if > 1GB
+            if asize/10**9 > 1:  # if > 1GB
                 filegroups_grouped.append(agroup)
-                agroup=[]
-                asize=0
-    return silegroups_grouped
+                agroup = []
+                asize = 0
+    return filegroups_grouped
+
 
 def search():
     """get recent tweets through standard search API"""
     pass
+
+
 def stream():
     """get currently sent tweets through standard stream API"""
     pass

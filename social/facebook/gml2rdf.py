@@ -1,9 +1,10 @@
-import percolation as P
-import social as S
-import networkx as x
-import datetime
 import os
 import shutil
+import networkx as x
+import rdflib as r
+import datetime
+import percolation as P
+import social as S
 from percolation.rdf import NS
 from .read import trans
 po = NS.po
@@ -77,9 +78,9 @@ class GmlRdfPublishing:
         P.add(triples, context=self.meta_graph)
         g = P.context(self.meta_graph)
         ntriples = len(g)
-        triples += [
+        triples.append(
                  (self.snapshoturi, po.nMetaTriples, ntriples+1),
-                 ]
+        )
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
         c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf", "xml")
@@ -159,12 +160,10 @@ The script that rendered this data publication is on the script/ \
             assert isinstance(edge[2], dict) and len(edge[2]) == 0
         self.friendsvars = ["name", "ageRank", "wallCount", "sex"]
         if ("RicardoFabbri18022013" not in self.snapshotid):
-            self.friendsvars += ["locale"]
+            self.friendsvars.append("locale")
         c("create uris for each partcipant, \
           with po:Participant#snapshoturi-localid")
         count = 0
-        trans = {'agerank': 'ageRank', 'wallcount': 'wallCount',
-                     'label': 'name', 'sex': 'sex', 'locale': 'locale'}
         for node_ in friendship_network.nodes(data=True):
             node = node_[1]
             localid = str(node_[0])
@@ -197,7 +196,7 @@ The script that rendered this data publication is on the script/ \
         triples = P.get(self.snapshoturi, None, None, self.social_graph)
         for rawfile in P.get(self.snapshoturi, po.rawFile, None,
                              self.social_graph, strict=True, minimized=True):
-            triples += P.get(rawfile, None, None, self.social_graph)
+            triples.extend(P.get(rawfile, None, None, self.social_graph))
         P.add(triples, context=self.meta_graph)
 
         self.ffile = "base/"+self.filename_friendships
