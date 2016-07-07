@@ -185,8 +185,21 @@ class LogPublishing:
             os.mkdir(self.final_path)
         if not os.path.isdir(self.final_path_):
             os.mkdir(self.final_path_)
+        g = P.context(self.irc_graph)
+        triples_ = [tr for tr in g]
+        triples.extend(triples_)
         self.log_xml, self.size_xml, self.log_ttl, self.size_ttl = P.rdf.writeByChunks(
             self.final_path_+self.snapshotid+"Log", ntriples=100000, triples=triples)
+        # write self.irc_graph with message and participant instances
+        # linked to snapshot
+        # g = P.context(self.irc_graph)
+        # g.namespace_manager.bind("po", po)
+        # tttl = self.snapshotid+"Log"+".ttl"
+        # trdf = self.snapshotid+"Log"+".rdf"
+        # g.serialize(self.final_path_+tttl, "turtle")
+        # c("ttl")
+        # g.serialize(self.final_path_+trdf, "xml")
+        # c("rdf")
 
     def makeMetadata(self):
         triples = P.get(self.snapshoturi, None, None, self.social_graph)

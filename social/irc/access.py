@@ -12,7 +12,7 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     triples = []
     for filename in filenames:
         snapshotid = "irc-legacy-"+filename.replace("#", "")
-        snapshoturi = po.TwitterSnapshot+"#"+snapshotid
+        snapshoturi = po.IRCSnapshot+"#"+snapshotid
         expressed_classes = [po.Participant, po.IRCMessage]
         expressed_reference = filename.replace("#", "").replace(".txt", "").replace(".log", "")
         name_humanized = "IRC log of channel "+expressed_reference
@@ -49,7 +49,7 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
              (platformuri, po.dataDir, data_dir),
              ]
     P.add(triples, context="social_irc")
-    c("parsed {} irc logs files ({} snapshots) are in percolation graph and 'irc_twitter' context".format(nfiles, nsnapshots))
+    c("parsed {} irc logs files ({} snapshots) are in percolation graph and 'social_irc' context".format(nfiles, nsnapshots))
     c("percolation graph have {} triples ({} in social_irc context)".format(len(P.percolation_graph), len(P.context("social_irc"))))
     negos = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE         { GRAPH <social_irc> { ?s po:isEgo true         } } ")
     ngroups = P.query(r" SELECT (COUNT(?s) as ?cs) WHERE       { GRAPH <social_irc> { ?s po:isGroup true       } } ")

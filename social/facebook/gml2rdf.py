@@ -34,6 +34,8 @@ class GmlRdfPublishing:
         self.online_prefix = "https://raw.githubusercontent.com/\
             OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,
                                                       self.snapshotid)
+        participant_uri = P.rdf.ic(po.FacebookSnapshot, self.snapshotid,
+                self.friendship_graph) 
         self.isego = True
         self.isgroup = False
         self.isfriendship = True
@@ -172,6 +174,8 @@ The script that rendered this data publication is on the script/ \
                                        self.snapshoturi)
             triples = [(participant_uri, eval('po.'+trans[i]), node[i])
                        for i in node]
+            if localid == '38':
+                c(node,triples)
             P.rdf.add(triples, context=self.friendship_graph)
             count += 1
             if count % 300 == 0:

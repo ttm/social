@@ -1,7 +1,8 @@
 import social as S
 
 # ss = S.facebook.access.parseLegacyFiles()
-# ss=[i for i in ss if i.endswith("gdf_fb")]
+# # ss=[i for i in ss if i.endswith("gdf_fb")]
+# ss=[i for i in ss if 'AntonioAnzo' in i]
 # last_triplification_class = S.facebook.render.publishAll(ss)
 
 # ss=S.twitter.access.parseLegacyFiles()
@@ -12,6 +13,7 @@ import social as S
 # last_triplification_class = S.twitter.render.publishAll(ss)
 
 ss = S.irc.access.parseLegacyFiles()
-ss = [i for i in ss if any([j in i for j in ('labmacambira_lalenia.txt', '#foradoeixo.log', '#matehackers_.log')])]
+# ss = [i for i in ss if any([j in i for j in ('labmacambira_lalenia.txt', '#foradoeixo.log', '#matehackers_.log')])]
+# ss = [i for i in ss if any([j in i for j in ('foradoeixo.log', 'matehackers_.log')])]
 print(ss)
 last_triplification_class = S.irc.render.publishAll(ss)
