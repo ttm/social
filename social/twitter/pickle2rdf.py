@@ -243,6 +243,7 @@ The script that rendered this data publication is on the script/ directory.
             c("rendering tweets, chunk:", chunk_count, "ntweets:",
               len(tweets), "snapshotid", self.snapshotid)
             count = 0
+
             for tweet in tweets:
                 tweeturi, triples = self.tweetTriples(tweet)
                 if "retweeted_status" in tweet.keys():
@@ -397,9 +398,17 @@ The script that rendered this data publication is on the script/ directory.
             # userid_mention_ = user_mention["id_str"]
             # name_mention = user_mention["name"]
             # screen_name_mention = user_mention["screen_name"]
-            userid_mention = self.snapshotid+"-"+user_mention['id_str']
-            useruri_mention = P.rdf.ic(po.Participant, userid_mention,
+            if user_mention["id_str"]:
+                userid_mention = self.snapshotid+"-"+user_mention['id_str']
+                useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                        self.tweet_graph, self.snapshoturi)
+            else:
+                userid_mention = self.snapshotid+"-anonymous-"+str(
+                    self.anonymous_user_count)
+                useruri_mention = P.rdf.ic(po.Participant, userid_mention,
+                                         self.tweet_graph, self.snapshoturi)
+                self.anonymous_user_count += 1
+                triples += [(useruri_mention, po.anonymous, True)]
             triples.extend((
                     (tweeturi, po.userMention, useruri_mention),
                     (useruri_mention, po.name, user_mention['name']),

@@ -12,7 +12,7 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
     snapshots = set()
     triples = []
     for filename in filenames:
-        snapshotid = "twitter-legacy-"+filename.replace("_", "")
+        snapshotid = "twitter-legacy-"+filename.replace("_", "").replace('tw.pickle', '')
         snapshoturi = po.TwitterSnapshot+"#"+snapshotid
         expressed_classes = [po.Participant, po.Tweet]
         expressed_reference = filename.replace("_", "").replace(".pickle", "")

@@ -68,8 +68,8 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             continue
         # size in megabytes
         filesize = os.path.getsize(datadir+filename)/(10**6)
-        snapshotid = filename.replace(
-            "_interactions.gdf", ".gdf").replace(".tab", ".gdf")+"_fb"
+        snapshotid = 'facebook-legacy-'+filename.replace(
+            "_interactions.gdf", "").replace(".tab", "").replace('.gml', '').replace('.gdf', '')
         snapshoturi = po.FacebookSnapshot+"#"+snapshotid
         date_obtained = datetime.date(
             int(date[4:]), int(date[2:4]), int(date[:2]))

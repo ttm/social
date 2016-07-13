@@ -11,7 +11,7 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     snapshots = set()
     triples = []
     for filename in filenames:
-        snapshotid = "irc-legacy-"+filename.replace("#", "")
+        snapshotid = "irc-legacy-"+filename.replace("#", "").replace('.log', '').replace('_lalenia.txt', '')
         snapshoturi = po.IRCSnapshot+"#"+snapshotid
         expressed_classes = [po.Participant, po.IRCMessage]
         expressed_reference = filename.replace("#", "").replace(".txt", "").replace(".log", "")
