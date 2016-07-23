@@ -92,7 +92,7 @@ class GdfRdfPublishing:
                         (ind, po.snapshot, self.snapshoturi),
                         (ind, po.postID, post[0]),
                         (ind, po.postType, post[1]),
-                        (ind, po.postText, ptext),
+                        (ind, po.text, ptext),
                         (ind, po.createdAt, dateutil.parser.parse(post[3])),
                         (ind, po.nComments, int(post[4])),
                         (ind, po.nLikes, int(post[5])),
@@ -287,111 +287,111 @@ The script that rendered this data publication is on the script/ \
                 (self.groupid != self.groupid2):
             raise ValueError("Group IDS are different")
         triples = P.get(self.snapshoturi, None, None, self.social_graph)
-        for rawfile in P.get(self.snapshoturi, po.rawFile, None,
-                             self.social_graph, strict=True, minimized=True):
-            triples.extend(P.get(rawfile, None, None, self.social_graph))
+        # for rawfile in P.get(self.snapshoturi, po.rawFile, None,
+        #                      self.social_graph, strict=True, minimized=True):
+        #     triples.extend(P.get(rawfile, None, None, self.social_graph))
         P.add(triples, context=self.meta_graph)
         foo = {"uris": [], "vals": []}
         if self.isfriendship:
             foo["uris"].extend([
-                    po.onlineOriginalFriendshipFile,
-                    po.originalFriendshipFileName,
-                    po.onlineFriendshipXMLFile,
-                    po.onlineFriendshipTTLFile,
-                    po.friendshipXMLFileName,
-                    po.friendshipTTLFileName,
-                    po.nFriends,
-                    po.nFriendships,
+                    # po.onlineOriginalFriendshipFile,
+                    # po.originalFriendshipFileName,
+                    # po.onlineFriendshipXMLFile,
+                    # po.onlineFriendshipTTLFile,
+                    # po.friendshipXMLFileName,
+                    # po.friendshipTTLFileName,
+                    # po.numberOfFriends,
+                    # po.numberOfFriendships,
                     po.friendshipsAnonymized
-                    ] + [po.frienshipParticipantAttribute]*len(self.friendsvars)
+                    ] #  + [po.frienshipParticipantAttribute]*len(self.friendsvars)
             )
             self.ffile = "base/"+self.filename_friendships
             self.frdf = self.snapshotid+"Friendship.rdf"
             self.fttl = self.snapshotid+"Friendship.ttl"
             foo["vals"].extend([
-                    self.online_prefix+self.ffile,
-                    self.ffile,
-                    self.online_prefix+self.frdf,
-                    self.online_prefix+self.fttl,
-                    self.frdf,
-                    self.fttl,
-                    self.nfriends,
-                    self.nfriendships,
+                    # self.online_prefix+self.ffile,
+                    # self.ffile,
+                    # self.online_prefix+self.frdf,
+                    # self.online_prefix+self.fttl,
+                    # self.frdf,
+                    # self.fttl,
+                    # self.nfriends,
+                    # self.nfriendships,
                     self.friendships_anonymized
-                    ]+list(self.friendsvars)
+                    ] #  +list(self.friendsvars)
             )
 
         if self.isinteraction:
             foo["uris"].extend([
-                        po.onlineOriginalInteractionFile,
-                        po.originalInteractionFileName,
-                        po.onlineInteractionXMLFile,
-                        po.onlineInteractionTTLFile,
-                        po.interactionXMLFileName,
-                        po.interactionTTLFileName,
-                        po.nInteracted,
-                        po.nInteractions,
+                        # po.onlineOriginalInteractionFile,
+                        # po.originalInteractionFileName,
+                        # po.onlineInteractionXMLFile,
+                        # po.onlineInteractionTTLFile,
+                        # po.interactionXMLFileName,
+                        # po.interactionTTLFileName,
+                        # po.numberOfInteractedParticipants,
+                        # po.numberOfInteractions,
                         po.interactionsAnonymized
-                        ] + [po.interactionParticipantAttribute]*len(
+                        ] #  + [po.interactionParticipantAttribute]*len(
                                 self.interactionsvars)
             )
             self.ifile = "base/"+self.filename_interactions
             self.irdf = irdf = self.snapshotid+"Interaction.rdf"
             self.ittl = ittl = self.snapshotid+"Interaction.ttl"
             foo["vals"].extend([
-                    self.ifile,
-                    self.online_prefix+self.ifile,
-                    self.online_prefix+irdf,
-                    self.online_prefix+ittl,
-                    irdf,
-                    ittl,
-                    self.ninteractions,
-                    self.ninteracted,
+                    # self.ifile,
+                    # self.online_prefix+self.ifile,
+                    # self.online_prefix+irdf,
+                    # self.online_prefix+ittl,
+                    # irdf,
+                    # ittl,
+                    # self.ninteractions,
+                    # self.ninteracted,
                     self.interactions_anonymized,
-                    ]+list(self.interactionsvars)
+                    ] #  +list(self.interactionsvars)
             )
         if self.hastext:
             foo["uris"].extend([
-                        po.onlineOriginalPostsFile,
-                        po.originalPostsFileName,
-                        po.onlinePostsXMLFile,
-                        po.onlinePostsTTLFile,
-                        po.postsXMLFileName,
-                        po.postsTTLFileName,
-                        po.nPosts,
-                        po.nCharsOverall,
-                        po.mCharsOverall,
-                        po.dCharsOverall,
-                        po.nTokensOverall,
-                        po.mTokensOverall,
-                        po.dTokensOverall,
-                        ] + [po.postAttribute]*len(self.postsvars)
+                        # po.onlineOriginalPostsFile,
+                        # po.originalPostsFileName,
+                        # po.onlinePostsXMLFile,
+                        # po.onlinePostsTTLFile,
+                        # po.postsXMLFileName,
+                        # po.postsTTLFileName,
+                        # po.numberOfPosts,
+                        # po.numberOfChars,
+                        # po.meanChars,
+                        # po.deviationChars,
+                        # po.numberOfTokens,
+                        # po.meanTokens,
+                        # po.deviationTokens,
+                        ] #  + [po.postAttribute]*len(self.postsvars)
             )
             self.pfile = "base/"+self.filename_posts
             self.prdf = self.snapshotid+"Post.rdf"
             self.pttl = self.snapshotid+"Post.ttl"
             foo["vals"].extend([
-                    self.online_prefix+self.pfile,
-                    self.pfile,
-                    self.online_prefix+self.prdf,
-                    self.online_prefix+self.pttl,
-                    self.prdf,
-                    self.pttl,
-                    self.nposts,
-                    int(self.totalchars),
-                    self.mcharsposts,
-                    self.dcharsposts,
-                    int(self.totaltokens),
-                    self.mtokensposts,
-                    self.dtokensposts,
-                    ]+list(self.postsvars)
+                    # self.online_prefix+self.pfile,
+                    # self.pfile,
+                    # self.online_prefix+self.prdf,
+                    # self.online_prefix+self.pttl,
+                    # self.prdf,
+                    # self.pttl,
+                    # self.nposts,
+                    # int(self.totalchars),
+                    # self.mcharsposts,
+                    # self.dcharsposts,
+                    # int(self.totaltokens),
+                    # self.mtokensposts,
+                    # self.dtokensposts,
+                    ] #  +list(self.postsvars)
             )
         foo["uris"].extend([
                     po.isGroup,
                     po.isEgo,
                     po.isFriendship,
                     po.isInteraction,
-                    po.hasText,
+                    # po.hasText,
                     po.isPost,
                     ]
         )
@@ -399,7 +399,7 @@ The script that rendered this data publication is on the script/ \
         self.isgroup = bool(
             P.get(r.URIRef(self.snapshoturi), a, po.GroupSnapshot))
         foo["vals"].extend([self.isgroup, self.isego, self.isfriendship,
-                        self.isinteraction, self.hastext, self.hastext])
+                        self.isinteraction, self.hastext]) #  , self.hastext])
 
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
@@ -409,49 +409,50 @@ The script that rendered this data publication is on the script/ \
                 self.snapshotid, self.snapshoturi, self.isego, self.isgroup)
         self.desc += "\nisFriendship: {}".format(self.isfriendship)
         if self.isfriendship:
-            self.desc += "; nFriends: {}; nFrienships: {}.".format(
+            self.desc += "; numberOfFriends: {}; numberOfFrienships: {}.".format(
                 self.nfriends, self.nfriendships)
         self.desc += "\nisInteraction: {}".format(self.isinteraction)
         if self.isinteraction:
-            self.desc += "; nInteracted: {}; nInteractions: {}.".format(
+            self.desc += "; numberOfInteracted: {}; numberOfInteractions: {}.".format(
                 self.ninteracted, self.ninteractions)
-        self.desc += "\nisPost: {} (alias hasText: {})".format(
-            self.hastext, self.hastext)
+        self.desc += "\nisPost: {} (has text)".format(
+            self.hastext)
         if self.hastext:
-            self.desc += ";\nmCharsPostsOverall: {}; dCharsPostsOverall: {}; \
-                totalCharsOverall: {}; \nmTokensPostsOverall: {}; \
-                dTokensPostsOverall: {}; totalTokensOverall: {}".format(
+            self.desc += ";\nmeanChars: {}; deviationChars: {}; \
+                totalChars: {}; \nmeanTokens: {}; \
+                deviationTokens: {}; totalTokens: {}".format(
                     self.nposts,
                     self.mcharsposts, self.dcharsposts, self.totalchars,
                     self.mtokensposts, self.dtokensposts, self.totaltokens,
                     )
         P.rdf.triplesScaffolding(self.snapshoturi, [
                         po.triplifiedIn,
-                        po.triplifiedBy,
-                        po.donatedBy,
-                        po.availableAt,
-                        po.onlineMetaXMLFile,
-                        po.onlineMetaTTLFile,
-                        po.metaXMLFileName,
-                        po.metaTTLFileName,
+                        # po.triplifiedBy,
+                        # po.donatedBy,
+                        # po.availableAt,
+                        # po.onlineMetaXMLFile,
+                        # po.onlineMetaTTLFile,
+                        # po.metaXMLFileName,
+                        # po.metaTTLFileName,
                         po.acquiredThrough,
-                        po.socialProtocolTag,
                         po.socialProtocol,
-                        NS.rdfs.comment,
+                        # po.socialProtocolTag,
+                        # po.socialProtocol,
+                        po.comment,
                         ]+foo["uris"],
                         [
                         datetime.datetime.now(),
-                        "scripts/",
-                        self.snapshotid[:-4],
-                        self.online_prefix,
-                        self.online_prefix+self.mrdf,
-                        self.online_prefix+self.mttl,
-                        self.mrdf,
-                        self.mttl,
+                        # "scripts/",
+                        # self.snapshotid[:-4],
+                        # self.online_prefix,
+                        # self.online_prefix+self.mrdf,
+                        # self.online_prefix+self.mttl,
+                        # self.mrdf,
+                        # self.mttl,
                         "Netvizz",
                         "Facebook",
-                        P.rdf.ic(po.Platform, "Facebook", self.meta_graph,
-                                 self.snapshoturi),
+                        # "Facebook",
+                        # P.rdf.ic(po.Platform, "Facebook", self.meta_graph, self.snapshoturi),
                         self.desc,
                         ]+foo["vals"],
                         self.meta_graph)

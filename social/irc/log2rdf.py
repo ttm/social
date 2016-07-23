@@ -41,7 +41,7 @@ class LogPublishing:
         nsentences_all = []
         participantvars = ["nick"]
         messagevars = ["author", "createdAt", "mentions", "directedTo",
-                       "systemMessage", "messageText", "cleanMessageText",
+                       "systemMessage", "text", "cleanMessageText",
                        "nChars", "nTokens", "nSentences", "url", "emptyMessage"]
         messagevars.sort()
         locals_ = locals().copy()
@@ -125,13 +125,13 @@ class LogPublishing:
                      (messageuri, po.createdAt, datetime_),
             ))
             if text:
-                triples.append((messageuri, po.messageText, text))
+                triples.append((messageuri, po.text, text))
             if text_:
                 nchars = len(text_)
                 ntokens = len(k.word_tokenize(text_))
                 nsentences = len(k.sent_tokenize(text_))
                 triples += [
-                         (messageuri, po.cleanMessageText, text_),
+                         (messageuri, po.cleanText, text_),
                          (messageuri, po.nChars, nchars),
                          (messageuri, po.nTokens, ntokens),
                          (messageuri, po.nSentences, nsentences),
@@ -170,12 +170,12 @@ class LogPublishing:
             messageuri = P.rdf.ic(po.IRCMessage, messageid, self.irc_graph, self.snapshoturi)
             triples += [
                      (messageuri, po.impliedUser, useruri),
-                     (messageuri, po.sentAt, datetime_),
+                     (messageuri, po.createdAt, datetime_),
                      (messageuri, po.systemMessage, True)
                      ]
             if text:
                 triples += [
-                         (messageuri, po.messageText, text)
+                         (messageuri, po.text, text)
                          ]
             msgcount += 1
             if msgcount % 1000 == 0:
@@ -203,52 +203,52 @@ class LogPublishing:
 
     def makeMetadata(self):
         triples = P.get(self.snapshoturi, None, None, self.social_graph)
-        for rawfile in P.get(self.snapshoturi, po.rawFile, None, self.social_graph, strict=True, minimized=True):
-            triples += P.get(rawfile, None, None, self.social_graph)
+        # for rawfile in P.get(self.snapshoturi, po.rawFile, None, self.social_graph, strict=True, minimized=True):
+        #     triples += P.get(rawfile, None, None, self.social_graph)
         P.add(triples, context=self.meta_graph)
-        self.totalchars = sum(self.nchars_all)
-        self.mcharsmessages = n.mean(self.nchars_all)
-        self.dcharsmessages = n.std(self.nchars_all)
-        self.totaltokens = sum(self.ntokens_all)
-        self.mtokensmessages = n.mean(self.ntokens_all)
-        self.dtokensmessages = n.std(self.ntokens_all)
-        self.totalsentences = sum(self.nsentences_all)
-        self.msentencesmessages = n.mean(self.nsentences_all)
-        self.dsentencesmessages = n.std(self.nsentences_all)
-        self.nparticipants = len(self.NICKS)
-        self.nmessages = len(self.messageids)
+        # self.totalchars = sum(self.nchars_all)
+        # self.mcharsmessages = n.mean(self.nchars_all)
+        # self.dcharsmessages = n.std(self.nchars_all)
+        # self.totaltokens = sum(self.ntokens_all)
+        # self.mtokensmessages = n.mean(self.ntokens_all)
+        # self.dtokensmessages = n.std(self.ntokens_all)
+        # self.totalsentences = sum(self.nsentences_all)
+        # self.msentencesmessages = n.mean(self.nsentences_all)
+        # self.dsentencesmessages = n.std(self.nsentences_all)
+        # self.nparticipants = len(self.NICKS)
+        # self.nmessages = len(self.messageids)
         self.ntriples = len(P.context(self.irc_graph))
         triples = [
-                (self.snapshoturi, po.nParticipants,           self.nparticipants),
-                (self.snapshoturi, po.nMessages,                 self.nmessages),
-                (self.snapshoturi, po.nDirectMessages,              self.ndirect),
-                (self.snapshoturi, po.nUserMentions,              self.nmention),
-                (self.snapshoturi, po.nCharsOverall, self.totalchars),
-                (self.snapshoturi, po.mCharsOverall, self.mcharsmessages),
-                (self.snapshoturi, po.dCharsOverall, self.dcharsmessages),
-                (self.snapshoturi, po.nTokensOverall, self.totaltokens),
-                (self.snapshoturi, po.mTokensOverall, self.mtokensmessages),
-                (self.snapshoturi, po.dTokensOverall, self.dtokensmessages),
-                (self.snapshoturi, po.nSentencesOverall, self.totalsentences),
-                (self.snapshoturi, po.mSentencesOverall, self.msentencesmessages),
-                (self.snapshoturi, po.dSentencesOverall, self.dsentencesmessages),
+                # (self.snapshoturi, po.numberOfParticipants,           self.nparticipants),
+                # (self.snapshoturi, po.numberOfMessages,                 self.nmessages),
+                # (self.snapshoturi, po.numberOfDirectMessages,              self.ndirect),
+                # (self.snapshoturi, po.numberOfUserMentions,              self.nmention),
+                # (self.snapshoturi, po.numberOfChars, self.totalchars),
+                # (self.snapshoturi, po.meanChars, self.mcharsmessages),
+                # (self.snapshoturi, po.deviationChars, self.dcharsmessages),
+                # (self.snapshoturi, po.numberOfTokens, self.totaltokens),
+                # (self.snapshoturi, po.meanTokens, self.mtokensmessages),
+                # (self.snapshoturi, po.deviationTokens, self.dtokensmessages),
+                # (self.snapshoturi, po.numberOfSentences, self.totalsentences),
+                # (self.snapshoturi, po.meanSentences, self.msentencesmessages),
+                # (self.snapshoturi, po.deviationSentences, self.dsentencesmessages),
                 ]
-        P.add(triples, context=self.meta_graph)
-        P.rdf.triplesScaffolding(
-            self.snapshoturi,
-            [po.ircParticipantAttribute]*len(self.participantvars),
-            self.participantvars, context=self.meta_graph
-        )
-        P.rdf.triplesScaffolding(
-            self.snapshoturi,
-            [po.logXMLFilename]*len(self.log_xml)+[po.logTTLFilename]*len(self.log_ttl),
-            self.log_xml+self.log_ttl, context=self.meta_graph
-        )
-        P.rdf.triplesScaffolding(
-            self.snapshoturi,
-            [po.onlineLogXMLFile]*len(self.log_xml)+[po.onlineLogTTLFile]*len(self.log_ttl),
-            [self.online_prefix+i for i in self.log_xml+self.log_ttl], context=self.meta_graph
-        )
+        # P.add(triples, context=self.meta_graph)
+        # P.rdf.triplesScaffolding(
+        #     self.snapshoturi,
+        #     [po.ircParticipantAttribute]*len(self.participantvars),
+        #     self.participantvars, context=self.meta_graph
+        # )
+        # P.rdf.triplesScaffolding(
+        #     self.snapshoturi,
+        #     [po.logXMLFilename]*len(self.log_xml)+[po.logTTLFilename]*len(self.log_ttl),
+        #     self.log_xml+self.log_ttl, context=self.meta_graph
+        # )
+        # P.rdf.triplesScaffolding(
+        #     self.snapshoturi,
+        #     [po.onlineLogXMLFile]*len(self.log_xml)+[po.onlineLogTTLFile]*len(self.log_ttl),
+        #     [self.online_prefix+i for i in self.log_xml+self.log_ttl], context=self.meta_graph
+        # )
 
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
@@ -256,35 +256,35 @@ class LogPublishing:
                                                 self.snapshotid, self.snapshoturi, self.isego, self.isgroup, )
         self.desc += "\nisFriendship: {}; ".format(self.isfriendship)
         self.desc += "isInteraction: {}.".format(self.isinteraction)
-        self.desc += "\nnParticipants: {}; nInteractions: {} (directed messages+user mentions).".format(
-            self.nparticipants, self.ndirect+self.nmention)
+        # self.desc += "\nnParticipants: {}; nInteractions: {} (directed messages+user mentions).".format(
+        #     self.nparticipants, self.ndirect+self.nmention)
         self.desc += "\nisPost: {} (alias hasText: {})".format(self.hastext, self.hastext)
-        self.desc += "\nnMessages: {}; ".format(self.nmessages)
-        self.desc += "nDirectedMessages: {}; nUserMentions: {};".format(self.ndirect, self.nmention)
-        self.desc += "\nnCharsOverall: {}; mCharsOverall: {}; dCharsOverall: {}.".format(
-            self.totalchars, self.mcharsmessages, self.dcharsmessages)
-        self.desc += "\nnTokensOverall: {}; mTokensOverall: {}; dTokensOverall: {};".format(
-            self.totaltokens, self.mtokensmessages, self.dtokensmessages)
-        self.desc += "\nnSentencesOverall: {}; mSentencesOverall: {}; dSentencesOverall: {};".format(
-            self.totalsentences, self.msentencesmessages, self.dsentencesmessages)
-        self.desc += "\nnURLs: {}; nAAMessages {}.".format(self.nurls, self.naamessages)
+        # self.desc += "\nnumberOfMessages: {}; ".format(self.nmessages)
+        # self.desc += "nDirectedMessages: {}; numberOfUserMentions: {};".format(self.ndirect, self.nmention)
+        # self.desc += "\nnumberOfChars: {}; meanChars: {}; deviationChars: {}.".format(
+        #     self.totalchars, self.mcharsmessages, self.dcharsmessages)
+        # self.desc += "\nnumberOfTokens: {}; meanTokens: {}; deviationTokens: {};"
+        #     self.totaltokens, self.mtokensmessages, self.dtokensmessages)
+        # self.desc += "\nnSentencesOverall: {}; meanSentences: {}; deviationSentences: {};".format(
+        #     self.totalsentences, self.msentencesmessages, self.dsentencesmessages)
+        # self.desc += "\nnumberOfURLs: {}; numberOfAAMessages {}.".format(self.nurls, self.naamessages)
         triples = [
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
-                (self.snapshoturi, po.triplifiedBy,      "scripts/"),
-                (self.snapshoturi, po.donatedBy,         self.snapshotid[:-4]),
-                (self.snapshoturi, po.availableAt,       self.online_prefix),
-                (self.snapshoturi, po.onlineMetaXMLFile, self.online_prefix+self.mrdf),
-                (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
-                (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
-                (self.snapshoturi, po.metaTTLFileName,   self.mttl),
-                (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_xml)),
-                (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
+                # (self.snapshoturi, po.triplifiedBy,      "scripts/"),
+                # (self.snapshoturi, po.donatedBy,         self.snapshotid[:-4]),
+                # (self.snapshoturi, po.availableAt,       self.online_prefix),
+                # (self.snapshoturi, po.onlineMetaXMLFile, self.online_prefix+self.mrdf),
+                # (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
+                # (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
+                # (self.snapshoturi, po.metaTTLFileName,   self.mttl),
+                # (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_xml)),
+                # (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
                 (self.snapshoturi, po.acquiredThrough,   "channel text log"),
-                (self.snapshoturi, po.socialProtocolTag, "IRC"),
-                (self.snapshoturi, po.socialProtocol,    P.rdf.ic(
-                    po.Platform, "IRC", self.meta_graph, self.snapshoturi)),
-                (self.snapshoturi, po.nTriples,         self.ntriples),
-                (self.snapshoturi, NS.rdfs.comment,         self.desc),
+                (self.snapshoturi, po.socialProtocol, "IRC"),
+                # (self.snapshoturi, po.socialProtocolTag, "IRC"),
+                # (self.snapshoturi, po.socialProtocol,    P.rdf.ic( po.Platform, "IRC", self.meta_graph, self.snapshoturi)),
+                # (self.snapshoturi, po.numberOfTriples,         self.ntriples),
+                (self.snapshoturi, po.comment,         self.desc),
                 ]
         P.add(triples, self.meta_graph)
 

@@ -35,7 +35,7 @@ class GmlRdfPublishing:
             OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,
                                                       self.snapshotid)
         participant_uri = P.rdf.ic(po.FacebookSnapshot, self.snapshotid,
-                self.friendship_graph) 
+                self.friendship_graph)
         self.isego = True
         self.isgroup = False
         self.isfriendship = True
@@ -198,61 +198,60 @@ The script that rendered this data publication is on the script/ \
 
     def makeMetadata(self):
         triples = P.get(self.snapshoturi, None, None, self.social_graph)
-        for rawfile in P.get(self.snapshoturi, po.rawFile, None,
-                             self.social_graph, strict=True, minimized=True):
-            triples.extend(P.get(rawfile, None, None, self.social_graph))
+        # for rawfile in P.get(self.snapshoturi, po.rawFile, None,
+        #                      self.social_graph, strict=True, minimized=True):
+        #     triples.extend(P.get(rawfile, None, None, self.social_graph))
         P.add(triples, context=self.meta_graph)
 
         self.ffile = "base/"+self.filename_friendships
         self.frdf = self.snapshotid+"Friendship.rdf"
         self.fttl = self.snapshotid+"Friendship.ttl"
         triples = [
-                (self.snapshoturi, po.onlineOriginalFriendshipFile,
-                 self.online_prefix+self.ffile),
-                (self.snapshoturi, po.originalFriendshipFileName, self.ffile),
-                (self.snapshoturi, po.onlineFriendshipXMLFile,
-                 self.online_prefix+self.frdf),
-                (self.snapshoturi, po.onlineFriendshipTTLFile,
-                 self.online_prefix+self.fttl),
-                (self.snapshoturi, po.friendshipXMLFileName, self.frdf),
-                (self.snapshoturi, po.friendshipTTLFileName, self.fttl),
-                (self.snapshoturi, po.nFriends,              self.nfriends),
-                (self.snapshoturi, po.nFriendships,          self.nfriendships),
-                (self.snapshoturi, po.friendshipsAnonymized,
-                 self.friendships_anonymized),
+                # (self.snapshoturi, po.onlineOriginalFriendshipFile,
+                #  self.online_prefix+self.ffile),
+                # (self.snapshoturi, po.originalFriendshipFileName, self.ffile),
+                # (self.snapshoturi, po.onlineFriendshipXMLFile,
+                #  self.online_prefix+self.frdf),
+                # (self.snapshoturi, po.onlineFriendshipTTLFile,
+                #  self.online_prefix+self.fttl),
+                # (self.snapshoturi, po.friendshipXMLFileName, self.frdf),
+                # (self.snapshoturi, po.friendshipTTLFileName, self.fttl),
+                # (self.snapshoturi, po.numberOfFriends,              self.nfriends),
+                # (self.snapshoturi, po.numberOfFriendships,          self.nfriendships),
+                (self.snapshoturi, po.friendshipsAnonymized, self.friendships_anonymized),
                 ]
         P.add(triples, context=self.meta_graph)
-        P.rdf.triplesScaffolding(self.snapshoturi,
-                                 [po.frienshipParticipantAttribute] *
-                                 len(self.friendsvars),
-                                 self.friendsvars, context=self.meta_graph)
+        # P.rdf.triplesScaffolding(self.snapshoturi,
+        #                          [po.frienshipParticipantAttribute] *
+        #                          len(self.friendsvars),
+        #                          self.friendsvars, context=self.meta_graph)
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
         self.desc = "facebook network with snapshotID: {}\nsnapshotURI: {} \n\
             isEgo: {}. isGroup: {}.".format(self.snapshotid, self.snapshoturi,
                                             self.isego, self.isgroup)
         self.desc += "\nisFriendship: {}".format(self.isfriendship)
-        self.desc += "; nFriends: {}; nFrienships: {}."\
-            .format(self.nfriends, self.nfriendships)
+        # self.desc += "; numberOfFriends: {}; numberOfFrienships: {}."\
+        #     .format(self.nfriends, self.nfriendships)
         self.desc += "\nisInteraction: {}".format(self.isinteraction)
-        self.desc += "\nisPost: {} (alias hasText: {})".format(self.hastext,
-                                                               self.hastext)
+        self.desc += "\nisPost: {} (hasText)".format(self.hastext)
         triples = [
                 (self.snapshoturi, po.triplifiedIn, datetime.datetime.now()),
-                (self.snapshoturi, po.triplifiedBy, "scripts/"),
-                (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
-                (self.snapshoturi, po.availableAt, self.online_prefix),
-                (self.snapshoturi, po.onlineMetaXMLFile,
-                 self.online_prefix+self.mrdf),
-                (self.snapshoturi, po.onlineMetaTTLFile,
-                 self.online_prefix+self.mttl),
-                (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
-                (self.snapshoturi, po.metaTTLFileName,   self.mttl),
+                # (self.snapshoturi, po.triplifiedBy, "scripts/"),
+                # (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
+                # (self.snapshoturi, po.availableAt, self.online_prefix),
+                # (self.snapshoturi, po.onlineMetaXMLFile,
+                #  self.online_prefix+self.mrdf),
+                # (self.snapshoturi, po.onlineMetaTTLFile,
+                #  self.online_prefix+self.mttl),
+                # (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
+                # (self.snapshoturi, po.metaTTLFileName,   self.mttl),
                 (self.snapshoturi, po.acquiredThrough,   "Netvizz"),
-                (self.snapshoturi, po.socialProtocolTag, "Facebook"),
-                (self.snapshoturi, po.socialProtocol,
-                 P.rdf.ic(po.Platform, "Facebook", self.meta_graph,
-                          self.snapshoturi)),
-                (self.snapshoturi, NS.rdfs.comment,         self.desc),
+                (self.snapshoturi, po.socialProtocol, "Facebook"),
+                # (self.snapshoturi, po.socialProtocolTag, "Facebook"),
+                # (self.snapshoturi, po.socialProtocol,
+                #  P.rdf.ic(po.Platform, "Facebook", self.meta_graph,
+                #           self.snapshoturi)),
+                (self.snapshoturi, po.comment,         self.desc),
                 ]
         P.add(triples, self.meta_graph)

@@ -31,7 +31,7 @@ import os
 # ss = [i for i in ss if not any([j in i for j in ('Syria','art','MAMA2015','QuartaSemRacismoClubeSDV','ForaDilma','obama','science','god','porn','SnapDetremura')])]
 #
 ss = S.irc.access.parseLegacyFiles()
-# # # ss = [i for i in ss if any([j in i for j in ('labmacambira_lalenia.txt', '#foradoeixo.log', '#matehackers_.log')])]
-# # # ss = [i for i in ss if any([j in i for j in ('foradoeixo.log', 'matehackers_.log')])]
-# # print(ss)
+# # ss = [i for i in ss if any([j in i for j in ('labmacambira_lalenia.txt', '#foradoeixo.log', '#matehackers_.log')])]
+# # ss = [i for i in ss if any([j in i for j in ('foradoeixo.log', 'matehackers_.log')])]
+# print(ss)
 last_triplification_class = S.irc.render.publishAll(ss)

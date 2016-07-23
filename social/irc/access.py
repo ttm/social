@@ -35,8 +35,8 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
                  (fileuri,     po.fileName, filename),
                  (fileuri,     po.fileFormat, fileformat),
                  ]+[
-                 (fileuri,    po.expressedClass, expressed_class) for
-                 expressed_class in expressed_classes
+                 # (fileuri,    po.expressedClass, expressed_class) for
+                 # expressed_class in expressed_classes
                  ]
         snapshots.add(snapshoturi)
     nfiles = len(filenames)

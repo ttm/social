@@ -22,22 +22,22 @@ def parseLegacyFiles(data_dir=DATADIR+"twitter/"):
         fileuri = po.File+"#twitter-file-"+filename
         triples += [
                  (snapshoturi, a, po.Snapshot),
-                 (snapshoturi, a, po.TwitterSnapshot),
+                 # (snapshoturi, a, po.TwitterSnapshot),
                  (snapshoturi, po.snapshotID, snapshotid),
                  (snapshoturi, po.isEgo, False),
                  (snapshoturi, po.isGroup, True),
                  (snapshoturi, po.isFriendship, False),
                  (snapshoturi, po.isInteraction, True),
                  (snapshoturi, po.isPost, True),
-                 (snapshoturi, po.humanizedName, name_humanized),
-                 (snapshoturi, po.expressedReference, expressed_reference),
-                 (snapshoturi, po.rawFile, fileuri),
-                 (fileuri,     po.fileSize, filesize),
-                 (fileuri,     po.fileName, filename),
-                 (fileuri,     po.fileFormat, fileformat),
+                 # (snapshoturi, po.humanizedName, name_humanized),
+                 # (snapshoturi, po.expressedReference, expressed_reference),
+                 # (snapshoturi, po.rawFile, fileuri),
+                 # (fileuri,     po.fileSize, filesize),
+                 # (fileuri,     po.fileName, filename),
+                 # (fileuri,     po.fileFormat, fileformat),
                  ]+[
-                 (fileuri,    po.expressedClass, expressed_class) for
-                 expressed_class in expressed_classes
+                 # (fileuri,    po.expressedClass, expressed_class) for
+                 # expressed_class in expressed_classes
                  ]
         snapshots.add(snapshoturi)
     nfiles = len(filenames)

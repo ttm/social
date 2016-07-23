@@ -70,45 +70,45 @@ class PicklePublishing:
 
     def makeMetadata(self):
         triples = P.get(self.snapshoturi, None, None, self.social_graph)
-        for rawfile in P.get(self.snapshoturi, po.rawFile, None,
-                             self.social_graph, strict=True, minimized=True):
-            triples.extend(P.get(rawfile, None, None, self.social_graph))
-        self.totalchars = sum(self.nchars_all)
-        self.mcharstweets = n.mean(self.nchars_all)
-        self.dcharstweets = n.std(self.nchars_all)
-        self.totaltokens = sum(self.ntokens_all)
-        self.mtokenstweets = n.mean(self.ntokens_all)
-        self.dtokenstweets = n.std(self.ntokens_all)
+        # for rawfile in P.get(self.snapshoturi, po.rawFile, None,
+        #                      self.social_graph, strict=True, minimized=True):
+        #     triples.extend(P.get(rawfile, None, None, self.social_graph))
+        # self.totalchars = sum(self.nchars_all)
+        # self.mcharstweets = n.mean(self.nchars_all)
+        # self.dcharstweets = n.std(self.nchars_all)
+        # self.totaltokens = sum(self.ntokens_all)
+        # self.mtokenstweets = n.mean(self.ntokens_all)
+        # self.dtokenstweets = n.std(self.ntokens_all)
         # P.add(triples, context=self.meta_graph)
         triples.extend((
-                (self.snapshoturi, po.nParticipants, self.nparticipants),
-                (self.snapshoturi, po.nTweets, self.ntweets),
-                (self.snapshoturi, po.nReplies, self.nreplies),
-                (self.snapshoturi, po.nRetweets, self.nretweets),
-                (self.snapshoturi, po.nCharsOverall, self.totalchars),
-                (self.snapshoturi, po.mCharsOverall, self.mcharstweets),
-                (self.snapshoturi, po.dCharsOverall, self.dcharstweets),
-                (self.snapshoturi, po.nTokensOverall, self.totaltokens),
-                (self.snapshoturi, po.mTokensOverall, self.mtokenstweets),
-                (self.snapshoturi, po.dTokensOverall, self.dtokenstweets),
+                # (self.snapshoturi, po.numberOfParticipants, self.nparticipants),
+                # (self.snapshoturi, po.numberOfTweets, self.ntweets),
+                # (self.snapshoturi, po.numberOfReplies, self.nreplies),
+                # (self.snapshoturi, po.numberOfRetweets, self.nretweets),
+                # (self.snapshoturi, po.numberOfChars, self.totalchars),
+                # (self.snapshoturi, po.meanChars, self.mcharstweets),
+                # (self.snapshoturi, po.deviationChars, self.dcharstweets),
+                # (self.snapshoturi, po.numberOfTokens, self.totaltokens),
+                # (self.snapshoturi, po.meanTokens, self.mtokenstweets),
+                # (self.snapshoturi, po.deviationTokens, self.dtokenstweets),
         ))
         P.add(triples, context=self.meta_graph)
-        P.rdf.triplesScaffolding(
-            self.snapshoturi,
-            [po.tweetParticipantAttribute]*len(self.participantvars),
-            self.participantvars, context=self.meta_graph
-        )
-        P.rdf.triplesScaffolding(
-            self.snapshoturi,
-            [po.tweetXMLFilename]*len(self.tweet_rdf) +
-            [po.tweetTTLFilename]*len(self.tweet_ttl),
-            self.tweet_rdf+self.tweet_ttl, context=self.meta_graph)
-        P.rdf.triplesScaffolding(
-            self.snapshoturi,
-            [po.onlineTweetXMLFile]*len(self.tweet_rdf) +
-            [po.onlineTweetTTLFile]*len(self.tweet_ttl),
-            [self.online_prefix+i for i in self.tweet_rdf+self.tweet_ttl],
-            context=self.meta_graph)
+        # P.rdf.triplesScaffolding(
+        #     self.snapshoturi,
+        #     [po.tweetParticipantAttribute]*len(self.participantvars),
+        #     self.participantvars, context=self.meta_graph
+        # )
+        # P.rdf.triplesScaffolding(
+        #     self.snapshoturi,
+        #     [po.tweetXMLFilename]*len(self.tweet_rdf) +
+        #     [po.tweetTTLFilename]*len(self.tweet_ttl),
+        #     self.tweet_rdf+self.tweet_ttl, context=self.meta_graph)
+        # P.rdf.triplesScaffolding(
+        #     self.snapshoturi,
+        #     [po.onlineTweetXMLFile]*len(self.tweet_rdf) +
+        #     [po.onlineTweetTTLFile]*len(self.tweet_ttl),
+        #     [self.online_prefix+i for i in self.tweet_rdf+self.tweet_ttl],
+        #     context=self.meta_graph)
 
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
@@ -118,40 +118,38 @@ class PicklePublishing:
                          self.isgroup, )
         self.desc += "\nisFriendship: {}; ".format(self.isfriendship)
         self.desc += "isInteraction: {}.".format(self.isinteraction)
-        self.desc += ("\nnParticipants: {}; nInteractions: {} "
-                      "(replies+retweets+user mentions).").format(
-                          self.nparticipants, self.nreplies+self.nretweets +
-                          self.nuser_mentions,)
-        self.desc += "\nisPost: {} (alias hasText: {})".format(
-            self.hastext, self.hastext)
-        self.desc += "\nnTweets: {}; ".format(self.ntweets)
-        self.desc += "nReplies: {}; nRetweets: {}; nUserMentions: {}.".format(
-            self.nreplies, self.nretweets, self.nuser_mentions)
-        self.desc += "\nnTokens: {}; mTokens: {}; dTokens: {};".format(
-            self.totaltokens, self.mtokenstweets, self.dtokenstweets)
-        self.desc += "\nnChars: {}; mChars: {}; dChars: {}.".format(
+        # self.desc += ("\nnParticipants: {}; nInteractions: {} "
+        #               "(replies+retweets+user mentions).").format(
+        #                   self.nparticipants, self.nreplies+self.nretweets +
+        #                   self.nuser_mentions,)
+        self.desc += "\nisPost: {}".format(
+            self.hastext)
+        # self.desc += "\nnumberOfTweets: {}; ".format(self.ntweets)
+        # self.desc += "numberOfReplies: {}; numberOfRetweets: {}; nmberOfUserMentions: {}.".format(
+        #     self.nreplies, self.nretweets, self.nuser_mentions)
+        # self.desc += "\nnumberOfTokens: {}; meanTokens: {}; deviationTokens: {};".format(
+        #     self.totaltokens, self.mtokenstweets, self.dtokenstweets)
+        self.desc += "\nnumberOfChars: {}; meanChars: {}; deviationChars: {}.".format(
             self.totalchars, self.mcharstweets, self.dcharstweets)
-        self.desc += "\nnHashtags: {}; nMedia: {}; nLinks: {}.".format(
-            self.nhashtags, self.nmedia, self.nlinks)
+        self.desc += "\nnumberOfHashtags: {}; numberOfMedia: {}; ".format(
+            self.nhashtags, self.nmedia)
         triples.extend((
                 (self.snapshoturi, po.triplifiedIn, datetime.datetime.now()),
-                (self.snapshoturi, po.triplifiedBy, "scripts/"),
-                (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
-                (self.snapshoturi, po.availableAt, self.online_prefix),
-                (self.snapshoturi, po.onlineMetaXMLFile, self.online_prefix+self.mrdf),
-                (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
-                (self.snapshoturi, po.metaXMLFileName, self.mrdf),
-                (self.snapshoturi, po.metaTTLFileName, self.mttl),
-                (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_rdf)),
-                (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
-                (self.snapshoturi, po.acquiredThrough, "Twitter APIs"),
-                (self.snapshoturi, po.socialProtocolTag, "Twitter"),
-                (self.snapshoturi, po.socialProtocol, P.rdf.ic(po.Platform,
-                                                               "Twitter",
-                                                               self.meta_graph,
-                                                               self.snapshoturi)),
-                (self.snapshoturi, po.nTriples, self.ntriples),
-                (self.snapshoturi, NS.rdfs.comment, self.desc),
+                # (self.snapshoturi, po.triplifiedBy, "scripts/"),
+                # (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
+                # (self.snapshoturi, po.availableAt, self.online_prefix),
+                # (self.snapshoturi, po.onlineMetaXMLFile, self.online_prefix+self.mrdf),
+                # (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
+                # (self.snapshoturi, po.metaXMLFileName, self.mrdf),
+                # (self.snapshoturi, po.metaTTLFileName, self.mttl),
+                # (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_rdf)),
+                # (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
+                # (self.snapshoturi, po.acquiredThrough, "Twitter APIs"),
+                (self.snapshoturi, po.socialProtocol, "Twitter"),
+                # (self.snapshoturi, po.socialProtocolTag, "Twitter"),
+                # (self.snapshoturi, po.socialProtocol, P.rdf.ic(po.Platform, "Twitter", self.meta_graph, self.snapshoturi)),
+                # (self.snapshoturi, po.numberOfTriples, self.ntriples),
+                (self.snapshoturi, po.comment, self.desc),
         ))
         P.add(triples, self.meta_graph)
 
@@ -340,7 +338,7 @@ The script that rendered this data publication is on the script/ directory.
 #                (tweeturi, po.nTokens, ntokens),
                 (tweeturi, po.stringID, tweetid),
                 (tweeturi, po.createdAt, date),
-                (tweeturi, po.message, tweet["text"]),
+                (tweeturi, po.text, tweet["text"]),
                 (tweeturi, po.retweetCount, tweet["retweet_count"]),
                 (tweeturi, po.language, tweet["lang"]),
                 ]
