@@ -4,7 +4,7 @@ c = P.check
 
 trans = {'agerank': 'ageRank', 'wallcount': 'wallCount', 'label': 'name',
          'sex': 'sex', 'locale': 'locale',
-         'name': 'numericID', 'posts': 'nPosts'}
+         'name': 'numericID', 'posts': 'numberOfPosts'}
 
 
 def readGDF(filename="../data/RenatoFabbri06022014.gdf"):

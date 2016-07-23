@@ -34,8 +34,8 @@ class GmlRdfPublishing:
         self.online_prefix = "https://raw.githubusercontent.com/\
             OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,
                                                       self.snapshotid)
-        participant_uri = P.rdf.ic(po.FacebookSnapshot, self.snapshotid,
-                self.friendship_graph)
+        participant_uri = P.rdf.ic(po.Snapshot, self.snapshotid,
+                                   self.friendship_graph)
         self.isego = True
         self.isgroup = False
         self.isfriendship = True
@@ -67,22 +67,22 @@ class GmlRdfPublishing:
         g.serialize(self.final_path_+self.snapshotid+"Friendship.rdf", "xml")
         c("serialized friendships")
         # get filesize and ntriples
-        filesizerdf = os.path.getsize(self.final_path_+self.snapshotid +
-                                      "Friendship.rdf")/(10**6)
-        filesizettl = os.path.getsize(self.final_path_+self.snapshotid +
-                                      "Friendship.ttl")/(10**6)
-        ntriples = len(g)
-        triples = [
-                 (self.snapshoturi, po.friendshipXMLFileSizeMB, filesizerdf),
-                 (self.snapshoturi, po.friendshipTTLFileSizeMB, filesizettl),
-                 (self.snapshoturi, po.nFriendshipTriples, ntriples),
-                 ]
-        P.add(triples, context=self.meta_graph)
-        g = P.context(self.meta_graph)
-        ntriples = len(g)
-        triples.append(
-                 (self.snapshoturi, po.nMetaTriples, ntriples+1),
-        )
+        # filesizerdf = os.path.getsize(self.final_path_+self.snapshotid +
+        #                               "Friendship.rdf")/(10**6)
+        # filesizettl = os.path.getsize(self.final_path_+self.snapshotid +
+        #                               "Friendship.ttl")/(10**6)
+        # ntriples = len(g)
+        # triples = [
+        #          (self.snapshoturi, po.friendshipXMLFileSizeMB, filesizerdf),
+        #          (self.snapshoturi, po.friendshipTTLFileSizeMB, filesizettl),
+        #          (self.snapshoturi, po.nFriendshipTriples, ntriples),
+        #          ]
+        # g = P.context(self.meta_graph)
+        # ntriples = len(g)
+        # triples.append(
+        #          (self.snapshoturi, po.nMetaTriples, ntriples+1),
+        # )
+        # P.add(triples, context=self.meta_graph)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
         c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf", "xml")

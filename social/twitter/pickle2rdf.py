@@ -129,10 +129,10 @@ class PicklePublishing:
         #     self.nreplies, self.nretweets, self.nuser_mentions)
         # self.desc += "\nnumberOfTokens: {}; meanTokens: {}; deviationTokens: {};".format(
         #     self.totaltokens, self.mtokenstweets, self.dtokenstweets)
-        self.desc += "\nnumberOfChars: {}; meanChars: {}; deviationChars: {}.".format(
-            self.totalchars, self.mcharstweets, self.dcharstweets)
-        self.desc += "\nnumberOfHashtags: {}; numberOfMedia: {}; ".format(
-            self.nhashtags, self.nmedia)
+        # self.desc += "\nnumberOfChars: {}; meanChars: {}; deviationChars: {}.".format(
+        #     self.totalchars, self.mcharstweets, self.dcharstweets)
+        # self.desc += "\nnumberOfHashtags: {}; numberOfMedia: {}; ".format(
+        #     self.nhashtags, self.nmedia)
         triples.extend((
                 (self.snapshoturi, po.triplifiedIn, datetime.datetime.now()),
                 # (self.snapshoturi, po.triplifiedBy, "scripts/"),
@@ -156,11 +156,11 @@ class PicklePublishing:
     def writeAllTW(self):
         # write meta and readme with self.desc, then all is finished.
         g = P.context(self.meta_graph)
-        ntriples = len(g)
-        triples = [
-                 (self.snapshoturi, po.nMetaTriples, ntriples),
-                 ]
-        P.add(triples, context=self.meta_graph)
+        # ntriples = len(g)
+        # triples = [
+        #          (self.snapshoturi, po.nMetaTriples, ntriples),
+        #          ]
+        # P.add(triples, context=self.meta_graph)
         g.namespace_manager.bind("po", po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
         c("ttl")

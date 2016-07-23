@@ -94,10 +94,10 @@ class GdfRdfPublishing:
                         (ind, po.postType, post[1]),
                         (ind, po.text, ptext),
                         (ind, po.createdAt, dateutil.parser.parse(post[3])),
-                        (ind, po.nComments, int(post[4])),
-                        (ind, po.nLikes, int(post[5])),
-                        (ind, po.nChars, nchars),
-                        (ind, po.nTokens, ntokens),
+                        (ind, po.numberOfComments, int(post[4])),
+                        (ind, po.numberOfLikes, int(post[5])),
+                        # (ind, po.nChars, nchars),
+                        # (ind, po.nTokens, ntokens),
             ))
             if self.nposts % 200 == 0:
                 c("posts: ", self.nposts)
@@ -117,7 +117,7 @@ class GdfRdfPublishing:
         self.final_path_ = "{}{}/".format(self.final_path, self.snapshotid)
         if not os.path.isdir(self.final_path_):
             os.mkdir(self.final_path_)
-        triples = []
+        # triples = []
         if self.isfriendship:
             g = P.context(self.friendship_graph)
             g.namespace_manager.bind("po", po)
@@ -128,16 +128,16 @@ class GdfRdfPublishing:
                         "xml")
             c("xml; serialized friendships")
             # get filesize and ntriples
-            filesizerdf = os.path.getsize(
-                self.final_path_+self.snapshotid+"Friendship.rdf")/(10**6)
-            filesizettl = os.path.getsize(
-                self.final_path_+self.snapshotid+"Friendship.ttl")/(10**6)
-            ntriples = len(g)
-            triples.extend((
-                    (self.snapshoturi, po.friendshipXMLFileSizeMB, filesizerdf),
-                    (self.snapshoturi, po.friendshipTTLFileSizeMB, filesizettl),
-                    (self.snapshoturi, po.nFriendshipTriples, ntriples),
-            ))
+            # filesizerdf = os.path.getsize(
+            #     self.final_path_+self.snapshotid+"Friendship.rdf")/(10**6)
+            # filesizettl = os.path.getsize(
+            #     self.final_path_+self.snapshotid+"Friendship.ttl")/(10**6)
+            # ntriples = len(g)
+            # triples.extend((
+            #         (self.snapshoturi, po.friendshipXMLFileSizeMB, filesizerdf),
+            #         (self.snapshoturi, po.friendshipTTLFileSizeMB, filesizettl),
+            #         (self.snapshoturi, po.nFriendshipTriples, ntriples),
+            # ))
         if self.isinteraction:
             g = P.context(self.interaction_graph)
             g.namespace_manager.bind("po", po)
@@ -147,16 +147,16 @@ class GdfRdfPublishing:
             g.serialize(
                 self.final_path_+self.snapshotid+"Interaction.rdf", "xml")
             c("serialized interaction")
-            filesizerdf = os.path.getsize(
-                self.final_path_+self.snapshotid+"Interaction.rdf")/(10**6)
-            filesizettl = os.path.getsize(
-                self.final_path_+self.snapshotid+"Interaction.ttl")/(10**6)
-            ntriples = len(g)
-            triples.extend((
-                (self.snapshoturi, po.interactionXMLFileSizeMB, filesizerdf),
-                (self.snapshoturi, po.interactionTTLFileSizeMB, filesizettl),
-                (self.snapshoturi, po.nInteractionTriples, ntriples),
-            ))
+            # filesizerdf = os.path.getsize(
+            #     self.final_path_+self.snapshotid+"Interaction.rdf")/(10**6)
+            # filesizettl = os.path.getsize(
+            #     self.final_path_+self.snapshotid+"Interaction.ttl")/(10**6)
+            # ntriples = len(g)
+            # triples.extend((
+            #     (self.snapshoturi, po.interactionXMLFileSizeMB, filesizerdf),
+            #     (self.snapshoturi, po.interactionTTLFileSizeMB, filesizettl),
+            #     (self.snapshoturi, po.nInteractionTriples, ntriples),
+            # ))
         if self.hastext:
             g = P.context(self.posts_graph)
             g.namespace_manager.bind("po", po)
@@ -165,22 +165,22 @@ class GdfRdfPublishing:
             c("ttl")
             g.serialize(self.final_path_+self.snapshotid+"Posts.rdf", "xml")
             c("serialized posts")
-            filesizerdf = os.path.getsize(
-                self.final_path_+self.snapshotid+"Posts.rdf")/(10**6)
-            filesizettl = os.path.getsize(
-                self.final_path_+self.snapshotid+"Posts.ttl")/(10**6)
-            ntriples = len(g)
-            triples.extend((
-                (self.snapshoturi, po.postsXMLFileSizeMB, filesizerdf),
-                (self.snapshoturi, po.postsTTLFileSizeMB, filesizettl),
-                (self.snapshoturi, po.nPostsTriples, ntriples),
-            ))
-        g = P.context(self.meta_graph)
-        ntriples = len(g)
-        triples.extend((
-            (self.snapshoturi, po.nMetaTriples, ntriples),
-        ))
-        P.add(triples, context=self.meta_graph)
+            # filesizerdf = os.path.getsize(
+            #     self.final_path_+self.snapshotid+"Posts.rdf")/(10**6)
+            # filesizettl = os.path.getsize(
+            #     self.final_path_+self.snapshotid+"Posts.ttl")/(10**6)
+            # ntriples = len(g)
+            # triples.extend((
+            #     (self.snapshoturi, po.postsXMLFileSizeMB, filesizerdf),
+            #     (self.snapshoturi, po.postsTTLFileSizeMB, filesizettl),
+            #     (self.snapshoturi, po.nPostsTriples, ntriples),
+            # ))
+        # g = P.context(self.meta_graph)
+        # ntriples = len(g)
+        # triples.extend((
+        #     (self.snapshoturi, po.nMetaTriples, ntriples),
+        # ))
+        # P.add(triples, context=self.meta_graph)
         g.namespace_manager.bind("po", po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
         c("ttl")
@@ -408,23 +408,23 @@ The script that rendered this data publication is on the script/ \
             {} \nisEgo: {}. isGroup: {}.".format(
                 self.snapshotid, self.snapshoturi, self.isego, self.isgroup)
         self.desc += "\nisFriendship: {}".format(self.isfriendship)
-        if self.isfriendship:
-            self.desc += "; numberOfFriends: {}; numberOfFrienships: {}.".format(
-                self.nfriends, self.nfriendships)
+        # if self.isfriendship:
+        #     self.desc += "; numberOfFriends: {}; numberOfFrienships: {}.".format(
+        #         self.nfriends, self.nfriendships)
         self.desc += "\nisInteraction: {}".format(self.isinteraction)
-        if self.isinteraction:
-            self.desc += "; numberOfInteracted: {}; numberOfInteractions: {}.".format(
-                self.ninteracted, self.ninteractions)
+        # if self.isinteraction:
+        #     self.desc += "; numberOfInteracted: {}; numberOfInteractions: {}.".format(
+        #         self.ninteracted, self.ninteractions)
         self.desc += "\nisPost: {} (has text)".format(
             self.hastext)
-        if self.hastext:
-            self.desc += ";\nmeanChars: {}; deviationChars: {}; \
-                totalChars: {}; \nmeanTokens: {}; \
-                deviationTokens: {}; totalTokens: {}".format(
-                    self.nposts,
-                    self.mcharsposts, self.dcharsposts, self.totalchars,
-                    self.mtokensposts, self.dtokensposts, self.totaltokens,
-                    )
+        # if self.hastext:
+        #     self.desc += ";\nmeanChars: {}; deviationChars: {}; \
+        #         totalChars: {}; \nmeanTokens: {}; \
+        #         deviationTokens: {}; totalTokens: {}".format(
+        #             self.nposts,
+        #             self.mcharsposts, self.dcharsposts, self.totalchars,
+        #             self.mtokensposts, self.dtokensposts, self.totaltokens,
+        #             )
         P.rdf.triplesScaffolding(self.snapshoturi, [
                         po.triplifiedIn,
                         # po.triplifiedBy,

@@ -132,9 +132,9 @@ class LogPublishing:
                 nsentences = len(k.sent_tokenize(text_))
                 triples += [
                          (messageuri, po.cleanText, text_),
-                         (messageuri, po.nChars, nchars),
-                         (messageuri, po.nTokens, ntokens),
-                         (messageuri, po.nSentences, nsentences),
+                         # (messageuri, po.nChars, nchars),
+                         # (messageuri, po.nTokens, ntokens),
+                         # (messageuri, po.nSentences, nsentences),
                          ]
                 urls = re.findall(rurl, text_)
                 for url in urls:
@@ -151,7 +151,8 @@ class LogPublishing:
                          ]
             if text.startswith(";aa ") or text.startswith("lalenia, aa ") or text.startswith("lalenia: aa "):
                 self.naamessages += 1
-                triples.append((messageuri, a, po.AAIRCMessage))
+                # triples.append((messageuri, a, po.AAIRCMessage))
+                triples.append((messageuri, po:aaMessage, True))
             msgcount += 1
             if msgcount % 1000 == 0:
                 c("finished user message", msgcount)
@@ -189,7 +190,7 @@ class LogPublishing:
         triples_ = [tr for tr in g]
         triples.extend(triples_)
         self.log_xml, self.size_xml, self.log_ttl, self.size_ttl = P.rdf.writeByChunks(
-            self.final_path_+self.snapshotid+"Log", ntriples=100000, triples=triples)
+            self.final_path_+self.snapshotid+"Log", ntriples=100000, triples=triples, bind=[('po', po)])
         # write self.irc_graph with message and participant instances
         # linked to snapshot
         # g = P.context(self.irc_graph)
@@ -290,11 +291,11 @@ class LogPublishing:
 
     def writeAllIRC(self):
         g = P.context(self.meta_graph)
-        ntriples = len(g)
-        triples = [
-                 (self.snapshoturi, po.nMetaTriples, ntriples+1),
-                 ]
-        P.add(triples, context=self.meta_graph)
+        # ntriples = len(g)
+        # triples = [
+        #          (self.snapshoturi, po.nMetaTriples, ntriples+1),
+        #          ]
+        # P.add(triples, context=self.meta_graph)
         g.namespace_manager.bind("po", po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
         c("ttl")

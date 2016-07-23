@@ -12,7 +12,7 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
     triples = []
     for filename in filenames:
         snapshotid = "irc-legacy-"+filename.replace("#", "").replace('.log', '').replace('_lalenia.txt', '')
-        snapshoturi = po.IRCSnapshot+"#"+snapshotid
+        snapshoturi = po.Snapshot+"#"+snapshotid
         expressed_classes = [po.Participant, po.IRCMessage]
         expressed_reference = filename.replace("#", "").replace(".txt", "").replace(".log", "")
         name_humanized = "IRC log of channel "+expressed_reference
@@ -21,19 +21,19 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
         fileuri = po.File+"#Irc-log-"+filename.replace("#", "")
         triples += [
                  (snapshoturi, a, po.Snapshot),
-                 (snapshoturi, a, po.IRCSnapshot),
+                 # (snapshoturi, a, po.IRCSnapshot),
                  (snapshoturi, po.snapshotID, snapshotid),
                  (snapshoturi, po.isEgo, False),
                  (snapshoturi, po.isGroup, True),
                  (snapshoturi, po.isFriendship, False),
                  (snapshoturi, po.isInteraction, True),
                  (snapshoturi, po.isPost, True),
-                 (snapshoturi, po.humanizedName, name_humanized),
-                 (snapshoturi, po.expressedReference, expressed_reference),
-                 (snapshoturi, po.rawFile, fileuri),
-                 (fileuri,     po.fileSize, filesize),
-                 (fileuri,     po.fileName, filename),
-                 (fileuri,     po.fileFormat, fileformat),
+                 # (snapshoturi, po.humanizedName, name_humanized),
+                 # (snapshoturi, po.expressedReference, expressed_reference),
+                 # (snapshoturi, po.rawFile, fileuri),
+                 # (fileuri,     po.fileSize, filesize),
+                 # (fileuri,     po.fileName, filename),
+                 # (fileuri,     po.fileFormat, fileformat),
                  ]+[
                  # (fileuri,    po.expressedClass, expressed_class) for
                  # expressed_class in expressed_classes
