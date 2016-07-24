@@ -270,13 +270,13 @@ class LogPublishing:
         # self.desc += "\nnumberOfURLs: {}; numberOfAAMessages {}.".format(self.nurls, self.naamessages)
         triples = [
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
-                 (snapshoturi, a, po.Snapshot),
-                 (snapshoturi, po.snapshotID, snapshotid),
-                 (snapshoturi, po.isEgo, False),
-                 (snapshoturi, po.isGroup, True),
-                 (snapshoturi, po.isFriendship, False),
-                 (snapshoturi, po.isInteraction, True),
-                 (snapshoturi, po.isPost, True),
+                 (self.snapshoturi, a, po.Snapshot),
+                 (self.snapshoturi, po.snapshotID, self.snapshotid),
+                 (self.snapshoturi, po.isEgo, False),
+                 (self.snapshoturi, po.isGroup, True),
+                 (self.snapshoturi, po.isFriendship, False),
+                 (self.snapshoturi, po.isInteraction, True),
+                 (self.snapshoturi, po.isPost, True),
                 # (self.snapshoturi, po.triplifiedBy,      "scripts/"),
                 # (self.snapshoturi, po.donatedBy,         self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt,       self.online_prefix),
@@ -308,63 +308,63 @@ class LogPublishing:
         c("ttl")
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf", "xml")
         c("serialized meta")
-        if not os.path.isdir(self.final_path_+"scripts"):
-            os.mkdir(self.final_path_+"scripts")
-        shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py", self.final_path_+"scripts/triplify.py")
-        tinteraction = """\n\n{} individuals with metadata {}
-and {} interactions (direct messages: {}, user mentions: {})
-constitute the interaction
-structure in the RDF/XML file(s):
-{}
-and the Turtle file(s):
-{}
-(anonymized: "nicks inteface").""".format(
-            self.nparticipants, str(self.participantvars),
-            self.ndirect+self.nmention, self.ndirect, self.nmention,
-            self.log_xml,
-            self.log_ttl)
-        tposts = """\n\nThe dataset consists of {} irc messages with metadata {}
-{:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
-{:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
-{:.3f} sentences in average (std: {:.3f}) and total sentences in snapshot: {}""".format(
-                        self.nmessages, str(self.messagevars),
-                        self.mcharsmessages, self.dcharsmessages, self.totalchars,
-                        self.mtokensmessages, self.dtokensmessages, self.totaltokens,
-                        self.msentencesmessages, self.dsentencesmessages, self.totalsentences,
-                        )
-        self.dates = [i.isoformat() for i in self.dates]
-        date1 = min(self.dates)
-        date2 = max(self.dates)
-        with open(self.final_path_+"README", "w") as f:
-            f.write("""::: Open Linked Social Data publication
-\nThis repository is a RDF data expression of the IRC
-snapshot {snapid} with tweets from {date1} to {date2}
-(total of {ntrip} triples).{tinteraction}{tposts}
-\nMetadata for discovery in the RDF/XML file:
-{mrdf} \nor in the Turtle file:\n{mttl}
-\nEgo network: {ise}
-Group network: {isg}
-Friendship network: {isf}
-Interaction network: {isi}
-Has text/posts: {ist}
-\nAll files should be available at the git repository:
-{ava}
-\n{desc}
-
-The script that rendered this data publication is on the script/ directory.\n:::""".format(
-                snapid=self.snapshotid, date1=date1, date2=date2, ntrip=self.ntriples,
-                tinteraction=tinteraction,
-                tposts=tposts,
-                mrdf=self.log_xml,
-                mttl=self.log_ttl,
-                ise=self.isego,
-                isg=self.isgroup,
-                isf=self.isfriendship,
-                isi=self.isinteraction,
-                ist=self.hastext,
-                ava=self.online_prefix,
-                desc=self.desc
-                ))
+#         if not os.path.isdir(self.final_path_+"scripts"):
+#             os.mkdir(self.final_path_+"scripts")
+#         shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py", self.final_path_+"scripts/triplify.py")
+#         tinteraction = """\n\n{} individuals with metadata {}
+# and {} interactions (direct messages: {}, user mentions: {})
+# constitute the interaction
+# structure in the RDF/XML file(s):
+# {}
+# and the Turtle file(s):
+# {}
+# (anonymized: "nicks inteface").""".format(
+#             self.nparticipants, str(self.participantvars),
+#             self.ndirect+self.nmention, self.ndirect, self.nmention,
+#             self.log_xml,
+#             self.log_ttl)
+#         tposts = """\n\nThe dataset consists of {} irc messages with metadata {}
+# {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
+# {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
+# {:.3f} sentences in average (std: {:.3f}) and total sentences in snapshot: {}""".format(
+#                         self.nmessages, str(self.messagevars),
+#                         self.mcharsmessages, self.dcharsmessages, self.totalchars,
+#                         self.mtokensmessages, self.dtokensmessages, self.totaltokens,
+#                         self.msentencesmessages, self.dsentencesmessages, self.totalsentences,
+#                         )
+#         self.dates = [i.isoformat() for i in self.dates]
+#         date1 = min(self.dates)
+#         date2 = max(self.dates)
+#         with open(self.final_path_+"README", "w") as f:
+#             f.write("""::: Open Linked Social Data publication
+# \nThis repository is a RDF data expression of the IRC
+# snapshot {snapid} with tweets from {date1} to {date2}
+# (total of {ntrip} triples).{tinteraction}{tposts}
+# \nMetadata for discovery in the RDF/XML file:
+# {mrdf} \nor in the Turtle file:\n{mttl}
+# \nEgo network: {ise}
+# Group network: {isg}
+# Friendship network: {isf}
+# Interaction network: {isi}
+# Has text/posts: {ist}
+# \nAll files should be available at the git repository:
+# {ava}
+# \n{desc}
+#
+# The script that rendered this data publication is on the script/ directory.\n:::""".format(
+#                 snapid=self.snapshotid, date1=date1, date2=date2, ntrip=self.ntriples,
+#                 tinteraction=tinteraction,
+#                 tposts=tposts,
+#                 mrdf=self.log_xml,
+#                 mttl=self.log_ttl,
+#                 ise=self.isego,
+#                 isg=self.isgroup,
+#                 isf=self.isfriendship,
+#                 isi=self.isinteraction,
+#                 ist=self.hastext,
+#                 ava=self.online_prefix,
+#                 desc=self.desc
+#                 ))
 
 
 strange = ("Ã\x89", "Ã¡", "Ã ", "Ã¢", "Ã£", "Ã¤", "Ã©", "Ã¨", "Ãª", "Ã«",
