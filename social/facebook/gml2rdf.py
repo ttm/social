@@ -5,7 +5,7 @@ import rdflib as r
 import datetime
 import percolation as P
 import social as S
-from percolation.rdf import NS
+from percolation.rdf import NS, a
 from .read import trans
 po = NS.po
 c = P.check
@@ -34,8 +34,8 @@ class GmlRdfPublishing:
         self.online_prefix = "https://raw.githubusercontent.com/\
             OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,
                                                       self.snapshotid)
-        participant_uri = P.rdf.ic(po.Snapshot, self.snapshotid,
-                                   self.friendship_graph)
+        # participant_uri = P.rdf.ic(po.Snapshot, self.snapshotid,
+        #                            self.friendship_graph)
         self.isego = True
         self.isgroup = False
         self.isfriendship = True
@@ -197,15 +197,17 @@ The script that rendered this data publication is on the script/ \
         self.nfriendships = friendship_network.number_of_edges()
 
     def makeMetadata(self):
-        triples = P.get(self.snapshoturi, None, None, self.social_graph)
+        # triples = P.get(self.snapshoturi, None, None, self.social_graph)
         # for rawfile in P.get(self.snapshoturi, po.rawFile, None,
         #                      self.social_graph, strict=True, minimized=True):
         #     triples.extend(P.get(rawfile, None, None, self.social_graph))
-        P.add(triples, context=self.meta_graph)
+        # P.add(triples, context=self.meta_graph)
 
         self.ffile = "base/"+self.filename_friendships
         self.frdf = self.snapshotid+"Friendship.rdf"
         self.fttl = self.snapshotid+"Friendship.ttl"
+        date_obtained = P.get(r.URIRef(self.snapshoturi), po.dateObtained)[2].toPython()
+        assert isinstance(date_obtained, datetime.date)
         triples = [
                 # (self.snapshoturi, po.onlineOriginalFriendshipFile,
                 #  self.online_prefix+self.ffile),
@@ -237,6 +239,14 @@ The script that rendered this data publication is on the script/ \
         self.desc += "\nisPost: {} (hasText)".format(self.hastext)
         triples = [
                 (self.snapshoturi, po.triplifiedIn, datetime.datetime.now()),
+                 (self.snapshoturi, a, po.Snapshot),
+                 (self.snapshoturi, po.snapshotID, self.snapshotid),
+                 (self.snapshoturi, po.isEgo, True),
+                 (self.snapshoturi, po.isGroup, False),
+                 (self.snapshoturi, po.isFriendship, True),
+                 (self.snapshoturi, po.isInteraction, False),
+                 (self.snapshoturi, po.isPost, False),
+                 (self.snapshoturi, po.dateObtained, date_obtained),
                 # (self.snapshoturi, po.triplifiedBy, "scripts/"),
                 # (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt, self.online_prefix),

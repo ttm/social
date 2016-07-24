@@ -152,7 +152,7 @@ class LogPublishing:
             if text.startswith(";aa ") or text.startswith("lalenia, aa ") or text.startswith("lalenia: aa "):
                 self.naamessages += 1
                 # triples.append((messageuri, a, po.AAIRCMessage))
-                triples.append((messageuri, po:aaMessage, True))
+                triples.append((messageuri, po.aaMessage, True))
             msgcount += 1
             if msgcount % 1000 == 0:
                 c("finished user message", msgcount)
@@ -203,10 +203,9 @@ class LogPublishing:
         # c("rdf")
 
     def makeMetadata(self):
-        triples = P.get(self.snapshoturi, None, None, self.social_graph)
+        # triples = P.get(self.snapshoturi, None, None, self.social_graph)
         # for rawfile in P.get(self.snapshoturi, po.rawFile, None, self.social_graph, strict=True, minimized=True):
         #     triples += P.get(rawfile, None, None, self.social_graph)
-        P.add(triples, context=self.meta_graph)
         # self.totalchars = sum(self.nchars_all)
         # self.mcharsmessages = n.mean(self.nchars_all)
         # self.dcharsmessages = n.std(self.nchars_all)
@@ -218,8 +217,8 @@ class LogPublishing:
         # self.dsentencesmessages = n.std(self.nsentences_all)
         # self.nparticipants = len(self.NICKS)
         # self.nmessages = len(self.messageids)
-        self.ntriples = len(P.context(self.irc_graph))
-        triples = [
+        # self.ntriples = len(P.context(self.irc_graph))
+        # triples = [
                 # (self.snapshoturi, po.numberOfParticipants,           self.nparticipants),
                 # (self.snapshoturi, po.numberOfMessages,                 self.nmessages),
                 # (self.snapshoturi, po.numberOfDirectMessages,              self.ndirect),
@@ -233,7 +232,7 @@ class LogPublishing:
                 # (self.snapshoturi, po.numberOfSentences, self.totalsentences),
                 # (self.snapshoturi, po.meanSentences, self.msentencesmessages),
                 # (self.snapshoturi, po.deviationSentences, self.dsentencesmessages),
-                ]
+        #        ]
         # P.add(triples, context=self.meta_graph)
         # P.rdf.triplesScaffolding(
         #     self.snapshoturi,
@@ -271,6 +270,13 @@ class LogPublishing:
         # self.desc += "\nnumberOfURLs: {}; numberOfAAMessages {}.".format(self.nurls, self.naamessages)
         triples = [
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
+                 (snapshoturi, a, po.Snapshot),
+                 (snapshoturi, po.snapshotID, snapshotid),
+                 (snapshoturi, po.isEgo, False),
+                 (snapshoturi, po.isGroup, True),
+                 (snapshoturi, po.isFriendship, False),
+                 (snapshoturi, po.isInteraction, True),
+                 (snapshoturi, po.isPost, True),
                 # (self.snapshoturi, po.triplifiedBy,      "scripts/"),
                 # (self.snapshoturi, po.donatedBy,         self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt,       self.online_prefix),
@@ -290,12 +296,13 @@ class LogPublishing:
         P.add(triples, self.meta_graph)
 
     def writeAllIRC(self):
-        g = P.context(self.meta_graph)
+        # g = P.context(self.meta_graph)
         # ntriples = len(g)
         # triples = [
         #          (self.snapshoturi, po.nMetaTriples, ntriples+1),
         #          ]
         # P.add(triples, context=self.meta_graph)
+        g = P.context(self.meta_graph)
         g.namespace_manager.bind("po", po)
         g.serialize(self.final_path_+self.snapshotid+"Meta.ttl", "turtle")
         c("ttl")

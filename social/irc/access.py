@@ -30,9 +30,9 @@ def parseLegacyFiles(data_dir=DATADIR+"irc/"):
                  (snapshoturi, po.isPost, True),
                  # (snapshoturi, po.humanizedName, name_humanized),
                  # (snapshoturi, po.expressedReference, expressed_reference),
-                 # (snapshoturi, po.rawFile, fileuri),
+                 (snapshoturi, po.rawFile, fileuri),
                  # (fileuri,     po.fileSize, filesize),
-                 # (fileuri,     po.fileName, filename),
+                 (fileuri,     po.fileName, filename),
                  # (fileuri,     po.fileFormat, fileformat),
                  ]+[
                  # (fileuri,    po.expressedClass, expressed_class) for

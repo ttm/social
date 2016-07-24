@@ -148,10 +148,10 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
                  # (snapshoturi, po.humanizedName, name_humanized),
                  (snapshoturi, po.dateObtained, date_obtained),
                  # (snapshoturi, po.expressedReference, expressed_reference),
-                 # (snapshoturi, po.rawFile, fileuri),
+                 (snapshoturi, po.rawFile, fileuri),
                  # (fileuri,     po.fileSize, filesize),
-                 # (fileuri,     po.fileName, filename),
-                 # (fileuri,     po.fileFormat, format_),
+                 (fileuri,     po.fileName, filename),
+                 (fileuri,     po.fileFormat, format_),
                  ]
         triples += [(fileuri, po.expressedClass, expressed_class)
                     for expressed_class in expressed_classes]

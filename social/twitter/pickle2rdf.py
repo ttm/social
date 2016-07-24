@@ -69,7 +69,7 @@ class PicklePublishing:
         self.writeAllTW()
 
     def makeMetadata(self):
-        triples = P.get(self.snapshoturi, None, None, self.social_graph)
+        # triples = P.get(self.snapshoturi, None, None, self.social_graph)
         # for rawfile in P.get(self.snapshoturi, po.rawFile, None,
         #                      self.social_graph, strict=True, minimized=True):
         #     triples.extend(P.get(rawfile, None, None, self.social_graph))
@@ -80,7 +80,6 @@ class PicklePublishing:
         # self.mtokenstweets = n.mean(self.ntokens_all)
         # self.dtokenstweets = n.std(self.ntokens_all)
         # P.add(triples, context=self.meta_graph)
-        triples.extend((
                 # (self.snapshoturi, po.numberOfParticipants, self.nparticipants),
                 # (self.snapshoturi, po.numberOfTweets, self.ntweets),
                 # (self.snapshoturi, po.numberOfReplies, self.nreplies),
@@ -91,8 +90,6 @@ class PicklePublishing:
                 # (self.snapshoturi, po.numberOfTokens, self.totaltokens),
                 # (self.snapshoturi, po.meanTokens, self.mtokenstweets),
                 # (self.snapshoturi, po.deviationTokens, self.dtokenstweets),
-        ))
-        P.add(triples, context=self.meta_graph)
         # P.rdf.triplesScaffolding(
         #     self.snapshoturi,
         #     [po.tweetParticipantAttribute]*len(self.participantvars),
@@ -133,8 +130,16 @@ class PicklePublishing:
         #     self.totalchars, self.mcharstweets, self.dcharstweets)
         # self.desc += "\nnumberOfHashtags: {}; numberOfMedia: {}; ".format(
         #     self.nhashtags, self.nmedia)
+        triples = []
         triples.extend((
                 (self.snapshoturi, po.triplifiedIn, datetime.datetime.now()),
+                (self.snapshoturi, a, po.Snapshot),
+                (self.snapshoturi, po.snapshotID, self.snapshotid),
+                (self.snapshoturi, po.isEgo, False),
+                (self.snapshoturi, po.isGroup, True),
+                (self.snapshoturi, po.isFriendship, False),
+                (self.snapshoturi, po.isInteraction, True),
+                (self.snapshoturi, po.isPost, True),
                 # (self.snapshoturi, po.triplifiedBy, "scripts/"),
                 # (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt, self.online_prefix),
@@ -167,64 +172,64 @@ class PicklePublishing:
         g.serialize(self.final_path_+self.snapshotid+"Meta.rdf", "xml")
         c("serialized meta")
         # copia o script que gera este codigo
-        if not os.path.isdir(self.final_path_+"scripts"):
-            os.mkdir(self.final_path_+"scripts")
-        shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py",
-                    self.final_path_+"scripts/triplify.py")
-        # copia do base data
-        tinteraction = """\n\n{} individuals with metadata {}
-and {} interactions (retweets: {}, replies: {}, user_mentions: {})
-constitute the interaction
-network in the RDF/XML file(s):
-{}
-and the Turtle file(s):
-{}
-(anonymized: {}).""".format(self.nparticipants, str(self.participantvars),
-                            self.nretweets+self.nreplies+self.nuser_mentions,
-                            self.nretweets, self.nreplies, self.nuser_mentions,
-                            self.tweet_rdf,
-                            self.tweet_ttl,
-                            self.interactions_anonymized)
-        tposts = """\n\nThe dataset consists of {} tweets with metadata {}
-{:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
-{:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}""".format(
-                        self.ntweets, str(self.tweetvars),
-                        self.mcharstweets, self.dcharstweets, self.totalchars,
-                        self.mtokenstweets, self.dtokenstweets, self.totaltokens,
-                        )
-        self.dates = [i.isoformat() for i in self.dates]
-        date1 = 0  # min(self.dates)
-        date2 = 0  # max(self.dates)
-        with open(self.final_path_+"README", "w") as f:
-            f.write("""::: Open Linked Social Data publication
-\nThis repository is a RDF data expression of the twitter
-snapshot {snapid} with tweets from {date1} to {date2}
-(total of {ntrip} triples).{tinteraction}{tposts}
-\nMetadata for discovery in the RDF/XML file:
-{mrdf} \nor in the Turtle file:\n{mttl}
-\nEgo network: {ise}
-Group network: {isg}
-Friendship network: {isf}
-Interaction network: {isi}
-Has text/posts: {ist}
-\nAll files should be available at the git repository:
-{ava}
-\n{desc}
-
-The script that rendered this data publication is on the script/ directory.
-:::""".format(snapid=self.snapshotid, date1=date1, date2=date2, ntrip=self.ntriples,
-              tinteraction=tinteraction,
-              tposts=tposts,
-              mrdf=self.mrdf,
-              mttl=self.mttl,
-              ise=self.isego,
-              isg=self.isgroup,
-              isf=self.isfriendship,
-              isi=self.isinteraction,
-              ist=self.hastext,
-              ava=self.online_prefix,
-              desc=self.desc
-              ))
+#         if not os.path.isdir(self.final_path_+"scripts"):
+#             os.mkdir(self.final_path_+"scripts")
+#         shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py",
+#                     self.final_path_+"scripts/triplify.py")
+#         # copia do base data
+#         tinteraction = """\n\n{} individuals with metadata {}
+# and {} interactions (retweets: {}, replies: {}, user_mentions: {})
+# constitute the interaction
+# network in the RDF/XML file(s):
+# {}
+# and the Turtle file(s):
+# {}
+# (anonymized: {}).""".format(self.nparticipants, str(self.participantvars),
+#                             self.nretweets+self.nreplies+self.nuser_mentions,
+#                             self.nretweets, self.nreplies, self.nuser_mentions,
+#                             self.tweet_rdf,
+#                             self.tweet_ttl,
+#                             self.interactions_anonymized)
+#         tposts = """\n\nThe dataset consists of {} tweets with metadata {}
+# {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
+# {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}""".format(
+#                         self.ntweets, str(self.tweetvars),
+#                         self.mcharstweets, self.dcharstweets, self.totalchars,
+#                         self.mtokenstweets, self.dtokenstweets, self.totaltokens,
+#                         )
+#         self.dates = [i.isoformat() for i in self.dates]
+#         date1 = 0  # min(self.dates)
+#         date2 = 0  # max(self.dates)
+#         with open(self.final_path_+"README", "w") as f:
+#             f.write("""::: Open Linked Social Data publication
+# \nThis repository is a RDF data expression of the twitter
+# snapshot {snapid} with tweets from {date1} to {date2}
+# (total of {ntrip} triples).{tinteraction}{tposts}
+# \nMetadata for discovery in the RDF/XML file:
+# {mrdf} \nor in the Turtle file:\n{mttl}
+# \nEgo network: {ise}
+# Group network: {isg}
+# Friendship network: {isf}
+# Interaction network: {isi}
+# Has text/posts: {ist}
+# \nAll files should be available at the git repository:
+# {ava}
+# \n{desc}
+#
+# The script that rendered this data publication is on the script/ directory.
+# :::""".format(snapid=self.snapshotid, date1=date1, date2=date2, ntrip=self.ntriples,
+#               tinteraction=tinteraction,
+#               tposts=tposts,
+#               mrdf=self.mrdf,
+#               mttl=self.mttl,
+#               ise=self.isego,
+#               isg=self.isgroup,
+#               isf=self.isfriendship,
+#               isi=self.isinteraction,
+#               ist=self.hastext,
+#               ava=self.online_prefix,
+#               desc=self.desc
+#               ))
 
     def rdfTweets(self):
         tweets = []

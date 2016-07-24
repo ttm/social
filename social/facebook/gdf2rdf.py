@@ -286,11 +286,11 @@ The script that rendered this data publication is on the script/ \
         if self.isfriendship and self.groupid and self.groupid2 and \
                 (self.groupid != self.groupid2):
             raise ValueError("Group IDS are different")
-        triples = P.get(self.snapshoturi, None, None, self.social_graph)
+        # triples = P.get(self.snapshoturi, None, None, self.social_graph)
         # for rawfile in P.get(self.snapshoturi, po.rawFile, None,
         #                      self.social_graph, strict=True, minimized=True):
         #     triples.extend(P.get(rawfile, None, None, self.social_graph))
-        P.add(triples, context=self.meta_graph)
+        # P.add(triples, context=self.meta_graph)
         foo = {"uris": [], "vals": []}
         if self.isfriendship:
             foo["uris"].extend([
@@ -332,9 +332,9 @@ The script that rendered this data publication is on the script/ \
                         # po.numberOfInteractedParticipants,
                         # po.numberOfInteractions,
                         po.interactionsAnonymized
-                        ] #  + [po.interactionParticipantAttribute]*len(
-                                self.interactionsvars)
-            )
+                        ])
+            #  + [po.interactionParticipantAttribute]*len(
+            #      self.interactionsvars)
             self.ifile = "base/"+self.filename_interactions
             self.irdf = irdf = self.snapshotid+"Interaction.rdf"
             self.ittl = ittl = self.snapshotid+"Interaction.ttl"
@@ -386,20 +386,28 @@ The script that rendered this data publication is on the script/ \
                     # self.dtokensposts,
                     ] #  +list(self.postsvars)
             )
+
         foo["uris"].extend([
+                    a,
+                    po.snapshotID,
                     po.isGroup,
                     po.isEgo,
                     po.isFriendship,
                     po.isInteraction,
                     # po.hasText,
                     po.isPost,
+                    po.dateObtained,
                     ]
         )
-        self.isego = bool(P.get(r.URIRef(self.snapshoturi), a, po.EgoSnapshot))
-        self.isgroup = bool(
-            P.get(r.URIRef(self.snapshoturi), a, po.GroupSnapshot))
-        foo["vals"].extend([self.isgroup, self.isego, self.isfriendship,
-                        self.isinteraction, self.hastext]) #  , self.hastext])
+        # self.isego = bool(P.get(r.URIRef(self.snapshoturi), a, po.EgoSnapshot))
+        # self.isgroup = bool(P.get(r.URIRef(self.snapshoturi), a, po.GroupSnapshot))
+        self.isego = P.get(r.URIRef(self.snapshoturi), po.isEgo)[2].toPython()
+        self.isgroup = P.get(r.URIRef(self.snapshoturi), po.isGroup)[2].toPython()
+        date_obtained = P.get(r.URIRef(self.snapshoturi), po.dateObtained)[2].toPython()
+        assert isinstance(date_obtained, datetime.date)
+        foo["vals"].extend([po.Snapshot, self.snapshotid,
+                        self.isgroup, self.isego, self.isfriendship,
+                        self.isinteraction, self.hastext, date_obtained]) #  , self.hastext])
 
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
