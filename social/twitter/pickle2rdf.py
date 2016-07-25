@@ -140,6 +140,7 @@ class PicklePublishing:
                 (self.snapshoturi, po.isFriendship, False),
                 (self.snapshoturi, po.isInteraction, True),
                 (self.snapshoturi, po.isPost, True),
+                (self.snapshoturi, po.hashtag, '#'+self.snapshotid.replace('twitter-legacy-','')),
                 # (self.snapshoturi, po.triplifiedBy, "scripts/"),
                 # (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt, self.online_prefix),

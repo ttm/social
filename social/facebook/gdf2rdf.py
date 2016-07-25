@@ -175,7 +175,7 @@ class GdfRdfPublishing:
             #     (self.snapshoturi, po.postsTTLFileSizeMB, filesizettl),
             #     (self.snapshoturi, po.nPostsTriples, ntriples),
             # ))
-        # g = P.context(self.meta_graph)
+        g = P.context(self.meta_graph)
         # ntriples = len(g)
         # triples.extend((
         #     (self.snapshoturi, po.nMetaTriples, ntriples),
@@ -244,8 +244,7 @@ or in the Turtle file:
             originals += "\nbase/{}".format(self.filename_posts)
         else:
             tposts = ""
-        datetime_string = P.get(r.URIRef(self.snapshoturi), po.dateObtained,
-                                None, context=self.social_graph)[2]
+        datetime_string = P.get(r.URIRef(self.snapshoturi), po.dateObtained, None, context=self.social_graph)[2]
         with open(self.final_path_+"README", "w") as f:
             f.write("""::: Open Linked Social Data publication
                     \nThis repository is a RDF data expression of the facebook
@@ -397,6 +396,7 @@ The script that rendered this data publication is on the script/ \
                     # po.hasText,
                     po.isPost,
                     po.dateObtained,
+                    po.name,
                     ]
         )
         # self.isego = bool(P.get(r.URIRef(self.snapshoturi), a, po.EgoSnapshot))
@@ -405,10 +405,23 @@ The script that rendered this data publication is on the script/ \
         self.isgroup = P.get(r.URIRef(self.snapshoturi), po.isGroup)[2].toPython()
         date_obtained = P.get(r.URIRef(self.snapshoturi), po.dateObtained)[2].toPython()
         assert isinstance(date_obtained, datetime.date)
+        name = P.get(r.URIRef(self.snapshoturi), po.name, None, context=self.social_graph)[2]
         foo["vals"].extend([po.Snapshot, self.snapshotid,
                         self.isgroup, self.isego, self.isfriendship,
-                        self.isinteraction, self.hastext, date_obtained]) #  , self.hastext])
+                        self.isinteraction, self.hastext, date_obtained, name]) #  , self.hastext])
 
+        numericID = P.get(r.URIRef(self.snapshoturi), po.numericID, None, context=self.social_graph)
+        if numericID:
+            foo['uris'].append(po.numericID)
+            foo['vals'].append(numericID[2])
+        stringID = P.get(r.URIRef(self.snapshoturi), po.stringID, None, context=self.social_graph)
+        if stringID:
+            foo['uris'].append(po.stringID)
+            foo['vals'].append(stringID[2])
+        url = P.get(r.URIRef(self.snapshoturi), po.url, None, context=self.social_graph)
+        if url:
+            foo['uris'].append(po.url)
+            foo['vals'].append(url[2])
         self.mrdf = self.snapshotid+"Meta.rdf"
         self.mttl = self.snapshotid+"Meta.ttl"
 

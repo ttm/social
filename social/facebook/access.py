@@ -85,7 +85,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
             if not metadata[2]:
                 c("group data without a publishing link: ", filename)
             else:
-                triples += [(snapshoturi, po.publishedURL, metadata[2])]
+                triples += [(snapshoturi, po.url, metadata[2])]
         if filename.endswith(".gml") or any(filename.startswith(
                 i) for i in ("ego_", "avlab_", "posavlab_")):
             isego = True
@@ -145,7 +145,7 @@ def parseLegacyFiles(datadir=DATADIR+"facebook/"):
                  (snapshoturi, po.isFriendship, isfriendship),
                  (snapshoturi, po.isInteraction, isinteraction),
                  (snapshoturi, po.isPost, isposts),
-                 # (snapshoturi, po.humanizedName, name_humanized),
+                 (snapshoturi, po.name, name_humanized),
                  (snapshoturi, po.dateObtained, date_obtained),
                  # (snapshoturi, po.expressedReference, expressed_reference),
                  (snapshoturi, po.rawFile, fileuri),

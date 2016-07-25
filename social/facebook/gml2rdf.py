@@ -77,7 +77,7 @@ class GmlRdfPublishing:
         #          (self.snapshoturi, po.friendshipTTLFileSizeMB, filesizettl),
         #          (self.snapshoturi, po.nFriendshipTriples, ntriples),
         #          ]
-        # g = P.context(self.meta_graph)
+        g = P.context(self.meta_graph)
         # ntriples = len(g)
         # triples.append(
         #          (self.snapshoturi, po.nMetaTriples, ntriples+1),
@@ -206,8 +206,6 @@ The script that rendered this data publication is on the script/ \
         self.ffile = "base/"+self.filename_friendships
         self.frdf = self.snapshotid+"Friendship.rdf"
         self.fttl = self.snapshotid+"Friendship.ttl"
-        date_obtained = P.get(r.URIRef(self.snapshoturi), po.dateObtained)[2].toPython()
-        assert isinstance(date_obtained, datetime.date)
         triples = [
                 # (self.snapshoturi, po.onlineOriginalFriendshipFile,
                 #  self.online_prefix+self.ffile),
@@ -237,6 +235,9 @@ The script that rendered this data publication is on the script/ \
         #     .format(self.nfriends, self.nfriendships)
         self.desc += "\nisInteraction: {}".format(self.isinteraction)
         self.desc += "\nisPost: {} (hasText)".format(self.hastext)
+        date_obtained = P.get(r.URIRef(self.snapshoturi), po.dateObtained)[2].toPython()
+        assert isinstance(date_obtained, datetime.date)
+        name = P.get(r.URIRef(self.snapshoturi), po.name, None, context=self.social_graph)[2]
         triples = [
                 (self.snapshoturi, po.triplifiedIn, datetime.datetime.now()),
                  (self.snapshoturi, a, po.Snapshot),
@@ -247,6 +248,7 @@ The script that rendered this data publication is on the script/ \
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, False),
                  (self.snapshoturi, po.dateObtained, date_obtained),
+                 (self.snapshoturi, po.name, name),
                 # (self.snapshoturi, po.triplifiedBy, "scripts/"),
                 # (self.snapshoturi, po.donatedBy, self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt, self.online_prefix),
@@ -264,4 +266,13 @@ The script that rendered this data publication is on the script/ \
                 #           self.snapshoturi)),
                 (self.snapshoturi, po.comment,         self.desc),
                 ]
+        numericID = P.get(r.URIRef(self.snapshoturi), po.numericID, None, context=self.social_graph)
+        if numericID:
+            triples.append((self.snapshoturi, po.numericID, numericID[2]))
+        stringID = P.get(r.URIRef(self.snapshoturi), po.stringID, None, context=self.social_graph)
+        if stringID:
+            triples.append((self.snapshoturi, po.stringID, stringID[2]))
+        url = P.get(r.URIRef(self.snapshoturi), po.url, None, context=self.social_graph)
+        if url:
+            triples.append((self.snapshoturi, po.url, url[2]))
         P.add(triples, self.meta_graph)

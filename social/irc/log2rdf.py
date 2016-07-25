@@ -277,6 +277,7 @@ class LogPublishing:
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, True),
                  (self.snapshoturi, po.isPost, True),
+                 (self.snapshoturi, po.channel, '#'+self.snapshotid.replace('irc-legacy-', '')),
                 # (self.snapshoturi, po.triplifiedBy,      "scripts/"),
                 # (self.snapshoturi, po.donatedBy,         self.snapshotid[:-4]),
                 # (self.snapshoturi, po.availableAt,       self.online_prefix),
