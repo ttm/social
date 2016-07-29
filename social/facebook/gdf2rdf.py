@@ -21,7 +21,7 @@ class GdfRdfPublishing:
     OUTPUTS:
     =======
     the tree in the directory final_path."""
-    provenance_prefix = 'facebook-legacy-'
+    provenance_prefix = 'facebook-legacy'
 
     def __init__(self, snapshoturi, snapshotid, filename_friendships=None,
                  filename_interactions=None, filename_posts=None,
@@ -516,6 +516,8 @@ The script that rendered this data publication is on the script/ \
                                 i not in (ilabel, iname)]
                 vals_ = [el for i, el in enumerate(vals_) if
                          (i not in (ilabel, iname))]
+                obsname = '{}-{}'.format(self.snapshotid, self.observation_count)
+                self.observation_count += 1
             else:
                 name_ = "{}-{}".format(self.provenance_prefix, vals_[iname])
                 insert_uris_ = [el for i, el in enumerate(insert['uris']) if i != iname]
@@ -523,11 +525,10 @@ The script that rendered this data publication is on the script/ \
                 uri = insert['uris'][iname]
                 numericID = vals_[iname]
                 P.add([(ind, uri, numericID)], self.friendship_graph)
+                obsname = '{}-{}'.format(self.snapshotid, vals_[iname])
             ind = P.rdf.ic(po.Participant, name_, self.friendship_graph,
                            self.snapshoturi)
-            name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
-            self.observation_count += 1
-            obs = P.rdf.ic(po.Observation, name__, self.friendship_graph,
+            obs = P.rdf.ic(po.Observation, obsname, self.friendship_graph,
                            self.snapshoturi)
             P.add([(ind, po.observation, obs)], self.friendship_graph)
             P.rdf.triplesScaffolding(obs, insert_uris_, vals_,
@@ -588,6 +589,8 @@ The script that rendered this data publication is on the script/ \
                                 i not in (ilabel, iname)]
                 vals__ = [el for i, el in enumerate(vals_) if
                           i not in (ilabel, iname)]
+                name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
+                self.observation_count += 1
             else:
                 name_ = "{}-{}".format(self.provenance_prefix, vals_[iname])
                 insert_uris_ = [el for i, el in enumerate(insert['uris']) if i != iname]
@@ -595,11 +598,10 @@ The script that rendered this data publication is on the script/ \
                 uri = insert['uris'][iname]
                 numericID = vals_[iname]
                 P.add([(ind, uri, numericID)], self.interaction_graph)
+                obsname = '{}-{}'.format(self.snapshotid, vals_[iname])
             ind = P.rdf.ic(po.Participant, name_, self.interaction_graph,
                            self.snapshoturi)
-            name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
-            self.observation_count += 1
-            obs = P.rdf.ic(po.Observation, name__, self.interaction_graph,
+            obs = P.rdf.ic(po.Observation, obsname, self.interaction_graph,
                            self.snapshoturi)
             P.add([(ind, po.observation, obs)], self.interaction_graph)
             if vals__:
@@ -632,9 +634,8 @@ The script that rendered this data publication is on the script/ \
             P.rdf.triplesScaffolding(ind, [po.interactionFrom,
                                            po.interactionTo],
                                      uids, self.interaction_graph)
-            name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
-            self.observation_count += 1
-            obs = P.rdf.ic(po.Observation, name__, self.interaction_graph,
+            obsname = '{}-{}-{}'.format(self.snapshotid, uid1, uid2)
+            obs = P.rdf.ic(po.Observation, obsname, self.interaction_graph,
                            self.snapshoturi)
             P.add([(ind, po.observation, obs), (obs, po.weight, weight_],
                 self.interaction_graph)

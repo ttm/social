@@ -11,6 +11,7 @@ from percolation.rdf import NS, a, po, c
 
 
 class PicklePublishing:
+    provenance_prefix = 'twitter-legacy'
     def __init__(self, snapshoturi, snapshotid, filenames=("foo.pickle", ),
                  data_path="../data/twitter/",
                  final_path="./twitter_snapshots/",
@@ -408,7 +409,7 @@ class PicklePublishing:
             # name_mention = user_mention["name"]
             # screen_name_mention = user_mention["screen_name"]
             if user_mention["id_str"]:
-                userid_mention = self.snapshotid+"-"+user_mention['id_str']
+                userid_mention = self.provenance_prefix+"-"+user_mention['id_str']
                 useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                        self.tweet_graph, self.snapshoturi)
                 triples.append((useruri_mention, po.numericID, user_mention['id_str']))

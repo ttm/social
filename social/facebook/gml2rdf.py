@@ -46,7 +46,6 @@ class GmlRdfPublishing:
         with open(data_path+filename_friendships) as f:
             lines = f.readlines()
         friendship_network = x.readwrite.gml.parse_gml_lines(lines, "id", None)
-        self.observation_count = 0
         locals_ = locals().copy()
         for i in locals_:
             if i != "self":
@@ -174,9 +173,8 @@ The script that rendered this data publication is on the script/ \
                                        "-"+localid, self.friendship_graph,
                                        self.snapshoturi)
             obs = P.rdf.ic(po.Observation, self.snapshotid +
-                                       "-"+self.observation_count, self.friendship_graph,
+                                       "-"+localid, self.friendship_graph,
                                        self.snapshoturi)
-            self.observation_count += 1
             triples = [(obs, eval('po.'+trans[i]), node[i])
                        for i in node]
             triples += [(participant_uri, po.observation, obs)]
