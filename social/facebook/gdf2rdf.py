@@ -21,6 +21,7 @@ class GdfRdfPublishing:
     OUTPUTS:
     =======
     the tree in the directory final_path."""
+    provenance_prefix = 'facebook-legacy-'
 
     def __init__(self, snapshoturi, snapshotid, filename_friendships=None,
                  filename_interactions=None, filename_posts=None,
@@ -57,6 +58,7 @@ class GdfRdfPublishing:
             self.groupid2 = 0
         if self.hastext:
             self.rdfGroupPosts(data_path+filename_posts)  # to self.posts_graph
+        self.observation_count = 0
         locals_ = locals().copy()
         for i in locals_:
             if i != "self":
@@ -505,29 +507,45 @@ The script that rendered this data publication is on the script/ \
         iname = tkeys.index("name")
         ilabel = tkeys.index("label")
         for vals_ in zip(*insert["vals"]):
-            name_ = "{}-{}".format(self.snapshotid, vals_[iname])
             if self.friendships_anonymized:
                 if vals_[ilabel] and ("user" not in vals_[ilabel]):
                     raise ValueError("Anonymized networks should have no \
                                      informative name. Found: "+vals_[ilabel])
+                name_ = "{}-{}".format(self.self.snapshotid, vals_[iname])
                 insert_uris_ = [el for i, el in enumerate(insert['uris']) if
                                 i not in (ilabel, iname)]
                 vals_ = [el for i, el in enumerate(vals_) if
                          (i not in (ilabel, iname))]
             else:
-                insert_uris_ = [el for i, el in enumerate(insert['uris'])]
-                vals_ = [el for el in vals_]
+                name_ = "{}-{}".format(self.provenance_prefix, vals_[iname])
+                insert_uris_ = [el for i, el in enumerate(insert['uris']) if i != iname]
+                vals_ = [el for i, el in enumerate(vals_) if i != iname]
+                uri = insert['uris'][iname]
+                numericID = vals_[iname]
+                P.add([(ind, uri, numericID)], self.friendship_graph)
             ind = P.rdf.ic(po.Participant, name_, self.friendship_graph,
                            self.snapshoturi)
-            P.rdf.triplesScaffolding(ind, insert_uris_, vals_,
+            name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
+            self.observation_count += 1
+            obs = P.rdf.ic(po.Observation, name__, self.friendship_graph,
+                           self.snapshoturi)
+            P.add([(ind, po.observation, obs)], self.friendship_graph)
+            P.rdf.triplesScaffolding(obs, insert_uris_, vals_,
                                      self.friendship_graph)
         c("participants written")
         friendships_ = [fnet["relations"][i] for i in ("node1", "node2")]
         i = 0
         for uid1, uid2 in zip(*friendships_):
-            uids = [r.URIRef(po.Participant+"#{}-{}".format(
-                self.snapshotid, i)) for i in (uid1, uid2)]
-            flabel = "{}-{}-{}".format(self.snapshotid, uid1, uid2)
+            uids_ = [uid1, uid2]
+            uids_.sort()
+            if self.friendships_anonymized:
+                flabel = "{}-{}-{}".format(self.snapshotid, *uids_)
+                uids = [r.URIRef(po.Participant+"#{}-{}".format(
+                    self.snapshotid, i)) for i in (uid1, uid2)]
+            else:
+                flabel = "{}-{}-{}".format(self.provenance_prefix, *uids_)
+                uids = [r.URIRef(po.Participant+"#{}-{}".format(
+                    self.provenance_prefix, i)) for i in (uid1, uid2)]
             friendship_uri = P.rdf.ic(po.Friendship, flabel,
                                       self.friendship_graph, self.snapshoturi)
             P.rdf.triplesScaffolding(friendship_uri, [po.member]*2,
@@ -565,18 +583,27 @@ The script that rendered this data publication is on the script/ \
         ilabel = tkeys.index("label")
         for vals_ in zip(*insert["vals"]):
             if self.interactions_anonymized:
+                name_ = "{}-{}".format(self.snapshotid, vals_[iname])
                 insert_uris_ = [el for i, el in enumerate(insert['uris']) if
                                 i not in (ilabel, iname)]
                 vals__ = [el for i, el in enumerate(vals_) if
                           i not in (ilabel, iname)]
             else:
-                insert_uris_ = [el for i, el in enumerate(insert['uris'])]
-                vals__ = [el for el in vals_]
-            name_ = "{}-{}".format(self.snapshotid, vals_[iname])
+                name_ = "{}-{}".format(self.provenance_prefix, vals_[iname])
+                insert_uris_ = [el for i, el in enumerate(insert['uris']) if i != iname]
+                vals__ = [el for i, el in enumerate(vals_) if i != iname]
+                uri = insert['uris'][iname]
+                numericID = vals_[iname]
+                P.add([(ind, uri, numericID)], self.friendship_graph)
             ind = P.rdf.ic(po.Participant, name_, self.interaction_graph,
                            self.snapshoturi)
+            name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
+            self.observation_count += 1
+            obs = P.rdf.ic(po.Observation, name__, self.friendship_graph,
+                           self.snapshoturi)
+            P.add([(ind, po.observation, obs)], self.friendship_graph)
             if vals__:
-                P.rdf.triplesScaffolding(ind, insert_uris_, vals__,
+                P.rdf.triplesScaffolding(obs, insert_uris_, vals__,
                                          self.interaction_graph)
             else:
                 c("anonymous participant without attributes (besides local id). \
@@ -592,14 +619,27 @@ The script that rendered this data publication is on the script/ \
             weight_ = int(weight)
             assert weight_-weight == 0, \
                 "float weights in fb interaction networks?"
-            iid = "{}-{}-{}".format(self.snapshotid, uid1, uid2)
+            uids_ = [uid1, uid2]
+            uids_.sort()
+            if self.interactions_anonymized:
+                iid = "{}-{}-{}".format(self.snapshotid, *uids_)
+                uids = [r.URIRef(po.Participant+"#{}-{}".format(self.snapshotid, i))
+                        for i in (uid1, uid2)]
+            else:
+                iid = "{}-{}-{}".format(self.provenance_prefix, *uids_)
+                uids = [r.URIRef(po.Participant+"#{}-{}".format(self.provenance_prefix, i))
+                        for i in (uid1, uid2)]
             ind = P.rdf.ic(po.Interaction, iid, self.interaction_graph,
                            self.snapshoturi)
-            uids = [r.URIRef(po.Participant+"#{}-{}".format(self.snapshotid, i))
-                    for i in (uid1, uid2)]
             P.rdf.triplesScaffolding(ind, [po.interactionFrom,
-                                           po.interactionTo]+[po.weight],
-                                     uids+[weight_], self.interaction_graph)
+                                           po.interactionTo],
+                                     uids, self.interaction_graph)
+            name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
+            self.observation_count += 1
+            obs = P.rdf.ic(po.Observation, name__, self.interaction_graph,
+                           self.snapshoturi)
+            P.add([(ind, po.observation, obs), (obs, po.weight, weight_],
+                self.interaction_graph)
             if (i % 1000) == 0:
                 c("interactions: ", i)
             i += 1

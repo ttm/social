@@ -1,8 +1,8 @@
 import social as S
 import os
 
-ss = S.facebook.access.parseLegacyFiles()
-last_triplification_class = S.facebook.render.publishAll(ss)
+# ss = S.facebook.access.parseLegacyFiles()
+# last_triplification_class = S.facebook.render.publishAll(ss)
 # ss_ = []
 # ids = os.listdir('./facebook_snapshots')
 # for snap in ss:
@@ -14,17 +14,17 @@ last_triplification_class = S.facebook.render.publishAll(ss)
 # # ss=[i for i in ss if 'AntonioAnzo' in i]
 # last_triplification_class = S.facebook.render.publishAll(ss_)
 #
-# ss = S.twitter.access.parseLegacyFiles()
-# # last_triplification_class = S.twitter.render.publishAll(ss)
-# ss_ = []
-# ids = os.listdir('./twitter_snapshots')
-# for snap in ss:
-#     if not any([id_ in snap for id_ in ids]):
-#         ss_.append(snap)
-#     else:
-#         print('found snapshot: '+snap)
-# ss_ = [i for i in ss_ if 'Syria' not in i and 'porn' not in i]
-# last_triplification_class = S.twitter.render.publishAll(ss_)
+ss = S.twitter.access.parseLegacyFiles()
+# last_triplification_class = S.twitter.render.publishAll(ss)
+ss_ = []
+ids = os.listdir('./twitter_snapshots')
+for snap in ss:
+    if not any([id_ in snap for id_ in ids]):
+        ss_.append(snap)
+    else:
+        print('found snapshot: '+snap)
+ss_ = [i for i in ss_ if 'Syria' not in i and 'porn' not in i]
+last_triplification_class = S.twitter.render.publishAll(ss_)
 
 # ss = S.twitter.access.parseLegacyFiles('../../socialLegacy/data/tw/')
 # ss = [i for i in ss if 'porn' not in i and 'fuck' not in i]

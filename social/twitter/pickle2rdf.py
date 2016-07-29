@@ -311,7 +311,7 @@ class PicklePublishing:
         useruri = P.rdf.ic(po.Participant, userid, self.tweet_graph,
                            self.snapshoturi)
         triples = [
-                 (useruri, po.stringID, userid),
+                 # (useruri, po.stringID, userid),
                  (useruri, po.screenName, tweet["user"]["screen_name"]),
                  (useruri, po.numericID, tweet["user"]["id_str"]),
                  (useruri, po.favouritesCount, tweet["user"]["favourites_count"]),
@@ -332,7 +332,7 @@ class PicklePublishing:
         tweetid = userid+"-"+tweetid_
         tweeturi = P.rdf.ic(po.Tweet, tweetid, self.tweet_graph, self.snapshoturi)
         # tweet_text = tweet["text"]
-        nchars = len(tweet['text'])
+        # nchars = len(tweet['text'])
 #        ntokens = len(k.tokenize.wordpunct_tokenize(tweet['text']))
         # self.nchars_all += [nchars]
         # self.ntokens_all += [ntokens]
@@ -340,9 +340,10 @@ class PicklePublishing:
         # self.dates += [date]
         triples = [
                 (tweeturi, po.author, useruri),
-                (tweeturi, po.nChars, nchars),
+                # (tweeturi, po.nChars, nchars),
 #                (tweeturi, po.nTokens, ntokens),
-                (tweeturi, po.stringID, tweetid),
+                # (tweeturi, po.stringID, tweetid),
+                (tweeturi, po.numericID, tweetid_),
                 (tweeturi, po.createdAt, date),
                 (tweeturi, po.text, tweet["text"]),
                 (tweeturi, po.retweetCount, tweet["retweet_count"]),
@@ -361,7 +362,7 @@ class PicklePublishing:
                 # if not P.get(useruri_reply, po.numericID, None):  # new user
                 #     self.nparticipants += 1
                 #     triples += [(useruri_reply, po.numericID, userid_reply)]
-                triples.append((useruri_reply, po.numericID, userid_reply))
+                triples.append((useruri_reply, po.numericID, tweet["in_reply_to_user_id_str"]))
             else:
                 userid_reply = self.snapshotid+"-anonymous-"+str(
                     self.anonymous_user_count)
@@ -376,7 +377,7 @@ class PicklePublishing:
                 # if not P.get(tweeturi_reply, po.numericID, None):  # new message
                 #     self.ntweets += 1
                 #     triples += [(tweeturi_reply, po.numericID, tweetid_reply)]
-                triples.append((tweeturi_reply, po.numericID, tweetid_reply))
+                triples.append((tweeturi_reply, po.numericID, tweet["in_reply_to_status_id_str"]))
             else:
                 tweetid_reply = self.snapshotid+"-noidmsg-"+str(self.anonymous_tweet_count)
                 tweeturi_reply = P.rdf.ic(po.Tweet, tweetid_reply,
@@ -384,7 +385,7 @@ class PicklePublishing:
                 self.anonymous_tweet_count += 1
                 triples.append((tweeturi_reply, po.noid, True))
             triples.extend((
-                     (tweeturi, po.inReplyToTweet, tweeturi_reply),
+                     (tweeturi, po.replyTo, tweeturi_reply),
                      (tweeturi_reply, po.author, useruri_reply),
             ))
         return triples
@@ -406,6 +407,7 @@ class PicklePublishing:
                 userid_mention = self.snapshotid+"-"+user_mention['id_str']
                 useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                        self.tweet_graph, self.snapshoturi)
+                triples.append((useruri_mention, po.numericID, user_mention['id_str']))
             else:
                 userid_mention = self.snapshotid+"-anonymous-"+str(
                     self.anonymous_user_count)
@@ -415,11 +417,12 @@ class PicklePublishing:
                 triples += [(useruri_mention, po.anonymous, True)]
             triples.extend((
                     (tweeturi, po.userMention, useruri_mention),
-                    (useruri_mention, po.name, user_mention['name']),
-                    (useruri_mention, po.screenName, user_mention['screen_name']),
-                    (useruri_mention, po.stringID, userid_mention),
-                    (useruri_mention, po.numericID, user_mention['id_str'])
+                    # (useruri_mention, po.stringID, userid_mention),
             ))
+            if user_mention['name']:
+                triples.append((useruri_mention, po.name, user_mention['name']))
+            if user_mention['screen_name']:
+                triples.append((useruri_mention, po.screenName, user_mention['screen_name']))
             # if not P.get(useruri_mention, po.numericID, None):  # new user
             #     self.nparticipants += 1
             #     triples.append((useruri_mention, po.numericID, userid_mention))
@@ -427,7 +430,7 @@ class PicklePublishing:
         for link in tweet["entities"]["urls"]:
             # self.nlinks += 1
             # url = link["url"]
-            triples.append((tweeturi, po.expandedURL, link["expanded_url"]))
+            triples.append((tweeturi, po.url, link["expanded_url"]))
         if "media" in tweet["entities"].keys():
             for media in tweet["entities"]["media"]:
                 self.nmedia += 1
@@ -437,7 +440,7 @@ class PicklePublishing:
                 triples += [
                         (tweeturi, po.media, mediauri),
                         (mediauri, po.type, media["type"]),
-                        (mediauri, po.expandedURL, media["expanded_url"]),
+                        (mediauri, po.url, media["expanded_url"]),
                         ]
         # symbols? TTM
         return triples
