@@ -307,22 +307,26 @@ class PicklePublishing:
     def userTriples(self, tweet):
         assert tweet["user"]["id_str"], "user id is None???"
         userid_ = tweet["user"]["id_str"]
-        userid = self.snapshotid+"-"+userid_
+        userid = self.provenance_prefix+"-"+userid_
         useruri = P.rdf.ic(po.Participant, userid, self.tweet_graph,
+                           self.snapshoturi)
+        obsname = self.snapshotid+"-"+userid_
+        obs = P.rdf.ic(po.Observation, obsname, self.tweet_graph,
                            self.snapshoturi)
         triples = [
                  # (useruri, po.stringID, userid),
-                 (useruri, po.screenName, tweet["user"]["screen_name"]),
                  (useruri, po.numericID, tweet["user"]["id_str"]),
-                 (useruri, po.favouritesCount, tweet["user"]["favourites_count"]),
-                 (useruri, po.followersCount, tweet["user"]["followers_count"]),
-                 (useruri, po.friendsCount, tweet["user"]["friends_count"]),
-                 (useruri, po.language, tweet["user"]["lang"]),
-                 (useruri, po.listedCount, tweet["user"]["listed_count"]),
-                 (useruri, po.name, tweet["user"]["name"]),
-                 (useruri, po.statusesCount, tweet["user"]["statuses_count"]),
-                 (useruri, po.createdAt, dateutil.parser.parse(tweet["user"]["created_at"])),
-                 (useruri, po.utcOffset, tweet["user"]["utc_offset"]),
+                 (useruri, po.observation, obs),
+                 (obs, po.screenName, tweet["user"]["screen_name"]),
+                 (obs, po.favouritesCount, tweet["user"]["favourites_count"]),
+                 (obs, po.followersCount, tweet["user"]["followers_count"]),
+                 (obs, po.friendsCount, tweet["user"]["friends_count"]),
+                 (obs, po.language, tweet["user"]["lang"]),
+                 (obs, po.listedCount, tweet["user"]["listed_count"]),
+                 (obs, po.name, tweet["user"]["name"]),
+                 (obs, po.statusesCount, tweet["user"]["statuses_count"]),
+                 (obs, po.createdAt, dateutil.parser.parse(tweet["user"]["created_at"])),
+                 (obs, po.utcOffset, tweet["user"]["utc_offset"]),
                  ]
         return userid, useruri, triples
 
@@ -356,7 +360,7 @@ class PicklePublishing:
         if tweet["in_reply_to_user_id_str"] or tweet["in_reply_to_status_id_str"]:
             # self.nreplies += 1
             if tweet["in_reply_to_status_id_str"]:
-                userid_reply = self.snapshotid+"-"+tweet["in_reply_to_user_id_str"]
+                userid_reply = self.provenance_prefix+"-"+tweet["in_reply_to_user_id_str"]
                 useruri_reply = P.rdf.ic(po.Participant, userid_reply,
                                          self.tweet_graph, self.snapshoturi)
                 # if not P.get(useruri_reply, po.numericID, None):  # new user
@@ -408,21 +412,30 @@ class PicklePublishing:
                 useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                        self.tweet_graph, self.snapshoturi)
                 triples.append((useruri_mention, po.numericID, user_mention['id_str']))
+                obsname = self.snapshotid+"-"+user_mention['id_str']
             else:
                 userid_mention = self.snapshotid+"-anonymous-"+str(
                     self.anonymous_user_count)
+                obsname = self.snapshotid+"-anonymous-"+str(
+                    self.anonymous_user_count)
+                self.anonymous_user_count += 1
                 useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                          self.tweet_graph, self.snapshoturi)
-                self.anonymous_user_count += 1
                 triples += [(useruri_mention, po.anonymous, True)]
             triples.extend((
                     (tweeturi, po.userMention, useruri_mention),
                     # (useruri_mention, po.stringID, userid_mention),
             ))
             if user_mention['name']:
-                triples.append((useruri_mention, po.name, user_mention['name']))
+                obs = P.rdf.ic(po.Observation, obsname, self.tweet_graph,
+                               self.snapshoturi)
+                triples.extend([(useruri_mention, po.observation, obs),
+                    (obs, po.name, user_mention['name'])])
             if user_mention['screen_name']:
-                triples.append((useruri_mention, po.screenName, user_mention['screen_name']))
+                obs = P.rdf.ic(po.Observation, obsname, self.tweet_graph,
+                               self.snapshoturi)
+                triples.extend([(useruri_mention, po.observation, obs),
+                        (obs, po.screenName, user_mention['screen_name'])])
             # if not P.get(useruri_mention, po.numericID, None):  # new user
             #     self.nparticipants += 1
             #     triples.append((useruri_mention, po.numericID, userid_mention))
