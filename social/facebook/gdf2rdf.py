@@ -520,11 +520,11 @@ The script that rendered this data publication is on the script/ \
                 self.observation_count += 1
             else:
                 name_ = "{}-{}".format(self.provenance_prefix, vals_[iname])
-                insert_uris_ = [el for i, el in enumerate(insert['uris']) if i != iname]
-                vals_ = [el for i, el in enumerate(vals_) if i != iname]
-                uri = insert['uris'][iname]
-                numericID = vals_[iname]
-                P.add([(ind, uri, numericID)], self.friendship_graph)
+                insert_uris_ = [el for i, el in enumerate(insert['uris'])]
+                vals_ = [el for i, el in enumerate(vals_)]
+                # uri = insert['uris'][iname]
+                # numericID = vals_[iname]
+                # P.add([(ind, uri, numericID)], self.friendship_graph)
                 obsname = '{}-{}'.format(self.snapshotid, vals_[iname])
             ind = P.rdf.ic(po.Participant, name_, self.friendship_graph,
                            self.snapshoturi)
@@ -593,11 +593,11 @@ The script that rendered this data publication is on the script/ \
                 self.observation_count += 1
             else:
                 name_ = "{}-{}".format(self.provenance_prefix, vals_[iname])
-                insert_uris_ = [el for i, el in enumerate(insert['uris']) if i != iname]
-                vals__ = [el for i, el in enumerate(vals_) if i != iname]
-                uri = insert['uris'][iname]
-                numericID = vals_[iname]
-                P.add([(ind, uri, numericID)], self.interaction_graph)
+                insert_uris_ = [el for i, el in enumerate(insert['uris'])]
+                vals__ = [el for i, el in enumerate(vals_)]
+                # uri = insert['uris'][iname]
+                # numericID = vals_[iname]
+                # P.add([(ind, uri, numericID)], self.interaction_graph)
                 obsname = '{}-{}'.format(self.snapshotid, vals_[iname])
             ind = P.rdf.ic(po.Participant, name_, self.interaction_graph,
                            self.snapshoturi)

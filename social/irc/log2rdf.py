@@ -17,6 +17,7 @@ from percolation.rdf import NS, a, po, c
 
 
 class LogPublishing:
+    provenance_prefix = 'irc-lagacy'
     def __init__(self, snapshoturi, snapshotid, filename="foo.txt",
                  data_path="../data/irc/", final_path="./irc_snapshots/",
                  umbrella_dir="irc_snapshots/"):
@@ -75,10 +76,12 @@ class LogPublishing:
         self.NICKS = set([Q(i[-2]) for i in messages]+[Q(i[-2]) for i in system_messages])
         triples = []
         for nick in self.NICKS:
-            useruri = P.rdf.ic(po.Participant, "{}-{}".format(self.snapshotid, nick), self.irc_graph, self.snapshoturi)
-            triples.append(
-                    (useruri, po.nick, nick),
-            )
+            useruri = P.rdf.ic(po.Participant, "{}-{}".format(self.provenance_prefix, nick), self.irc_graph, self.snapshoturi)
+            obs = P.rdf.ic(po.Observation, "{}-{}".format(self.snapshotid, nick), self.irc_graph, self.snapshoturi)
+            triples.extend([
+                    (useruri, po.observation, obs),
+                    (obs, po.nick, nick),
+            ])
         messageids = set()
         msgcount = 0
         c("starting translation of log with", len(messages)+len(system_messages), "messages")
@@ -160,7 +163,7 @@ class LogPublishing:
         for message in system_messages:
             year, month, day, hour, minute, second, nick, text = message
             nick = Q(nick)
-            useruri = po.Participant+"#{}-{}".format(self.snapshotid, nick)
+            useruri = po.Participant+"#{}-{}".format(self.provenance_prefix, nick)
             datetime_ = datetime.datetime(*[int(i) for i in (year, month, day, hour, minute, second)])
             self.dates += [datetime_]
             timestamp = datetime_.isoformat()

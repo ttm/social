@@ -316,8 +316,8 @@ class PicklePublishing:
                            self.snapshoturi)
         triples = [
                  # (useruri, po.stringID, userid),
-                 (useruri, po.numericID, tweet["user"]["id_str"]),
                  (useruri, po.observation, obs),
+                 (obs, po.numericID, tweet["user"]["id_str"]),
                  (obs, po.screenName, tweet["user"]["screen_name"]),
                  (obs, po.favouritesCount, tweet["user"]["favourites_count"]),
                  (obs, po.followersCount, tweet["user"]["followers_count"]),
@@ -367,7 +367,11 @@ class PicklePublishing:
                 # if not P.get(useruri_reply, po.numericID, None):  # new user
                 #     self.nparticipants += 1
                 #     triples += [(useruri_reply, po.numericID, userid_reply)]
-                triples.append((useruri_reply, po.numericID, tweet["in_reply_to_user_id_str"]))
+                obsname = self.snapshotid+"-"+tweet["in_reply_to_user_id_str"] 
+                obs = P.rdf.ic(po.Observation, obsname, self.tweet_graph,
+                           self.snapshoturi)
+                triples.extend([(useruri_reply, po.observation, obs),
+                        (obs, po.numericID, tweet["in_reply_to_user_id_str"])])
             else:
                 userid_reply = self.snapshotid+"-anonymous-"+str(
                     self.anonymous_user_count)
@@ -412,7 +416,11 @@ class PicklePublishing:
                 userid_mention = self.provenance_prefix+"-"+user_mention['id_str']
                 useruri_mention = P.rdf.ic(po.Participant, userid_mention,
                                        self.tweet_graph, self.snapshoturi)
-                triples.append((useruri_mention, po.numericID, user_mention['id_str']))
+                obsname = self.snapshotid+"-"+user_mention['id_str']
+                obs = P.rdf.ic(po.Observation, obsname, self.tweet_graph,
+                               self.snapshoturi)
+                triples.extend([(useruri_mention, po.observation, obs),
+                    (obs, po.numericID, user_mention['id_str'])])
                 obsname = self.snapshotid+"-"+user_mention['id_str']
             else:
                 userid_mention = self.snapshotid+"-anonymous-"+str(
