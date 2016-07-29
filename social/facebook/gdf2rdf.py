@@ -594,14 +594,14 @@ The script that rendered this data publication is on the script/ \
                 vals__ = [el for i, el in enumerate(vals_) if i != iname]
                 uri = insert['uris'][iname]
                 numericID = vals_[iname]
-                P.add([(ind, uri, numericID)], self.friendship_graph)
+                P.add([(ind, uri, numericID)], self.interaction_graph)
             ind = P.rdf.ic(po.Participant, name_, self.interaction_graph,
                            self.snapshoturi)
             name__ = '{}-{}'.format(self.snapshotid, self.observation_count)
             self.observation_count += 1
-            obs = P.rdf.ic(po.Observation, name__, self.friendship_graph,
+            obs = P.rdf.ic(po.Observation, name__, self.interaction_graph,
                            self.snapshoturi)
-            P.add([(ind, po.observation, obs)], self.friendship_graph)
+            P.add([(ind, po.observation, obs)], self.interaction_graph)
             if vals__:
                 P.rdf.triplesScaffolding(obs, insert_uris_, vals__,
                                          self.interaction_graph)
@@ -619,14 +619,12 @@ The script that rendered this data publication is on the script/ \
             weight_ = int(weight)
             assert weight_-weight == 0, \
                 "float weights in fb interaction networks?"
-            uids_ = [uid1, uid2]
-            uids_.sort()
             if self.interactions_anonymized:
-                iid = "{}-{}-{}".format(self.snapshotid, *uids_)
+                iid = "{}-{}-{}".format(self.snapshotid, uid1, uid2)
                 uids = [r.URIRef(po.Participant+"#{}-{}".format(self.snapshotid, i))
                         for i in (uid1, uid2)]
             else:
-                iid = "{}-{}-{}".format(self.provenance_prefix, *uids_)
+                iid = "{}-{}-{}".format(self.provenance_prefix, uid1, uid2)
                 uids = [r.URIRef(po.Participant+"#{}-{}".format(self.provenance_prefix, i))
                         for i in (uid1, uid2)]
             ind = P.rdf.ic(po.Interaction, iid, self.interaction_graph,
