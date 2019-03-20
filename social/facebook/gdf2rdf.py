@@ -637,7 +637,7 @@ The script that rendered this data publication is on the script/ \
             obsname = '{}-{}-{}'.format(self.snapshotid, uid1, uid2)
             obs = P.rdf.ic(po.Observation, obsname, self.interaction_graph,
                            self.snapshoturi)
-            P.add([(ind, po.observation, obs), (obs, po.weight, weight_],
+            P.add([(ind, po.observation, obs), (obs, po.weight, weight_)],
                 self.interaction_graph)
             if (i % 1000) == 0:
                 c("interactions: ", i)
